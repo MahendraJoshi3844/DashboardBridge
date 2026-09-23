@@ -1,0 +1,2011 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DashboardBridgeContracts",
+  "definitions": {
+    "AIProposal": {
+      "additionalProperties": false,
+      "description": "A drafted translation that survived the validation gauntlet (`P4.4`).\n\nA proposal is something to *show a person*, never something to apply. There\nis deliberately no `applied`, `accepted` or `auto_accept` field: ADR-007\nrejects an auto-apply path outright, because it contradicts the product's\ncentral claim, and a field named like permission is how such a path gets\nadded by accident.\n\n`confidence` is what the model said about itself. It orders and pre-selects\nand does nothing else - models are not calibrated, and a self-reported 0.94\nis not a 94% chance of being correct.",
+      "properties": {
+        "proposal_id": {
+          "format": "uuid",
+          "title": "Proposal Id",
+          "type": "string"
+        },
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        },
+        "source_expression": {
+          "title": "Source Expression",
+          "type": "string"
+        },
+        "target_expression": {
+          "title": "Target Expression",
+          "type": "string"
+        },
+        "explanation": {
+          "default": "",
+          "title": "Explanation",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        },
+        "requires_review": {
+          "default": true,
+          "title": "Requires Review",
+          "type": "boolean"
+        },
+        "preselected": {
+          "default": false,
+          "title": "Preselected",
+          "type": "boolean"
+        },
+        "model": {
+          "default": "",
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt_version": {
+          "default": 0,
+          "title": "Prompt Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "proposal_id",
+        "operation",
+        "source_expression",
+        "target_expression",
+        "confidence"
+      ],
+      "title": "AIProposal",
+      "type": "object"
+    },
+    "Aggregation": {
+      "enum": [
+        "sum",
+        "average",
+        "min",
+        "max",
+        "count",
+        "count_distinct",
+        "median",
+        "attribute"
+      ],
+      "title": "Aggregation",
+      "type": "string"
+    },
+    "Analysis": {
+      "additionalProperties": false,
+      "properties": {
+        "analysis_id": {
+          "format": "uuid",
+          "title": "Analysis Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/JobStatus"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CanonicalModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "inventory": {
+          "$ref": "#/definitions/Inventory"
+        },
+        "complexity": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Complexity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "compatibility": {
+          "$ref": "#/definitions/Compatibility"
+        },
+        "flags": {
+          "items": {
+            "$ref": "#/definitions/ConversionFlag"
+          },
+          "title": "Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "analysis_id",
+        "status"
+      ],
+      "title": "Analysis",
+      "type": "object"
+    },
+    "ApiError": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/definitions/ErrorCategory"
+        },
+        "message": {
+          "description": "For a person. Never a stack trace, path, or HTTP code.",
+          "title": "Message",
+          "type": "string"
+        },
+        "detail": {
+          "default": "",
+          "description": "For an engineer, behind a toggle.",
+          "title": "Detail",
+          "type": "string"
+        },
+        "request_id": {
+          "default": "",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "project_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project Id"
+        }
+      },
+      "required": [
+        "category",
+        "message"
+      ],
+      "title": "ApiError",
+      "type": "object"
+    },
+    "Artifact": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "format": "uuid",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/ArtifactKind",
+          "default": "source"
+        },
+        "filename": {
+          "description": "Sanitised. Never used as a path.",
+          "title": "Filename",
+          "type": "string"
+        },
+        "size_bytes": {
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "sha256": {
+          "title": "Sha256",
+          "type": "string"
+        },
+        "detected_platform": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Platform"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "artifact_id",
+        "filename",
+        "size_bytes",
+        "sha256"
+      ],
+      "title": "Artifact",
+      "type": "object"
+    },
+    "ArtifactKind": {
+      "description": "An artifact is either what was uploaded or what was produced.\n\nGET /projects/{id}/artifact must return the target, so the distinction has\nto exist in the contract and not only in the database.",
+      "enum": [
+        "source",
+        "target"
+      ],
+      "title": "ArtifactKind",
+      "type": "string"
+    },
+    "AuditEntry": {
+      "additionalProperties": false,
+      "description": "One object the conversion handled, and what became of it (P5.7, \u00a741).\n\nTaken from the engine's own recording, not reconstructed. The flags say\nwhat did *not* come across; this is the only record of what did, and of the\nexpression each translation actually produced - which is what \"defend every\ntransformation to a sceptical stakeholder\" needs.\n\n**No timing.** The event stream carries `elapsed_ms` because it is about a\nrun in progress. A record of a finished run must be byte-stable, or two\nconversions of one workbook produce reports that cannot be diffed, and a\nduration differs on every run.",
+      "properties": {
+        "seq": {
+          "description": "Position in the recording. Ordering, not time.",
+          "title": "Seq",
+          "type": "integer"
+        },
+        "stage": {
+          "$ref": "#/definitions/Stage"
+        },
+        "kind": {
+          "description": "table | column | calc | visual | parameter | relationship",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/definitions/Outcome"
+        },
+        "detail": {
+          "default": "",
+          "description": "Why it was held, or what it became.",
+          "title": "Detail",
+          "type": "string"
+        },
+        "ref": {
+          "default": "",
+          "description": "Canonical id, e.g. 'Orders.Profit'.",
+          "title": "Ref",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "description": "The original expression, if any.",
+          "title": "Source",
+          "type": "string"
+        },
+        "result": {
+          "default": "",
+          "description": "What was emitted. Empty if held.",
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "seq",
+        "stage",
+        "kind",
+        "name",
+        "outcome"
+      ],
+      "title": "AuditEntry",
+      "type": "object"
+    },
+    "BindingRole": {
+      "description": "Platform-neutral replacement for Tableau's shelves (ADR-002).",
+      "enum": [
+        "category",
+        "value",
+        "series",
+        "detail",
+        "tooltip",
+        "filter"
+      ],
+      "title": "BindingRole",
+      "type": "string"
+    },
+    "CanonicalModel": {
+      "additionalProperties": false,
+      "properties": {
+        "source_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "source_version": {
+          "default": "",
+          "title": "Source Version",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "datasources": {
+          "items": {
+            "$ref": "#/definitions/DataSource"
+          },
+          "title": "Datasources",
+          "type": "array"
+        },
+        "relationships": {
+          "items": {
+            "$ref": "#/definitions/Relationship"
+          },
+          "title": "Relationships",
+          "type": "array"
+        },
+        "parameters": {
+          "items": {
+            "$ref": "#/definitions/Parameter"
+          },
+          "title": "Parameters",
+          "type": "array"
+        },
+        "visuals": {
+          "items": {
+            "$ref": "#/definitions/Visual"
+          },
+          "title": "Visuals",
+          "type": "array"
+        },
+        "dashboards": {
+          "items": {
+            "$ref": "#/definitions/Dashboard"
+          },
+          "title": "Dashboards",
+          "type": "array"
+        },
+        "flags": {
+          "items": {
+            "$ref": "#/definitions/ConversionFlag"
+          },
+          "title": "Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_platform"
+      ],
+      "title": "CanonicalModel",
+      "type": "object"
+    },
+    "CategoryScore": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "checks": {
+          "title": "Checks",
+          "type": "integer"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "score",
+        "checks",
+        "passed"
+      ],
+      "title": "CategoryScore",
+      "type": "object"
+    },
+    "Column": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Deterministic: '<table>.<name>'. Never random.",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Display name. Often differs from name; collapsing them loses data and produces references to names that do not exist.",
+          "title": "Caption"
+        },
+        "datatype": {
+          "$ref": "#/definitions/DataType",
+          "default": "unknown"
+        },
+        "role": {
+          "default": "dimension",
+          "title": "Role",
+          "type": "string"
+        },
+        "grain": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Grain"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "None means the grain could not be determined; the object is refused rather than guessed."
+        },
+        "expression": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Expression"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "translation": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Translation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Column",
+      "type": "object"
+    },
+    "Compatibility": {
+      "additionalProperties": false,
+      "properties": {
+        "converted": {
+          "default": 0,
+          "title": "Converted",
+          "type": "integer"
+        },
+        "partial": {
+          "default": 0,
+          "title": "Partial",
+          "type": "integer"
+        },
+        "ai_required": {
+          "default": 0,
+          "title": "Ai Required",
+          "type": "integer"
+        },
+        "unsupported": {
+          "default": 0,
+          "title": "Unsupported",
+          "type": "integer"
+        },
+        "failed": {
+          "default": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "total": {
+          "default": 0,
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "title": "Compatibility",
+      "type": "object"
+    },
+    "Complexity": {
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Score",
+          "type": "number"
+        },
+        "band": {
+          "title": "Band",
+          "type": "string"
+        },
+        "formula": {
+          "description": "Returned so the UI can show the derivation. A score whose derivation a reader cannot follow is decoration.",
+          "title": "Formula",
+          "type": "string"
+        }
+      },
+      "required": [
+        "score",
+        "band",
+        "formula"
+      ],
+      "title": "Complexity",
+      "type": "object"
+    },
+    "Conversion": {
+      "additionalProperties": false,
+      "properties": {
+        "conversion_id": {
+          "format": "uuid",
+          "title": "Conversion Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/JobStatus"
+        },
+        "compatibility": {
+          "$ref": "#/definitions/Compatibility"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/CanonicalModel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The produced model, with translations filled in. The comparison view puts each source expression beside its target, so without this that column is empty for every row."
+        },
+        "artifact_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Artifact Id"
+        },
+        "flags": {
+          "items": {
+            "$ref": "#/definitions/ConversionFlag"
+          },
+          "title": "Flags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "conversion_id",
+        "status"
+      ],
+      "title": "Conversion",
+      "type": "object"
+    },
+    "ConversionFlag": {
+      "additionalProperties": false,
+      "description": "Anything that did not convert cleanly. Nothing is ever dropped silently.",
+      "properties": {
+        "item": {
+          "title": "Item",
+          "type": "string"
+        },
+        "stage": {
+          "$ref": "#/definitions/Stage"
+        },
+        "method": {
+          "$ref": "#/definitions/ConversionMethod",
+          "default": "deterministic"
+        },
+        "status": {
+          "$ref": "#/definitions/ConversionStatus",
+          "default": "converted"
+        },
+        "severity": {
+          "$ref": "#/definitions/Severity",
+          "default": "info"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        },
+        "ref": {
+          "default": "",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "stage"
+      ],
+      "title": "ConversionFlag",
+      "type": "object"
+    },
+    "ConversionMethod": {
+      "description": "*How* an object was converted.",
+      "enum": [
+        "deterministic",
+        "rule",
+        "ai_assisted",
+        "manual"
+      ],
+      "title": "ConversionMethod",
+      "type": "string"
+    },
+    "ConversionReport": {
+      "additionalProperties": false,
+      "description": "The deliverable that outlives the session.\n\nComposed entirely of contracts that already crossed this boundary, so the\nreport cannot say anything the API did not already say elsewhere. It is a\nrendering of the run, not a second opinion about it.\n\n`verdict` is repeated at the top level even though it also sits inside\n`validation`, because `validation` is null until the checks have run and a\nreader still needs an answer then. That answer is `unverified` - stated,\nnever omitted, since an absent verdict reads as a passed one.",
+      "properties": {
+        "project": {
+          "$ref": "#/definitions/Project"
+        },
+        "verdict": {
+          "$ref": "#/definitions/Verdict",
+          "default": "unverified"
+        },
+        "compatibility": {
+          "$ref": "#/definitions/Compatibility"
+        },
+        "flags": {
+          "items": {
+            "$ref": "#/definitions/ConversionFlag"
+          },
+          "title": "Flags",
+          "type": "array"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Validation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "audit": {
+          "description": "The run as it was recorded, object by object. Empty when the conversion predates the recording being kept, which the report states rather than omitting the section.",
+          "items": {
+            "$ref": "#/definitions/AuditEntry"
+          },
+          "title": "Audit",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project",
+        "compatibility"
+      ],
+      "title": "ConversionReport",
+      "type": "object"
+    },
+    "ConversionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "ai_enabled": {
+          "default": false,
+          "title": "Ai Enabled",
+          "type": "boolean"
+        },
+        "provider": {
+          "$ref": "#/definitions/ProviderKind",
+          "default": "none"
+        },
+        "privacy_mode": {
+          "$ref": "#/definitions/PrivacyMode",
+          "default": "standard"
+        }
+      },
+      "title": "ConversionRequest",
+      "type": "object"
+    },
+    "ConversionStatus": {
+      "description": "*What became of* an object.",
+      "enum": [
+        "converted",
+        "partial",
+        "ai_required",
+        "unsupported",
+        "failed"
+      ],
+      "title": "ConversionStatus",
+      "type": "string"
+    },
+    "CreateProjectRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "source_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "target_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_platform",
+        "target_platform",
+        "name"
+      ],
+      "title": "CreateProjectRequest",
+      "type": "object"
+    },
+    "CreateUserRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "display_name": {
+          "default": "",
+          "title": "Display Name",
+          "type": "string"
+        },
+        "password": {
+          "title": "Password",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ],
+      "title": "CreateUserRequest",
+      "type": "object"
+    },
+    "Dashboard": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "visual_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Visual Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Dashboard",
+      "type": "object"
+    },
+    "DataSource": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "connection": {
+          "default": "unknown",
+          "title": "Connection",
+          "type": "string"
+        },
+        "is_extract": {
+          "default": false,
+          "title": "Is Extract",
+          "type": "boolean"
+        },
+        "source_id": {
+          "default": "",
+          "description": "The platform's own datasource id. Visual bindings are scoped by it, so a field name present in two sources binds correctly.",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "tables": {
+          "items": {
+            "$ref": "#/definitions/Table"
+          },
+          "title": "Tables",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "DataSource",
+      "type": "object"
+    },
+    "DataType": {
+      "enum": [
+        "string",
+        "integer",
+        "decimal",
+        "boolean",
+        "date",
+        "datetime",
+        "unknown"
+      ],
+      "title": "DataType",
+      "type": "string"
+    },
+    "DatePart": {
+      "enum": [
+        "year",
+        "quarter",
+        "month",
+        "week",
+        "day",
+        "hour",
+        "minute",
+        "second"
+      ],
+      "title": "DatePart",
+      "type": "string"
+    },
+    "ErrorCategory": {
+      "enum": [
+        "UPLOAD_ERROR",
+        "PARSER_ERROR",
+        "UNSUPPORTED_ARTIFACT",
+        "METADATA_ERROR",
+        "RULE_ERROR",
+        "AI_ERROR",
+        "CONVERSION_ERROR",
+        "VALIDATION_ERROR",
+        "AUTH_ERROR",
+        "NOT_FOUND",
+        "SYSTEM_ERROR"
+      ],
+      "title": "ErrorCategory",
+      "type": "string"
+    },
+    "Expression": {
+      "additionalProperties": false,
+      "properties": {
+        "source_language": {
+          "description": "e.g. tableau_calc, dax",
+          "title": "Source Language",
+          "type": "string"
+        },
+        "source_text": {
+          "description": "Verbatim source. Untrusted: never interpolated into a prompt as instruction, only as delimited USER DATA.",
+          "title": "Source Text",
+          "type": "string"
+        },
+        "references": {
+          "items": {
+            "$ref": "#/definitions/FieldRef"
+          },
+          "title": "References",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_language",
+        "source_text"
+      ],
+      "title": "Expression",
+      "type": "object"
+    },
+    "FieldRef": {
+      "additionalProperties": false,
+      "description": "A reference to a column, resolved or not.",
+      "properties": {
+        "table": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Table"
+        },
+        "column": {
+          "title": "Column",
+          "type": "string"
+        },
+        "resolved": {
+          "default": true,
+          "title": "Resolved",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "column"
+      ],
+      "title": "FieldRef",
+      "type": "object"
+    },
+    "Grain": {
+      "description": "Where an expression evaluates.\n\nThe single most consequential property in the model: source tools decide\naggregation at query time, targets must commit at definition time. `None`\n(absent) means the grain could not be determined, and the object is refused\nrather than guessed.",
+      "enum": [
+        "row",
+        "aggregate"
+      ],
+      "title": "Grain",
+      "type": "string"
+    },
+    "HealthResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "privacy_mode": {
+          "$ref": "#/definitions/PrivacyMode"
+        },
+        "ai_available": {
+          "title": "Ai Available",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "status",
+        "version",
+        "privacy_mode",
+        "ai_available"
+      ],
+      "title": "HealthResponse",
+      "type": "object"
+    },
+    "Inventory": {
+      "additionalProperties": false,
+      "properties": {
+        "datasources": {
+          "default": 0,
+          "title": "Datasources",
+          "type": "integer"
+        },
+        "tables": {
+          "default": 0,
+          "title": "Tables",
+          "type": "integer"
+        },
+        "columns": {
+          "default": 0,
+          "title": "Columns",
+          "type": "integer"
+        },
+        "calculations": {
+          "default": 0,
+          "title": "Calculations",
+          "type": "integer"
+        },
+        "visuals": {
+          "default": 0,
+          "title": "Visuals",
+          "type": "integer"
+        },
+        "parameters": {
+          "default": 0,
+          "title": "Parameters",
+          "type": "integer"
+        },
+        "relationships": {
+          "default": 0,
+          "title": "Relationships",
+          "type": "integer"
+        },
+        "dashboards": {
+          "default": 0,
+          "title": "Dashboards",
+          "type": "integer"
+        }
+      },
+      "title": "Inventory",
+      "type": "object"
+    },
+    "ItemEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "string"
+        },
+        "method": {
+          "title": "Method",
+          "type": "string"
+        },
+        "ref": {
+          "default": "",
+          "title": "Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name",
+        "outcome",
+        "method"
+      ],
+      "title": "ItemEvent",
+      "type": "object"
+    },
+    "Job": {
+      "additionalProperties": false,
+      "properties": {
+        "job_id": {
+          "format": "uuid",
+          "title": "Job Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/definitions/JobKind"
+        },
+        "status": {
+          "$ref": "#/definitions/JobStatus"
+        },
+        "stage": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Stage"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "job_id",
+        "kind",
+        "status"
+      ],
+      "title": "Job",
+      "type": "object"
+    },
+    "JobKind": {
+      "description": "Analysis, conversion and validation are three jobs against one project,\nso a job row is not findable without saying which it is.",
+      "enum": [
+        "analysis",
+        "conversion",
+        "validation"
+      ],
+      "title": "JobKind",
+      "type": "string"
+    },
+    "JobStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "failed",
+        "cancelled"
+      ],
+      "title": "JobStatus",
+      "type": "string"
+    },
+    "LicenseStatusResponse": {
+      "additionalProperties": false,
+      "description": "The licence this deployment runs under (`P7.1`).\n\n**Never carries the token.** The screen needs the customer, the expiry and\nthe days left; it never needs the signed string, and a token on the wire is\na token in somebody's proxy log.\n\n`licensed` is not the same question as \"is anything wrong\". A licence that\nis valid and expires in nine days is `licensed: true` with\n`expiring_soon: true` and a message - which is the whole point of warning\nbefore the day conversions stop rather than on it.",
+      "properties": {
+        "licensed": {
+          "title": "Licensed",
+          "type": "boolean"
+        },
+        "customer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Customer"
+        },
+        "expires": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires"
+        },
+        "days_remaining": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Days Remaining"
+        },
+        "seats": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seats"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Features",
+          "type": "array"
+        },
+        "expiring_soon": {
+          "default": false,
+          "title": "Expiring Soon",
+          "type": "boolean"
+        },
+        "message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Message"
+        }
+      },
+      "required": [
+        "licensed"
+      ],
+      "title": "LicenseStatusResponse",
+      "type": "object"
+    },
+    "LoginRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "password": {
+          "title": "Password",
+          "type": "string"
+        }
+      },
+      "required": [
+        "email",
+        "password"
+      ],
+      "title": "LoginRequest",
+      "type": "object"
+    },
+    "NumericalValidation": {
+      "additionalProperties": false,
+      "description": "Always unmeasured in v1 (ADR-003).\n\nThe field exists so the absence is explicit rather than inferred. Comparing\nresults requires executing both dashboards against live data.",
+      "properties": {
+        "measured": {
+          "default": false,
+          "title": "Measured",
+          "type": "boolean"
+        },
+        "reason": {
+          "default": "Requires executing both dashboards against live data; not available offline.",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "title": "NumericalValidation",
+      "type": "object"
+    },
+    "Outcome": {
+      "description": "Which side of the seam an object ended on.\n\nThere is no third value by design: an object that was neither converted nor\nreported would be the silent drop this product exists to prevent. The engine\nenforces the same two in `t2pbi.events`.",
+      "enum": [
+        "crossed",
+        "held"
+      ],
+      "title": "Outcome",
+      "type": "string"
+    },
+    "Parameter": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "caption": {
+          "title": "Caption",
+          "type": "string"
+        },
+        "datatype": {
+          "$ref": "#/definitions/DataType",
+          "default": "string"
+        },
+        "default_value": {
+          "default": "",
+          "title": "Default Value",
+          "type": "string"
+        },
+        "kind": {
+          "default": "range",
+          "title": "Kind",
+          "type": "string"
+        },
+        "min_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Value"
+        },
+        "max_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Value"
+        },
+        "step": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Step"
+        },
+        "members": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Members",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "caption"
+      ],
+      "title": "Parameter",
+      "type": "object"
+    },
+    "Platform": {
+      "enum": [
+        "tableau",
+        "powerbi"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "PrivacyMode": {
+      "enum": [
+        "standard",
+        "local_only",
+        "enterprise_private"
+      ],
+      "title": "PrivacyMode",
+      "type": "string"
+    },
+    "ProgressEvent": {
+      "additionalProperties": false,
+      "description": "Emitted from a real EventSink. Never synthesised to smooth a bar.",
+      "properties": {
+        "stage": {
+          "$ref": "#/definitions/Stage"
+        },
+        "completed": {
+          "title": "Completed",
+          "type": "integer"
+        },
+        "total": {
+          "title": "Total",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "stage",
+        "completed",
+        "total"
+      ],
+      "title": "ProgressEvent",
+      "type": "object"
+    },
+    "Project": {
+      "additionalProperties": false,
+      "properties": {
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "source_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "target_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id",
+        "name",
+        "source_platform",
+        "target_platform",
+        "created_at"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "ProposalDecision": {
+      "description": "What a person did about a proposal (\u00a762).\n\n`PENDING` exists so \"nobody has looked at this yet\" is a state the audit\ntrail can report, rather than being indistinguishable from \"rejected\".",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "title": "ProposalDecision",
+      "type": "string"
+    },
+    "ProposalReview": {
+      "additionalProperties": false,
+      "description": "One proposal, with everything a reviewer needs to judge it (ADR-007).\n\n07-ai-engine.md: the reviewer sees the source expression, the reason the\ndeterministic path refused, the proposal, its explanation and assumptions,\n**and what was sent to the model**. The last one is why `prompt_sent` is\nhere: a review of a proposal without the question it answered is a review of\nhalf of it, and it is also the only way a person can see for themselves that\nthe workbook was not sent.",
+      "properties": {
+        "item": {
+          "description": "`'<table>.<name>'` - the object it is about.",
+          "title": "Item",
+          "type": "string"
+        },
+        "refusal_reason": {
+          "title": "Refusal Reason",
+          "type": "string"
+        },
+        "proposal": {
+          "$ref": "#/definitions/AIProposal"
+        },
+        "prompt_sent": {
+          "description": "Verbatim. Shown to the reviewer, never re-rendered.",
+          "title": "Prompt Sent",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/definitions/ProposalDecision",
+          "default": "pending"
+        }
+      },
+      "required": [
+        "item",
+        "refusal_reason",
+        "proposal",
+        "prompt_sent"
+      ],
+      "title": "ProposalReview",
+      "type": "object"
+    },
+    "ProposalSet": {
+      "additionalProperties": false,
+      "description": "Everything a model was asked about for one project, and what came back.",
+      "properties": {
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "reviews": {
+          "items": {
+            "$ref": "#/definitions/ProposalReview"
+          },
+          "title": "Reviews",
+          "type": "array"
+        },
+        "skipped": {
+          "items": {
+            "$ref": "#/definitions/SkippedItem"
+          },
+          "title": "Skipped",
+          "type": "array"
+        },
+        "summary": {
+          "default": "",
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id"
+      ],
+      "title": "ProposalSet",
+      "type": "object"
+    },
+    "ProviderKind": {
+      "enum": [
+        "none",
+        "ollama",
+        "openai_compatible"
+      ],
+      "title": "ProviderKind",
+      "type": "string"
+    },
+    "ProviderSettings": {
+      "additionalProperties": false,
+      "description": "Keys are write-only over the API.\n\nA GET never returns the value, nor a masked prefix, which leaks length and\nusually the first characters.",
+      "properties": {
+        "provider": {
+          "$ref": "#/definitions/ProviderKind",
+          "default": "none"
+        },
+        "base_url": {
+          "default": "",
+          "title": "Base Url",
+          "type": "string"
+        },
+        "model": {
+          "default": "",
+          "title": "Model",
+          "type": "string"
+        },
+        "configured": {
+          "default": false,
+          "title": "Configured",
+          "type": "boolean"
+        },
+        "available": {
+          "default": false,
+          "title": "Available",
+          "type": "boolean"
+        },
+        "unavailable_because": {
+          "default": "",
+          "title": "Unavailable Because",
+          "type": "string"
+        }
+      },
+      "title": "ProviderSettings",
+      "type": "object"
+    },
+    "Relationship": {
+      "additionalProperties": false,
+      "properties": {
+        "from_table": {
+          "title": "From Table",
+          "type": "string"
+        },
+        "from_column": {
+          "title": "From Column",
+          "type": "string"
+        },
+        "to_table": {
+          "title": "To Table",
+          "type": "string"
+        },
+        "to_column": {
+          "title": "To Column",
+          "type": "string"
+        },
+        "kind": {
+          "default": "many_to_one",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from_table",
+        "from_column",
+        "to_table",
+        "to_column"
+      ],
+      "title": "Relationship",
+      "type": "object"
+    },
+    "Severity": {
+      "description": "How loudly the report says so.",
+      "enum": [
+        "info",
+        "warning",
+        "manual"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SkippedItem": {
+      "additionalProperties": false,
+      "description": "An object no proposal exists for, and which of the reasons applies.\n\nNever merged into \"no suggestion available\". A model that was never asked, a\nmodel that declined, and a draft that failed the gauntlet are three different\nfacts, and only the third one says anything about the model's answer.",
+      "properties": {
+        "item": {
+          "title": "Item",
+          "type": "string"
+        },
+        "outcome": {
+          "description": "Router disposition or gauntlet rejection.",
+          "title": "Outcome",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "outcome",
+        "reason"
+      ],
+      "title": "SkippedItem",
+      "type": "object"
+    },
+    "Stage": {
+      "description": "Pipeline stages. Progress events name one of these and nothing else.",
+      "enum": [
+        "extract",
+        "parse",
+        "map",
+        "translate",
+        "generate",
+        "validate",
+        "report"
+      ],
+      "title": "Stage",
+      "type": "string"
+    },
+    "Table": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/Column"
+          },
+          "title": "Columns",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Table",
+      "type": "object"
+    },
+    "Translation": {
+      "additionalProperties": false,
+      "properties": {
+        "target_language": {
+          "title": "Target Language",
+          "type": "string"
+        },
+        "target_text": {
+          "title": "Target Text",
+          "type": "string"
+        },
+        "method": {
+          "$ref": "#/definitions/ConversionMethod"
+        },
+        "rule_ids": {
+          "description": "Every rule-pack mapping that produced this translation, sorted. Plural because one expression can fire several; empty when no mapping fired, which is a fact about the translation and not a gap - a control-flow rewrite is the translator's own work.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Rule Ids",
+          "type": "array"
+        },
+        "proposal_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Set when a human accepted an AI proposal. Never set by the model itself.",
+          "title": "Proposal Id"
+        }
+      },
+      "required": [
+        "target_language",
+        "target_text",
+        "method"
+      ],
+      "title": "Translation",
+      "type": "object"
+    },
+    "UpdateUserRequest": {
+      "additionalProperties": false,
+      "description": "Only the two things an administrator may change about someone else.\n\nNot the password: an administrator who can set another person's password\ncan sign in as them, and \"who did this conversion\" stops meaning anything.",
+      "properties": {
+        "is_active": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Active"
+        },
+        "is_admin": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Admin"
+        }
+      },
+      "title": "UpdateUserRequest",
+      "type": "object"
+    },
+    "UserAccount": {
+      "additionalProperties": false,
+      "description": "A person with an account on this deployment (`P7.1`).\n\n**There is no password field and there never will be.** The model has\nnowhere to put one, so a response cannot carry a password or its hash by\naccident - the same shape as `Artifact` having no column for bytes.",
+      "properties": {
+        "user_id": {
+          "format": "uuid",
+          "title": "User Id",
+          "type": "string"
+        },
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "display_name": {
+          "default": "",
+          "title": "Display Name",
+          "type": "string"
+        },
+        "is_admin": {
+          "default": false,
+          "title": "Is Admin",
+          "type": "boolean"
+        },
+        "is_active": {
+          "default": true,
+          "title": "Is Active",
+          "type": "boolean"
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Created At"
+        },
+        "last_login_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Last Login At"
+        }
+      },
+      "required": [
+        "user_id",
+        "email"
+      ],
+      "title": "UserAccount",
+      "type": "object"
+    },
+    "UserList": {
+      "additionalProperties": false,
+      "description": "The people on this deployment, and what the licence allows.\n\nThe seat counts travel with the list because they are the answer to the\nquestion the list provokes - \"can I add someone?\" - and a client that has\nto make a second call to find out will show the button and then refuse.",
+      "properties": {
+        "users": {
+          "items": {
+            "$ref": "#/definitions/UserAccount"
+          },
+          "title": "Users",
+          "type": "array"
+        },
+        "seats_total": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seats Total"
+        },
+        "seats_used": {
+          "default": 0,
+          "title": "Seats Used",
+          "type": "integer"
+        }
+      },
+      "title": "UserList",
+      "type": "object"
+    },
+    "Validation": {
+      "additionalProperties": false,
+      "properties": {
+        "validation_id": {
+          "format": "uuid",
+          "title": "Validation Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/JobStatus"
+        },
+        "verdict": {
+          "$ref": "#/definitions/Verdict",
+          "default": "unverified"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Computed only from measured categories.",
+          "title": "Score"
+        },
+        "formula": {
+          "default": "",
+          "title": "Formula",
+          "type": "string"
+        },
+        "categories": {
+          "additionalProperties": {
+            "$ref": "#/definitions/CategoryScore"
+          },
+          "title": "Categories",
+          "type": "object"
+        },
+        "numerical": {
+          "$ref": "#/definitions/NumericalValidation"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/definitions/ValidationRuleResult"
+          },
+          "title": "Rules",
+          "type": "array"
+        }
+      },
+      "required": [
+        "validation_id",
+        "status"
+      ],
+      "title": "Validation",
+      "type": "object"
+    },
+    "ValidationRuleResult": {
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "status"
+      ],
+      "title": "ValidationRuleResult",
+      "type": "object"
+    },
+    "Verdict": {
+      "description": "What the product is allowed to claim (\u00a763). Never 'success'.",
+      "enum": [
+        "verified",
+        "partially_verified",
+        "unverified",
+        "failed"
+      ],
+      "title": "Verdict",
+      "type": "string"
+    },
+    "Visual": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "visual_type": {
+          "default": "unknown",
+          "title": "Visual Type",
+          "type": "string"
+        },
+        "bindings": {
+          "items": {
+            "$ref": "#/definitions/VisualBinding"
+          },
+          "title": "Bindings",
+          "type": "array"
+        },
+        "filters": {
+          "items": {
+            "$ref": "#/definitions/VisualBinding"
+          },
+          "title": "Filters",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Visual",
+      "type": "object"
+    },
+    "VisualBinding": {
+      "additionalProperties": false,
+      "description": "One field placed in one well. Replaces Tableau-shaped shelf encodings.",
+      "properties": {
+        "role": {
+          "$ref": "#/definitions/BindingRole"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FieldRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "aggregation": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Aggregation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "date_part": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/DatePart"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "resolvable": {
+          "default": true,
+          "description": "False for constructs naming no real column. Binding one to a guess is how every visual ends up pointing at a column that does not exist.",
+          "title": "Resolvable",
+          "type": "boolean"
+        },
+        "raw": {
+          "default": "",
+          "description": "The original token, for the report.",
+          "title": "Raw",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role"
+      ],
+      "title": "VisualBinding",
+      "type": "object"
+    }
+  }
+}

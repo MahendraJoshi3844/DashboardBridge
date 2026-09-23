@@ -1,0 +1,30 @@
+table Store
+	lineageTag: 9a8b7c6d-0000-4000-8000-000000000001
+
+	column 'Store Key'
+		dataType: int64
+		isKey
+		lineageTag: 4d5e6f70-0001-0000-0000-000000000001
+		summarizeBy: none
+		sourceColumn: Store Key
+
+	column 'Store Name'
+		dataType: string
+		lineageTag: 4d5e6f70-0002-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: Store Name
+
+	column Region
+		dataType: string
+		lineageTag: 4d5e6f70-0003-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: Region
+
+	partition Store = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("server", "retail"),
+				    Store = Source{[Schema="dbo",Item="Store"]}[Data]
+				in
+				    Store

@@ -1,0 +1,226 @@
+/*
+ * DashboardBridge AI - design tokens.
+ *
+ * Dark-first (03-ux-spec.md, "Design language"), and since 2026-09-04 also
+ * light. Subtle gradients, glass panels, fine borders, strong typography, data
+ * in a monospace face - the same language in both, not a second design.
+ *
+ * Colour carries meaning and nothing else. There is no decorative hue in this
+ * file: every ink below answers a question the user asked - whose object is
+ * this, does it need me, how serious is it. Status is never colour alone; the
+ * components pair every status ink with an icon and a word.
+ *
+ * Text contrast is measured, not judged by eye. `npm run check:contrast`
+ * composites each ink over the surface it actually sits on and fails the
+ * process under 4.5:1. It measures **both palettes**, so a light theme cannot
+ * be added by eye either. Do not change a value here without re-running it.
+ *
+ * ## Two palettes, one attribute
+ *
+ * `:root` is dark and is what you get with no JavaScript. `[data-theme]` on
+ * <html> selects, and it is only ever `dark` or `light` - never `system`. The
+ * *preference* may be "system", and the small script in `layout.tsx` resolves
+ * it to a concrete value before first paint and re-resolves it when the OS
+ * setting changes. Keeping "system" out of the CSS means the palettes never
+ * have to be written twice, once for a selector and once for a media query,
+ * which is how the two copies drift.
+ */
+:root {
+  color-scheme: dark;
+
+  /* --- Ground ------------------------------------------------------- */
+  --dbb-bg-base: #090b10;
+  --dbb-bg-raised: #0d1018;
+
+  /* Glass. Alpha over the ground, never an opaque slab. */
+  --dbb-surface: rgba(255, 255, 255, 0.035);
+  --dbb-surface-strong: rgba(255, 255, 255, 0.065);
+
+  /* Fine borders. One hairline is enough to separate two planes. */
+  --dbb-line: rgba(255, 255, 255, 0.09);
+  --dbb-line-strong: rgba(255, 255, 255, 0.17);
+
+
+  /* --- Glass ---------------------------------------------------------
+   * Translucency alone is not glass. A pane reads as glass when it blurs
+   * what is behind it, catches light along its top edge, and sits at a
+   * believable distance from the plane below. Before this, `--dbb-surface`
+   * was alpha over the ground and nothing else - flat film, not glass.
+   *
+   * The fourth requirement is the one that decides whether any of it works:
+   * there has to be something behind the pane worth blurring. On a flat
+   * ground a blur renders nothing and the effect looks like a cheap filter,
+   * which is why `--dbb-bloom` exists below.
+   */
+  --dbb-glass-blur: 18px;
+  --dbb-glass-blur-quiet: 10px;
+  --dbb-glass-saturate: 150%;
+  /* The lit top edge. One hairline, brighter than the pane, is what makes a
+     surface read as having a thickness. */
+  --dbb-glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  --dbb-glass-edge-strong: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+
+  /* --- Ink ---------------------------------------------------------- */
+  --dbb-ink: #e9ecf3;
+  --dbb-ink-muted: #aab3c5;
+  --dbb-ink-faint: #8b95a9;
+
+  /* --- Meaning ------------------------------------------------------ */
+  /* Source and target are a blue/orange pair: the one categorical contrast
+     that survives protanopia, deuteranopia and tritanopia. */
+  --dbb-ink-source: #8ab4f8; /* objects belonging to the source platform */
+  --dbb-ink-target: #f0a868; /* objects belonging to the target platform */
+  --dbb-ink-held: #c3b1ff; /* held for a person — not a failure */
+
+  /* Status. Always rendered with an icon and a label beside it. */
+  --dbb-status-good: #56d6a0;
+  --dbb-status-warning: #e8b93f;
+  --dbb-status-serious: #f59058;
+  --dbb-status-critical: #ff8f8c;
+
+  /* --- Focus -------------------------------------------------------- */
+  /* Visible focus is never removed. This ring is the whole reason the
+     product is keyboard-completable. */
+  --dbb-focus: #8ab4f8;
+  --dbb-focus-width: 2px;
+  --dbb-focus-offset: 3px;
+
+  /* --- Type --------------------------------------------------------- */
+  /* System stacks only. The product is offline-first; a webfont request is a
+     network call in the render path. */
+  --dbb-font-sans: ui-sans-serif, system-ui, "Segoe UI Variable Text",
+    "Segoe UI", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --dbb-font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono",
+    "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* --- Form --------------------------------------------------------- */
+  --dbb-radius-card: 18px;
+  --dbb-radius-control: 10px;
+  --dbb-shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+    0 24px 60px -30px rgba(0, 0, 0, 0.9);
+  --dbb-shadow-lift: 0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 36px 80px -32px rgba(0, 0, 0, 0.95);
+
+  /* --- Gradients ---------------------------------------------------- */
+  /* Subtle: a wash that gives the page a light source, not a light show. */
+  --dbb-wash: radial-gradient(
+      120rem 60rem at 12% -18%,
+      rgba(138, 180, 248, 0.13),
+      transparent 62%
+    ),
+    radial-gradient(
+      90rem 50rem at 96% 6%,
+      rgba(240, 168, 104, 0.09),
+      transparent 60%
+    );
+  --dbb-panel-wash: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.055),
+    rgba(255, 255, 255, 0.012) 46%,
+    rgba(255, 255, 255, 0) 100%
+  );
+
+  /* --- Motion ------------------------------------------------------- */
+  --dbb-motion-page: 240ms;
+  --dbb-motion-micro: 160ms;
+  --dbb-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+
+/*
+ * Light. Overrides only - anything not restated here is the value above, which
+ * is why the type stack, radii, motion and meaning-of-colour do not repeat.
+ *
+ * The inks are darkened rather than reused: the same #8ab4f8 that reads
+ * clearly on #090b10 is 2.1:1 on white, so a palette that flipped only the
+ * ground would fail the contrast gate on every meaningful ink at once. The
+ * blue/orange source/target pairing is kept, because the reason for it -
+ * surviving all three common colour-vision deficiencies - does not change with
+ * the background.
+ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  /* --- Ground ------------------------------------------------------- */
+  /* Not #ffffff: a page-wide pure white is the one background that makes a
+     glass panel invisible, because there is nothing lighter to raise it to. */
+  --dbb-bg-base: #f4f6fa;
+  --dbb-bg-raised: #ffffff;
+
+  /* Glass, inverted: dark alpha over a light ground. */
+  --dbb-surface: rgba(15, 23, 42, 0.035);
+  --dbb-surface-strong: rgba(15, 23, 42, 0.065);
+
+  --dbb-line: rgba(15, 23, 42, 0.12);
+  --dbb-line-strong: rgba(15, 23, 42, 0.22);
+
+
+  /* --- Glass ---------------------------------------------------------
+   * Light glass is not dark glass inverted. A white inset edge on a white
+   * pane is invisible, so the lit edge here is near-white at high alpha over
+   * a tinted pane, and the depth comes from the shadow rather than the
+   * highlight.
+   */
+  --dbb-glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --dbb-glass-edge-strong: inset 0 1px 0 rgba(255, 255, 255, 1);
+
+  /* --- Ink ---------------------------------------------------------- */
+  --dbb-ink: #131722;
+  --dbb-ink-muted: #414a5c;
+  --dbb-ink-faint: #58627a;
+
+  /* --- Meaning ------------------------------------------------------ */
+  --dbb-ink-source: #1d4ed8;
+  --dbb-ink-target: #9a4a06;
+  --dbb-ink-held: #5b3bb5;
+
+  --dbb-status-good: #0f6f4a;
+  --dbb-status-warning: #7a5a00;
+  --dbb-status-serious: #a8410f;
+  --dbb-status-critical: #b91c1c;
+
+  /* --- Focus -------------------------------------------------------- */
+  --dbb-focus: #1d4ed8;
+
+  /* --- Form --------------------------------------------------------- */
+  /* A light theme's depth comes from shadow, not from an inset highlight:
+     a white inset line on a white panel is invisible and costs a repaint. */
+  --dbb-shadow-panel: 0 1px 2px rgba(15, 23, 42, 0.06),
+    0 18px 40px -28px rgba(15, 23, 42, 0.35);
+  --dbb-shadow-lift: 0 2px 4px rgba(15, 23, 42, 0.08),
+    0 28px 60px -30px rgba(15, 23, 42, 0.45);
+
+  /* --- Gradients ---------------------------------------------------- */
+  --dbb-wash: radial-gradient(
+      120rem 60rem at 12% -18%,
+      rgba(29, 78, 216, 0.07),
+      transparent 62%
+    ),
+    radial-gradient(
+      90rem 50rem at 96% 6%,
+      rgba(154, 74, 6, 0.05),
+      transparent 60%
+    );
+  --dbb-panel-wash: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0.55) 46%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+}
+
+/*
+ * CSS reduced motion. This is the floor, not the ceiling: a media query does
+ * not stop a JavaScript animation library, so the app is additionally wrapped
+ * in <MotionConfig reducedMotion="user"> (see src/app/providers.tsx).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

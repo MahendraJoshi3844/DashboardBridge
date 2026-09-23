@@ -1,0 +1,285 @@
+# DAX constructs that disqualify a whole expression (`P6b.2`).
+#
+# A function with no mapping is already refused by name. These exist because the
+# *reason* is the value: "no rule for RELATED" says nothing a person can act on,
+# where "Tableau resolves related fields through the data source's joins, not
+# inside a calculation" tells them where the work actually is.
+#
+# Nothing here is a partial conversion. A partially converted expression is a
+# wrong one that looks right, and Tableau will open the workbook and compute it.
+
+refusals:
+  # --- filter context -------------------------------------------------------
+  - rule_id: PBI_REFUSE_CALCULATE
+    version: 1
+    marker: CALCULATE
+    reason: >-
+      CALCULATE modifies filter context. Tableau has no equivalent inside a
+      calculation: the nearest forms are a level-of-detail expression or a
+      table calculation, and which one is correct depends on the view the
+      field is used in, which the expression does not say.
+  - rule_id: PBI_REFUSE_CALCULATETABLE
+    version: 1
+    marker: CALCULATETABLE
+    reason: >-
+      CALCULATETABLE returns a table under a modified filter context. A Tableau
+      calculation returns a value, so there is nothing for the result to be.
+  - rule_id: PBI_REFUSE_FILTER
+    version: 1
+    marker: FILTER
+    reason: >-
+      FILTER returns a table. A Tableau calculation returns a value per row or
+      per aggregate, and has no table-valued form to carry this into.
+  - rule_id: PBI_REFUSE_ALL
+    version: 1
+    marker: ALL
+    reason: >-
+      ALL removes filters from a table or column. The Tableau equivalent
+      depends on the view - a FIXED level-of-detail expression, or a table
+      calculation with an explicit partitioning - and the expression alone does
+      not establish which.
+  - rule_id: PBI_REFUSE_ALLEXCEPT
+    version: 1
+    marker: ALLEXCEPT
+    reason: >-
+      ALLEXCEPT removes filters except on named columns. The Tableau form is a
+      FIXED level-of-detail expression whose dimensions depend on the view.
+  - rule_id: PBI_REFUSE_ALLSELECTED
+    version: 1
+    marker: ALLSELECTED
+    reason: >-
+      ALLSELECTED depends on what a user has selected in a visual. Nothing in a
+      Tableau calculation can read that.
+
+  # --- relationships --------------------------------------------------------
+  - rule_id: PBI_REFUSE_RELATED
+    version: 1
+    marker: RELATED
+    reason: >-
+      RELATED follows a model relationship. Tableau resolves related fields
+      through the data source's joins or a blend, not inside a calculation, so
+      this is work in the data source rather than in the formula.
+  - rule_id: PBI_REFUSE_RELATEDTABLE
+    version: 1
+    marker: RELATEDTABLE
+    reason: >-
+      RELATEDTABLE returns the related rows as a table. A Tableau calculation
+      has no table-valued form.
+  - rule_id: PBI_REFUSE_USERELATIONSHIP
+    version: 1
+    marker: USERELATIONSHIP
+    reason: >-
+      USERELATIONSHIP activates an inactive relationship for one calculation.
+      Tableau has no inactive joins, so there is nothing to activate.
+  - rule_id: PBI_REFUSE_TREATAS
+    version: 1
+    marker: TREATAS
+    reason: >-
+      TREATAS applies one table's values as a filter on another. It has no
+      Tableau equivalent inside a calculation.
+  - rule_id: PBI_REFUSE_CROSSFILTER
+    version: 1
+    marker: CROSSFILTER
+    reason: >-
+      CROSSFILTER changes a relationship's filter direction for one
+      calculation. Tableau has no per-calculation join semantics.
+  - rule_id: PBI_REFUSE_LOOKUPVALUE
+    version: 1
+    marker: LOOKUPVALUE
+    reason: >-
+      LOOKUPVALUE reads a value from another table by matching columns. In
+      Tableau that is a join or a blend in the data source, not a formula.
+
+  # --- row and variable context ---------------------------------------------
+  - rule_id: PBI_REFUSE_EARLIER
+    version: 1
+    marker: EARLIER
+    reason: >-
+      EARLIER reaches into an outer row context. Tableau calculations have no
+      nested row context to reach into.
+  - rule_id: PBI_REFUSE_VAR
+    version: 1
+    marker: VAR
+    reason: >-
+      VAR introduces a named intermediate value. A Tableau calculation is a
+      single expression with no bindings; splitting it into several calculated
+      fields is a change to the model rather than to the formula.
+  - rule_id: PBI_REFUSE_RETURN
+    version: 1
+    marker: RETURN
+    reason: >-
+      RETURN closes a VAR block. A Tableau calculation is a single expression
+      with no bindings.
+
+  # --- iterators and table shaping ------------------------------------------
+  - rule_id: PBI_REFUSE_SUMX
+    version: 1
+    marker: SUMX
+    reason: >-
+      An X iterator evaluates an expression row by row over a table and then
+      aggregates. Tableau's row-level and aggregate contexts are separated by
+      the data source, so the table being iterated has no name here.
+  - rule_id: PBI_REFUSE_AVERAGEX
+    version: 1
+    marker: AVERAGEX
+    reason: >-
+      An X iterator evaluates an expression row by row over a table and then
+      aggregates. The table being iterated has no name in a Tableau
+      calculation.
+  - rule_id: PBI_REFUSE_MINX
+    version: 1
+    marker: MINX
+    reason: >-
+      An X iterator evaluates an expression row by row over a table and then
+      aggregates. The table being iterated has no name in a Tableau
+      calculation.
+  - rule_id: PBI_REFUSE_MAXX
+    version: 1
+    marker: MAXX
+    reason: >-
+      An X iterator evaluates an expression row by row over a table and then
+      aggregates. The table being iterated has no name in a Tableau
+      calculation.
+  - rule_id: PBI_REFUSE_COUNTX
+    version: 1
+    marker: COUNTX
+    reason: >-
+      An X iterator evaluates an expression row by row over a table and then
+      aggregates. The table being iterated has no name in a Tableau
+      calculation.
+  - rule_id: PBI_REFUSE_CONCATENATEX
+    version: 1
+    marker: CONCATENATEX
+    reason: >-
+      CONCATENATEX joins a column's values into one string over a table. The
+      nearest Tableau form is an aggregate over a view, which depends on the
+      view rather than the formula.
+  - rule_id: PBI_REFUSE_RANKX
+    version: 1
+    marker: RANKX
+    reason: >-
+      RANKX ranks over a table. Tableau ranks with a table calculation, whose
+      partitioning and addressing come from the view and are not stated here.
+  - rule_id: PBI_REFUSE_TOPN
+    version: 1
+    marker: TOPN
+    reason: >-
+      TOPN returns a table of the highest rows. A Tableau calculation has no
+      table-valued form; the equivalent is a filter on the view.
+  - rule_id: PBI_REFUSE_SUMMARIZE
+    version: 1
+    marker: SUMMARIZE
+    reason: >-
+      SUMMARIZE groups a table. A Tableau calculation returns a value, and
+      grouping is done by the view's dimensions.
+  - rule_id: PBI_REFUSE_ADDCOLUMNS
+    version: 1
+    marker: ADDCOLUMNS
+    reason: >-
+      ADDCOLUMNS builds a table with extra columns. A Tableau calculation has
+      no table-valued form.
+  - rule_id: PBI_REFUSE_SELECTCOLUMNS
+    version: 1
+    marker: SELECTCOLUMNS
+    reason: >-
+      SELECTCOLUMNS builds a table. A Tableau calculation has no table-valued
+      form.
+  - rule_id: PBI_REFUSE_GROUPBY
+    version: 1
+    marker: GROUPBY
+    reason: >-
+      GROUPBY builds a grouped table. A Tableau calculation returns a value,
+      and grouping is done by the view's dimensions.
+
+  # --- what the model, not the formula, decides ------------------------------
+  - rule_id: PBI_REFUSE_SELECTEDVALUE
+    version: 1
+    marker: SELECTEDVALUE
+    reason: >-
+      SELECTEDVALUE reads the single value left by the current filters, and
+      falls back when there is more than one. Nothing in a Tableau calculation
+      can read the filters applied to the view it is used in.
+  - rule_id: PBI_REFUSE_HASONEVALUE
+    version: 1
+    marker: HASONEVALUE
+    reason: >-
+      HASONEVALUE asks about the current filter context, which a Tableau
+      calculation cannot see.
+  - rule_id: PBI_REFUSE_VALUES
+    version: 1
+    marker: VALUES
+    reason: >-
+      VALUES returns a table of distinct values. A Tableau calculation has no
+      table-valued form.
+  - rule_id: PBI_REFUSE_DISTINCT
+    version: 1
+    marker: DISTINCT
+    reason: >-
+      DISTINCT returns a table of distinct values. A Tableau calculation has no
+      table-valued form; COUNTD counts them but does not return them.
+  - rule_id: PBI_REFUSE_SWITCH
+    version: 1
+    marker: SWITCH
+    reason: >-
+      SWITCH is written two ways in DAX - matching a value, and SWITCH(TRUE(),
+      ...) as a chain of conditions - and they become different Tableau forms.
+      Choosing between CASE and a nested IF requires reading which one was
+      meant, which is a judgement rather than a mapping.
+
+  # --- time intelligence -----------------------------------------------------
+  - rule_id: PBI_REFUSE_DATEADD
+    version: 1
+    marker: DATEADD
+    reason: >-
+      DAX time intelligence shifts a set of dates using the model's date table.
+      Tableau has no date table to shift against, and DATEADD there takes
+      different arguments and means something else - shifting one date.
+  - rule_id: PBI_REFUSE_DATESYTD
+    version: 1
+    marker: DATESYTD
+    reason: >-
+      Time intelligence depends on the model's marked date table, which a
+      Tableau workbook does not have.
+  - rule_id: PBI_REFUSE_DATESMTD
+    version: 1
+    marker: DATESMTD
+    reason: >-
+      Time intelligence depends on the model's marked date table, which a
+      Tableau workbook does not have.
+  - rule_id: PBI_REFUSE_DATESQTD
+    version: 1
+    marker: DATESQTD
+    reason: >-
+      Time intelligence depends on the model's marked date table, which a
+      Tableau workbook does not have.
+  - rule_id: PBI_REFUSE_DATESBETWEEN
+    version: 1
+    marker: DATESBETWEEN
+    reason: >-
+      DATESBETWEEN returns a table of dates. A Tableau calculation has no
+      table-valued form.
+  - rule_id: PBI_REFUSE_DATESINPERIOD
+    version: 1
+    marker: DATESINPERIOD
+    reason: >-
+      DATESINPERIOD returns a table of dates. A Tableau calculation has no
+      table-valued form.
+  - rule_id: PBI_REFUSE_TOTALYTD
+    version: 1
+    marker: TOTALYTD
+    reason: >-
+      TOTALYTD aggregates over a year to date using the model's date table.
+      Tableau expresses running totals as a table calculation, whose addressing
+      comes from the view.
+  - rule_id: PBI_REFUSE_SAMEPERIODLASTYEAR
+    version: 1
+    marker: SAMEPERIODLASTYEAR
+    reason: >-
+      Comparing with a prior period in Tableau is a table calculation or a
+      dedicated date field, and which one is correct depends on the view.
+  - rule_id: PBI_REFUSE_PARALLELPERIOD
+    version: 1
+    marker: PARALLELPERIOD
+    reason: >-
+      PARALLELPERIOD returns a shifted table of dates. A Tableau calculation
+      has no table-valued form.

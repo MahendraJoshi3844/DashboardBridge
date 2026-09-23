@@ -1,0 +1,132 @@
+# DashboardBridge AI — local development stack (P0.6).
+#
+#   docker compose up
+#   → http://localhost:3000  the web shell
+#   → http://localhost:8000/api/v1/health  the API
+#
+# This file is for development. Every credential below is a dev default that is
+# overridden from the environment (a `.env` beside this file, or real secrets in
+# a deployment), and none of them is valid anywhere else. Deployments supply
+# POSTGRES_PASSWORD through the secret provider, never through a committed file.
+#
+# The API and web images are the stock language images with the repository bind
+# mounted, so an edit is live without a rebuild. Production images are Phase 7.
+
+name: dashboardbridge
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRES_USER:-bridge}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bridge_dev_only}
+  POSTGRES_DB: ${POSTGRES_DB:-dashboardbridge}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment: *postgres-env
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # The API waits for this, so it must mean "accepting queries", not
+      # "the process started".
+      test:
+        - CMD-SHELL
+        - pg_isready -U "${POSTGRES_USER:-bridge}" -d "${POSTGRES_DB:-dashboardbridge}"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Job state and queue only. Nothing here is a system of record, so
+    # persistence is off deliberately rather than by omission.
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  api:
+    image: python:3.12-slim
+    restart: unless-stopped
+    working_dir: /workspace
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      # Server deployments are STANDARD; LOCAL_ONLY is the desktop shell's mode.
+      PRIVACY_MODE: ${PRIVACY_MODE:-standard}
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      MAX_UPLOAD_SIZE_MB: ${MAX_UPLOAD_SIZE_MB:-500}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-bridge}:${POSTGRES_PASSWORD:-bridge_dev_only}@db:5432/${POSTGRES_DB:-dashboardbridge}
+      REDIS_URL: redis://redis:6379/0
+      # Every import root. `engines` is a top-level package at the repo root
+      # and the converter lives under it since `P2.1`; omitting one means the
+      # API cannot import app.main at all - it fails at startup, not at
+      # conversion.
+      PYTHONPATH: /workspace:/workspace/apps/api:/workspace/packages/contracts/src
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    command:
+      - sh
+      - -c
+      - |
+        pip install --no-cache-dir -r apps/api/requirements.txt &&
+        alembic -c apps/api/alembic.ini upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/workspace
+      - api-pip-cache:/root/.cache/pip
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  web:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /workspace/apps/web
+    environment:
+      # The browser talks to the API on the host, not on the compose network.
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000/api/v1}
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true"
+    command:
+      - sh
+      - -c
+      - |
+        npm install &&
+        npm run gen:types --if-present &&
+        npm run dev -- --hostname 0.0.0.0 --port 3000
+    volumes:
+      - ./apps/web:/workspace/apps/web
+      # Types are generated from the contracts, never hand-written.
+      - ./packages/contracts:/workspace/packages/contracts:ro
+      # Keep the container's node_modules out of the host tree.
+      - web-node-modules:/workspace/apps/web/node_modules
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  api-pip-cache:
+  web-node-modules:

@@ -1,0 +1,426 @@
+/* The Stage. One rule governs this file: source ink and target ink never blend.
+ * No gradient crosses the seam, because the product does not blend the two
+ * languages - it translates discretely, and stops where it cannot. */
+
+.stage {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  height: 100%;
+  background: var(--void);
+}
+
+/* ---------- head ---------- */
+
+.stage__head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px var(--pad);
+  border-bottom: 1px solid var(--rule);
+}
+
+.stage__file {
+  color: var(--quiet);
+  font-size: var(--step-0);
+  letter-spacing: 0.02em;
+}
+
+.replay {
+  font-family: var(--display);
+  font-size: var(--step-1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--read);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 6px 18px;
+  transition:
+    border-color 0.2s var(--ease),
+    color 0.2s var(--ease);
+}
+.replay:hover:not(:disabled) {
+  border-color: var(--source);
+  color: var(--source);
+}
+.replay:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+
+/* ---------- lanes ---------- */
+
+.seamfield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.seamfield canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lanes {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: center;
+  min-height: 0;
+}
+
+.lane {
+  position: relative;
+  z-index: 1;
+  padding: 26px var(--pad);
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 200px;
+  gap: 16px;
+  overflow: hidden;
+}
+.lane--target {
+  text-align: right;
+}
+
+.lane__label {
+  align-self: inherit;
+  text-shadow: 0 0 14px rgb(10 14 20 / 0.9);
+  font-family: var(--display);
+  font-size: var(--step-1);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin: 0 0 18px;
+}
+.lane--source .lane__label {
+  color: var(--source);
+}
+.lane--target .lane__label {
+  color: var(--target);
+}
+
+/* tally: the running count on the Tableau side */
+.tally {
+  list-style: none;
+  margin: 0;
+  padding: 10px 14px;
+  width: max-content;
+  border-radius: var(--radius);
+  background: rgb(10 14 20 / 0.55);
+  backdrop-filter: blur(10px);
+}
+.tally__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 0;
+}
+.tally__n {
+  font-size: var(--step-2);
+  color: var(--read);
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.tally__k {
+  color: var(--quiet);
+  letter-spacing: 0.04em;
+}
+
+/* landed: what arrived on the Power BI side */
+.landed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.landed__row {
+  max-width: 100%;
+  white-space: nowrap; /* the button inside lays the row out */
+}
+.landed__name {
+  color: var(--read);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.landed__open {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  transition: background 0.15s var(--ease);
+}
+.landed__open:hover {
+  background: var(--plate);
+}
+.landed__detail {
+  color: var(--target);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  flex: none;
+}
+
+/* ---------- the seam ---------- */
+
+.seam {
+  position: relative;
+  z-index: 1;
+  width: 1px;
+  align-self: stretch; /* the seam spans the stage; it is the structure */
+}
+
+.seam__line {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--rule) 10%,
+    color-mix(in srgb, var(--source) 22%, var(--rule)) 45%,
+    color-mix(in srgb, var(--source) 22%, var(--rule)) 55%,
+    var(--rule) 90%,
+    transparent
+  );
+  box-shadow: 0 0 22px 1px color-mix(in srgb, var(--source) 14%, transparent);
+}
+
+/* the flight lane - chips crossing, or stopping */
+.flight {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 1px;
+  height: 0;
+  z-index: 2;
+  transform: translateY(-84px);
+}
+
+.chip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.chip__name {
+  display: block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  border: 1px solid;
+}
+.chip--crossed .chip__name {
+  color: var(--target);
+  border-color: color-mix(in srgb, var(--target) 35%, transparent);
+  background: color-mix(in srgb, var(--target) 8%, var(--void));
+}
+.chip--held .chip__name {
+  color: var(--held);
+  border-color: color-mix(in srgb, var(--held) 45%, transparent);
+  background: color-mix(in srgb, var(--held) 10%, var(--void));
+}
+
+/* the pile at the seam */
+.held {
+  position: absolute;
+  bottom: 5%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 18px;
+  border: 1px solid color-mix(in srgb, var(--held) 40%, transparent);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--held) 10%, rgb(10 14 20 / 0.72));
+  backdrop-filter: blur(14px) saturate(1.2);
+  transform: translateX(-50%);
+  left: 0;
+  z-index: 3;
+}
+.held__n {
+  font-size: var(--step-3);
+  line-height: 1;
+  color: var(--held);
+  font-variant-numeric: tabular-nums;
+}
+.held__label {
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--held);
+  opacity: 0.8;
+}
+
+/* ---------- held ledger ---------- */
+
+.heldlist {
+  position: relative;
+  z-index: 1;
+  background: rgb(10 14 20 / 0.78);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--rule);
+  padding: 14px var(--pad) 14px;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+.heldlist__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  font-family: var(--display);
+  font-size: var(--step-1);
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--held);
+}
+.heldlist__n {
+  color: var(--held);
+  opacity: 0.7;
+}
+.heldlist ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2px 18px;
+}
+.helditem {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  border-left: 2px solid transparent;
+  transition:
+    background 0.15s var(--ease),
+    border-color 0.15s var(--ease);
+}
+.helditem:hover {
+  background: var(--plate);
+  border-left-color: var(--held);
+}
+.helditem__kind {
+  flex: none;
+  width: 4.5em;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--quiet);
+}
+.hk--calc {
+  color: var(--held);
+}
+.helditem__name {
+  color: var(--read);
+  flex: none;
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.helditem__why {
+  color: var(--quiet);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- foot ---------- */
+
+.stage__foot {
+  position: relative;
+  z-index: 1;
+  background: rgb(10 14 20 / 0.78);
+  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--rule);
+}
+.progress {
+  height: 2px;
+  background: var(--rule);
+}
+.progress__fill {
+  height: 100%;
+  background: var(--source);
+  transform-origin: 0 50%;
+}
+.foot__stats {
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+  padding: 10px var(--pad);
+  color: var(--quiet);
+  letter-spacing: 0.04em;
+}
+.foot__stats b {
+  color: var(--read);
+  font-size: var(--step-1);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.held-ink {
+  color: var(--held) !important;
+}
+.foot__time {
+  margin-left: auto;
+  color: var(--quiet);
+}
+
+/* ---------- empty ---------- */
+
+.stage--empty {
+  place-items: center;
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.empty {
+  text-align: center;
+}
+/* The seam before anything has crossed it: two inks that meet and stop.
+ * Deliberately not a gradient - the whole design refuses to blend them. */
+.empty__mark {
+  width: 1px;
+  height: 96px;
+  margin: 0 auto 26px;
+  background: linear-gradient(
+    to bottom,
+    var(--source) 0 44%,
+    transparent 44% 56%,
+    var(--target) 56% 100%
+  );
+  opacity: 0.65;
+}
+.empty__title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: var(--step-3);
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+  color: var(--read);
+}
+.empty__note {
+  margin: 0;
+  color: var(--quiet);
+  letter-spacing: 0.05em;
+}

@@ -1,0 +1,236 @@
+# DAX functions that become a Tableau function by renaming them (`P6b.2`).
+#
+# Every entry is a rule with an id, because a translation has to be able to
+# cite the rule that produced it - that citation is the audit trail's answer
+# to "why is this formula what it is".
+#
+# `min_args`/`max_args` are the arities at which the rename is *correct*, not
+# the arities DAX allows. Where they are narrower than DAX, that narrowing is
+# the whole content of the rule: `LEFT` takes an optional length in DAX and a
+# required one in Tableau, so a one-argument `LEFT` is refused rather than
+# emitted with a length nobody wrote.
+#
+# A DAX function with no entry here is refused by name. That is the supported
+# way to grow coverage; removing one silently narrows it, which is why the
+# loader refuses a malformed pack rather than skipping the entry.
+
+functions:
+  # --- aggregations ---------------------------------------------------------
+  - rule_id: PBI_AVERAGE_TO_TABLEAU_AVG
+    version: 1
+    source: AVERAGE
+    target: AVG
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_COUNT_TO_TABLEAU_COUNT
+    version: 1
+    source: COUNT
+    target: COUNT
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_DISTINCTCOUNT_TO_TABLEAU_COUNTD
+    version: 1
+    source: DISTINCTCOUNT
+    target: COUNTD
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_MAX_TO_TABLEAU_MAX
+    version: 1
+    source: MAX
+    target: MAX
+    min_args: 1
+    max_args: 2
+    note: Both languages have a one-argument aggregate and a two-argument pairwise form.
+  - rule_id: PBI_MEDIAN_TO_TABLEAU_MEDIAN
+    version: 1
+    source: MEDIAN
+    target: MEDIAN
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_MIN_TO_TABLEAU_MIN
+    version: 1
+    source: MIN
+    target: MIN
+    min_args: 1
+    max_args: 2
+  - rule_id: PBI_SUM_TO_TABLEAU_SUM
+    version: 1
+    source: SUM
+    target: SUM
+    min_args: 1
+    max_args: 1
+
+  # --- numbers --------------------------------------------------------------
+  - rule_id: PBI_ABS_TO_TABLEAU_ABS
+    version: 1
+    source: ABS
+    target: ABS
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_EXP_TO_TABLEAU_EXP
+    version: 1
+    source: EXP
+    target: EXP
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_INT_TO_TABLEAU_INT
+    version: 1
+    source: INT
+    target: INT
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_LN_TO_TABLEAU_LN
+    version: 1
+    source: LN
+    target: LN
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_POWER_TO_TABLEAU_POWER
+    version: 1
+    source: POWER
+    target: POWER
+    min_args: 2
+    max_args: 2
+  - rule_id: PBI_ROUND_TO_TABLEAU_ROUND
+    version: 1
+    source: ROUND
+    target: ROUND
+    min_args: 1
+    max_args: 2
+  - rule_id: PBI_SIGN_TO_TABLEAU_SIGN
+    version: 1
+    source: SIGN
+    target: SIGN
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_SQRT_TO_TABLEAU_SQRT
+    version: 1
+    source: SQRT
+    target: SQRT
+    min_args: 1
+    max_args: 1
+
+  # --- text -----------------------------------------------------------------
+  - rule_id: PBI_LEFT_TO_TABLEAU_LEFT
+    version: 1
+    source: LEFT
+    target: LEFT
+    min_args: 2
+    max_args: 2
+    note: >-
+      DAX defaults the length to 1 when it is omitted; Tableau requires it. A
+      one-argument LEFT is refused rather than given a length nobody wrote.
+  - rule_id: PBI_LEN_TO_TABLEAU_LEN
+    version: 1
+    source: LEN
+    target: LEN
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_LOWER_TO_TABLEAU_LOWER
+    version: 1
+    source: LOWER
+    target: LOWER
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_MID_TO_TABLEAU_MID
+    version: 1
+    source: MID
+    target: MID
+    min_args: 3
+    max_args: 3
+  - rule_id: PBI_RIGHT_TO_TABLEAU_RIGHT
+    version: 1
+    source: RIGHT
+    target: RIGHT
+    min_args: 2
+    max_args: 2
+  - rule_id: PBI_SUBSTITUTE_TO_TABLEAU_REPLACE
+    version: 1
+    source: SUBSTITUTE
+    target: REPLACE
+    min_args: 3
+    max_args: 3
+    note: >-
+      Tableau's REPLACE takes the same three arguments in the same order. DAX
+      also has a REPLACE, and it means something else entirely - it replaces by
+      position - so that one has no rule and is refused by name.
+  - rule_id: PBI_TRIM_TO_TABLEAU_TRIM
+    version: 1
+    source: TRIM
+    target: TRIM
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_UPPER_TO_TABLEAU_UPPER
+    version: 1
+    source: UPPER
+    target: UPPER
+    min_args: 1
+    max_args: 1
+
+  # --- logic ----------------------------------------------------------------
+  - rule_id: PBI_IF_TO_TABLEAU_IIF
+    version: 1
+    source: IF
+    target: IIF
+    min_args: 3
+    max_args: 3
+    note: >-
+      DAX lets the else branch be omitted and returns blank; IIF has no
+      two-argument form. Inventing the third argument invents a value for every
+      row that fails the test, so a two-argument IF is refused.
+  - rule_id: PBI_ISBLANK_TO_TABLEAU_ISNULL
+    version: 1
+    source: ISBLANK
+    target: ISNULL
+    min_args: 1
+    max_args: 1
+
+  # --- dates ----------------------------------------------------------------
+  - rule_id: PBI_DAY_TO_TABLEAU_DAY
+    version: 1
+    source: DAY
+    target: DAY
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_HOUR_TO_TABLEAU_HOUR
+    version: 1
+    source: HOUR
+    target: HOUR
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_MINUTE_TO_TABLEAU_MINUTE
+    version: 1
+    source: MINUTE
+    target: MINUTE
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_MONTH_TO_TABLEAU_MONTH
+    version: 1
+    source: MONTH
+    target: MONTH
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_NOW_TO_TABLEAU_NOW
+    version: 1
+    source: NOW
+    target: NOW
+    min_args: 0
+    max_args: 0
+  - rule_id: PBI_SECOND_TO_TABLEAU_SECOND
+    version: 1
+    source: SECOND
+    target: SECOND
+    min_args: 1
+    max_args: 1
+  - rule_id: PBI_TODAY_TO_TABLEAU_TODAY
+    version: 1
+    source: TODAY
+    target: TODAY
+    min_args: 0
+    max_args: 0
+  - rule_id: PBI_YEAR_TO_TABLEAU_YEAR
+    version: 1
+    source: YEAR
+    target: YEAR
+    min_args: 1
+    max_args: 1

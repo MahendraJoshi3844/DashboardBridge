@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "t2pbi"
+version = "0.1.0"
+description = "Convert Tableau workbooks (.twb/.twbx) into Power BI projects (PBIP)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Mahendra Joshi", email = "mahendra.joshi@atos.net" }]
+dependencies = [
+    "lxml>=5.0",
+    "pyyaml>=6.0",
+    "pywebview>=5.0",
+    "pydantic>=2.7",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "python-multipart>=0.0.9",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    # Ed25519, for offline licence signatures. Was already installed and
+    # undeclared, which is the kind of dependency that works until a clean
+    # install on a customer's machine.
+    "cryptography>=42.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pyinstaller>=6.0"]
+
+[project.scripts]
+t2pbi = "engines.t2pbi.cli:main"
+t2pbi-app = "engines.t2pbi.desktop.shell:main"
+t2pbi-license = "engines.licensing.cli:main"
+
+# The engine moved under `engines/` (`P2.1`), so there is no `src/` layout
+# any more: `engines` is a package at the repository root and every engine -
+# the converter, the adapters, the validator, the AI layer - is a subpackage
+# of it. One import root instead of two.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["engines*"]
+
+# The translation rule pack is data, and data is not shipped by default. Without
+# this an installed t2pbi has no rules: the loader refuses the pack and the
+# engine converts nothing, in a build that looked fine locally.
+[tool.setuptools.package-data]
+"engines.t2pbi" = ["core/dax/rules/*.yaml"]
+"engines.tableau_calc" = ["rules/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

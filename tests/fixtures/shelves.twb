@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!--
+  A worksheet using the shelves besides rows and columns.
+
+  Before `P2.2` the parser read only rows and cols, so the colour, size and
+  tooltip placements here were invisible: not converted, not reported, not
+  counted. This fixture exists so that stays fixed.
+-->
+<workbook version='2021.4'>
+  <datasources>
+    <datasource name='Parameters' />
+    <datasource name='federated.shelves' caption='Orders'>
+      <connection class='sqlserver' />
+      <column name='[Order Date]' datatype='date' role='dimension' />
+      <column name='[Category]' datatype='string' role='dimension' />
+      <column name='[Region]' datatype='string' role='dimension' />
+      <column name='[Sales]' datatype='real' role='measure' />
+      <column name='[Profit]' datatype='real' role='measure' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sales by Date'>
+      <table>
+        <view>
+          <rows>[federated.shelves].[Sales]</rows>
+          <cols>[federated.shelves].[Order Date]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Bar' />
+            <encodings>
+              <color column='[federated.shelves].[Category]' />
+              <size column='[federated.shelves].[Profit]' />
+              <tooltip column='[federated.shelves].[Region]' />
+            </encodings>
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards />
+</workbook>

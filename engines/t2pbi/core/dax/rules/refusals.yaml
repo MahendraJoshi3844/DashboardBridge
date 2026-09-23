@@ -1,0 +1,107 @@
+# Constructs that disqualify a whole expression (06-conversion-engine.md,
+# "Refusal markers"). Presence of the marker refuses the formula; nothing here
+# is a partial conversion, because a partially converted expression is a wrong
+# one that looks right.
+#
+# Each carries the sentence a person reads. A marker without a reason is an
+# unexplained rejection, which is the one thing worse than a refusal.
+
+refusals:
+  - rule_id: TABLEAU_REFUSE_LOD_EXCLUDE
+    version: 1
+    marker: EXCLUDE
+    reason: >-
+      Level-of-detail expression. A rewrite to CALCULATE/ALLEXCEPT is only
+      correct when the filter context matches, and it usually does not.
+
+  - rule_id: TABLEAU_REFUSE_LOD_FIXED
+    version: 1
+    marker: FIXED
+    reason: >-
+      Level-of-detail expression. Every LOD form is refused, including the
+      simple ones: a FIXED rewrite is correct only when the filter context
+      matches, which cannot be established from the formula alone.
+
+  - rule_id: TABLEAU_REFUSE_LOD_INCLUDE
+    version: 1
+    marker: INCLUDE
+    reason: >-
+      Level-of-detail expression. A rewrite to CALCULATE/ALLEXCEPT is only
+      correct when the filter context matches, and it usually does not.
+
+  - rule_id: TABLEAU_REFUSE_RAWSQL
+    version: 1
+    marker: RAWSQL
+    reason: >-
+      Passes SQL straight to the data source. Power BI has no equivalent; the
+      logic has to be rebuilt in DAX or moved into the query.
+
+  - rule_id: TABLEAU_REFUSE_SCRIPT
+    version: 1
+    marker: SCRIPT_
+    reason: >-
+      Calls an external R or Python service. Nothing in Power BI corresponds to
+      it, and inventing a formula that returns a number would hide that.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_FIRST
+    version: 1
+    marker: FIRST(
+    reason: >-
+      Table calculation. It is evaluated against the partition Tableau builds
+      at render time, which the formula does not state and DAX cannot infer.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_INDEX
+    version: 1
+    marker: INDEX(
+    reason: >-
+      Table calculation. Its value depends on the row order of a partition
+      decided at render time, which the formula does not state.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_LAST
+    version: 1
+    marker: LAST(
+    reason: >-
+      Table calculation. It is evaluated against the partition Tableau builds
+      at render time, which the formula does not state and DAX cannot infer.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_LOOKUP
+    version: 1
+    marker: LOOKUP(
+    reason: >-
+      Table calculation. It offsets within a partition whose order is decided
+      at render time, so the target row cannot be identified from the formula.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_RANK
+    version: 1
+    marker: RANK(
+    reason: >-
+      Table calculation. The partition it ranks within is decided at render
+      time and is not stated in the formula.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_RANK_VARIANT
+    version: 1
+    marker: RANK_
+    reason: >-
+      Table calculation (RANK_DENSE, RANK_MODIFIED and the rest). The partition
+      is decided at render time and is not stated in the formula.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_RUNNING
+    version: 1
+    marker: RUNNING_
+    reason: >-
+      Running table calculation. It accumulates along a partition ordered at
+      render time, which the formula does not state.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_TOTAL
+    version: 1
+    marker: TOTAL(
+    reason: >-
+      Table calculation. It totals over a partition decided at render time,
+      which the formula does not state.
+
+  - rule_id: TABLEAU_REFUSE_TABLE_CALC_WINDOW
+    version: 1
+    marker: WINDOW_
+    reason: >-
+      Windowed table calculation. The window is a partition Tableau builds at
+      render time; the formula does not state it and DAX cannot infer it.

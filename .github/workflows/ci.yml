@@ -1,0 +1,143 @@
+name: CI
+
+# Every push and every pull request. A gate that only runs on main tells you
+# after the fact.
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONPATH: apps/api:packages/contracts/src
+
+jobs:
+  python:
+    name: Python — lint, typecheck, tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r apps/api/requirements.txt
+          # Test-only tools. Runtime dependencies are not listed here: they
+          # live in requirements.txt above, so CI installs the same set the API
+          # container does rather than a hand-copy that can drift from it.
+          # pywebview is deliberately absent - the desktop shell imports it
+          # lazily, so the suite runs headless without it.
+          pip install pytest httpx
+
+      - name: Lint (ruff, if configured)
+        run: |
+          if [ -f ruff.toml ] || [ -f .ruff.toml ] || grep -q '\[tool\.ruff' pyproject.toml; then
+            pip install ruff
+            ruff check .
+          else
+            echo "No ruff configuration in this repository; skipping lint."
+          fi
+
+      - name: Typecheck (mypy, if configured)
+        run: |
+          if [ -f mypy.ini ] || [ -f .mypy.ini ] || grep -q '\[tool\.mypy' pyproject.toml; then
+            pip install mypy
+            mypy
+          else
+            echo "No mypy configuration in this repository; skipping typecheck."
+          fi
+
+      - name: Tests
+        # SQLite by default: the suite must not need a database server. If it
+        # ever does, that is the bug, not a missing service container.
+        run: python -m pytest -q
+
+  contracts:
+    name: Contract drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install "pydantic>=2.7"
+
+      - name: Regenerate the contract schema
+        run: python packages/contracts/export_schema.py
+
+      - name: Fail if the committed schema is stale
+        # This is the point of the job. packages/contracts/schema.json is what
+        # the web app's TypeScript types are generated from, so a backend model
+        # change that was not exported breaks the frontend silently. Here it
+        # breaks the build instead.
+        run: |
+          if ! git diff --exit-code -- packages/contracts/schema.json; then
+            echo "::error file=packages/contracts/schema.json::Contracts changed but schema.json was not regenerated. Run: python packages/contracts/export_schema.py, then run apps/web's gen:types and commit both."
+            exit 1
+          fi
+          if [ -n "$(git status --porcelain -- packages/contracts/schema.json)" ]; then
+            echo "::error file=packages/contracts/schema.json::schema.json is not committed. The generated schema is the contract; it must be in the tree."
+            exit 1
+          fi
+
+  web:
+    name: Web — build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Is there a web app yet?
+        id: probe
+        # apps/web is landing concurrently. A guard, not a silent skip: the log
+        # says plainly which branch was taken.
+        run: |
+          if [ -f apps/web/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "apps/web/package.json found — building."
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "apps/web/package.json not present yet — nothing to build."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.probe.outputs.present == 'true'
+        with:
+          node-version: "22"
+
+      - name: Install
+        if: steps.probe.outputs.present == 'true'
+        working-directory: apps/web
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Generate types from the contracts
+        if: steps.probe.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run gen:types --if-present
+
+      - name: Typecheck
+        if: steps.probe.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run typecheck --if-present
+
+      - name: Unit tests
+        if: steps.probe.outputs.present == 'true'
+        working-directory: apps/web
+        run: npm run test --if-present
+
+      - name: Build
+        if: steps.probe.outputs.present == 'true'
+        working-directory: apps/web
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: npm run build

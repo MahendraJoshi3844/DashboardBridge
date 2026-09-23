@@ -1,0 +1,337 @@
+@import "../styles/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--dbb-bg-base);
+    background-image: var(--dbb-wash);
+    background-attachment: fixed;
+    color: var(--dbb-ink);
+    font-family: var(--dbb-font-sans);
+    font-feature-settings: "cv05", "ss01";
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /*
+   * Visible focus, never removed (03-ux-spec.md, "Accessibility"). Drawn on
+   * :focus-visible so it appears for keyboard and assistive-tech use without
+   * following a mouse click around the page.
+   *
+   * `outline`, not `box-shadow`: the glass panels set their own box-shadow in
+   * a later cascade layer, which silently swallowed a box-shadow ring and left
+   * the card looking focusable while showing nothing. An outline cannot be
+   * overridden that way, follows the element's own border-radius, and does not
+   * shift layout.
+   */
+  :focus-visible {
+    outline: var(--dbb-focus-width) solid var(--dbb-focus);
+    outline-offset: var(--dbb-focus-offset);
+  }
+
+  /* Data — expressions, names, counts — is set in a monospace face. */
+  code,
+  kbd,
+  samp,
+  pre,
+  /*
+   * A small label naming the field beside it. Prose face, sentence case.
+   *
+   * These were all `.data` plus `uppercase tracking-wider` - monospace capitals
+   * on ten components. That spent the monospace face on chrome, and this screen
+   * needs it to mean one thing only: text that came out of a workbook. A DAX
+   * expression and the word "method" should not look like the same kind of
+   * thing.
+   */
+  .tag {
+    font-weight: 500;
+    letter-spacing: 0.005em;
+  }
+
+  .data {
+    font-family: var(--dbb-font-mono);
+    font-variant-ligatures: none;
+  }
+
+  ::selection {
+    background: rgba(138, 180, 248, 0.28);
+  }
+}
+
+@layer components {
+  /* A glass panel: a wash, one hairline, and a shadow that reads as depth
+     rather than decoration. */
+  /*
+   * A pane of glass.
+   *
+   * There was a blur here already, and it was doing almost nothing: a blur
+   * with no saturation and no lit edge reads as tinted film rather than as a
+   * material. Three things were missing.
+   *
+   * `saturate` is what makes the colour behind the pane bloom through it
+   * instead of going grey - the difference between glass and frosted plastic.
+   * The inset hairline gives the pane a thickness by catching a light source.
+   * And `isolation: isolate` is load-bearing: without it a stacking context
+   * from a parent can lift content out of the backdrop group, the blur samples
+   * the wrong layer, the pane goes flat, and nothing says why.
+   *
+   * The `-webkit-` prefix is not optional. Safari still needs it, and the
+   * failure is silent - the pane simply stops being glass on one browser.
+   */
+  .panel {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--dbb-surface);
+    background-image: var(--dbb-panel-wash);
+    border: 1px solid var(--dbb-line);
+    border-radius: var(--dbb-radius-card);
+    box-shadow: var(--dbb-glass-edge), var(--dbb-shadow-panel);
+    -webkit-backdrop-filter: blur(var(--dbb-glass-blur-quiet))
+      saturate(var(--dbb-glass-saturate));
+    backdrop-filter: blur(var(--dbb-glass-blur-quiet))
+      saturate(var(--dbb-glass-saturate));
+  }
+
+  /* The small uppercase label that names a region or a value. */
+  /*
+   * A section label. Sentence case, in the prose face.
+   *
+   * It was tracked-out upper-case monospace, on every heading on every screen.
+   * Two things were wrong with that. It is the commonest tell of a generated
+   * page, and - the reason that actually matters here - it spent the monospace
+   * face on decoration. This product is full of machine text: field names, DAX,
+   * shelf tokens, hashes. When every small label is also mono, mono stops
+   * meaning "this is what the machine said", which is the one thing it has to
+   * mean on the comparison screen.
+   *
+   * So the face is the prose face, and mono is reserved for content that came
+   * out of a workbook.
+   */
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--dbb-ink-faint);
+  }
+
+
+  /*
+   * Controls. One shape, two weights. Every colour resolves to a token that
+   * `npm run check:contrast` already measures, so a button cannot introduce an
+   * unmeasured pair.
+   */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: var(--dbb-radius-control);
+    border: 1px solid var(--dbb-line-strong);
+    background-color: var(--dbb-surface-strong);
+    color: var(--dbb-ink);
+    padding: 0.5625rem 1.05rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.2;
+    transition:
+      background-color var(--dbb-motion-micro) var(--dbb-ease),
+      border-color var(--dbb-motion-micro) var(--dbb-ease);
+  }
+
+  .btn:hover:not(:disabled) {
+    border-color: var(--dbb-ink-source);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-quiet {
+    background-color: transparent;
+    border-color: var(--dbb-line);
+    color: var(--dbb-ink-muted);
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    color: var(--dbb-ink);
+  }
+
+  /*
+   * A text field. The first one in the product (`P7.1`) - everything before
+   * the sign-in form took a file or a click. Built from the same tokens as
+   * `.btn`, so `npm run check:contrast` already measures every colour in it
+   * and a field cannot introduce an unmeasured pair.
+   */
+  .field {
+    border-radius: var(--dbb-radius-control);
+    border: 1px solid var(--dbb-line-strong);
+    background-color: var(--dbb-surface-strong);
+    color: var(--dbb-ink);
+    padding: 0.5625rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.3;
+    transition: border-color var(--dbb-motion-micro) var(--dbb-ease);
+  }
+
+  .field:hover {
+    border-color: var(--dbb-ink-source);
+  }
+
+  /* Not a red border while someone is still typing: the form is checked on
+     submit, and a field that turns red mid-address tells a person they are
+     wrong before they have finished being right. */
+  .field[aria-invalid="true"] {
+    border-color: var(--dbb-status-critical);
+  }
+
+  /* Where a value is a value: tabular figures so a counter does not jitter
+     while it animates, and does not reflow when it stops. */
+  .numeral {
+    font-family: var(--dbb-font-mono);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Skip link: present for keyboard users, out of the way for everyone else. */
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: 1rem;
+    z-index: 50;
+    transform: translateY(-160%);
+    background: var(--dbb-bg-raised);
+    border: 1px solid var(--dbb-line-strong);
+    border-radius: var(--dbb-radius-control);
+    padding: 0.625rem 1rem;
+    color: var(--dbb-ink);
+    transition: transform var(--dbb-motion-micro) var(--dbb-ease);
+  }
+
+  .skip-link:focus {
+    transform: translateY(0);
+  }
+}
+
+/*
+ * Theme control. System / Light / Dark, as a segmented radio group.
+ *
+ * Built from the same tokens as everything else, so it inherits both palettes
+ * rather than needing a light variant of its own - which is the test of
+ * whether the tokens actually carry the design.
+ */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.theme-toggle__group {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--dbb-line);
+  border-radius: var(--dbb-radius-control);
+  background-color: var(--dbb-surface);
+}
+
+.theme-toggle__option {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--dbb-ink-faint);
+  font-family: var(--dbb-font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.55rem;
+  border-radius: calc(var(--dbb-radius-control) - 3px);
+  cursor: pointer;
+  transition:
+    color var(--dbb-motion-micro) var(--dbb-ease),
+    background-color var(--dbb-motion-micro) var(--dbb-ease);
+}
+
+.theme-toggle__option:hover {
+  color: var(--dbb-ink-muted);
+}
+
+/*
+ * The selected one is marked by background *and* weight, never by colour
+ * alone - the same rule the status inks follow, for the same reason.
+ */
+.theme-toggle__option[aria-checked="true"] {
+  background-color: var(--dbb-surface-strong);
+  color: var(--dbb-ink);
+  font-weight: 600;
+}
+
+/* Screen-reader-only text. Announced, never drawn. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+
+/*
+ * The verdict pane, and the light behind it.
+ *
+ * This is the one place the results screen raises its voice. Every other
+ * migration tool's results screen says "Success". This one says *Unverified*,
+ * out loud, with the reason - and that refusal is the product's whole claim, so
+ * it is treated as the hero rather than tucked away as a warning.
+ *
+ * The bloom is the reason the glass reads at all. A backdrop blur over a flat
+ * ground renders nothing: there has to be something behind the pane worth
+ * blurring. So the page's light source is the result itself - a soft field in
+ * the verdict's own colour, behind the pane and never under the text.
+ * `--dbb-verdict-glow` is set per verdict by the component, so the screen
+ * literally glows the colour of its own conclusion.
+ */
+.verdict {
+  isolation: isolate;
+  -webkit-backdrop-filter: blur(var(--dbb-glass-blur))
+    saturate(var(--dbb-glass-saturate));
+  backdrop-filter: blur(var(--dbb-glass-blur)) saturate(var(--dbb-glass-saturate));
+  box-shadow: var(--dbb-glass-edge-strong), var(--dbb-shadow-lift);
+}
+
+/*
+ * Behind the pane, not inside it. `z-index: -1` puts the bloom under the glass
+ * so the blur has something to work on; `pointer-events: none` keeps it clear
+ * of anything selectable. It is deliberately wider than the pane and anchored
+ * to the top, so the light appears to come from off-screen rather than from a
+ * lamp inside the card.
+ */
+.verdict::before {
+  content: "";
+  position: absolute;
+  inset: -45% -12% auto -12%;
+  height: 24rem;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    58% 50% at 24% 0%,
+    var(--dbb-verdict-glow, rgba(138, 180, 248, 0.18)),
+    transparent 72%
+  );
+}
+
+/* Tabular figures, so the digits do not shift width as the count animates. */
+.verdict__count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+}

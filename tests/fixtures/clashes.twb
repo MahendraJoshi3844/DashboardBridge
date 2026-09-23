@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!--
+  A workbook where three tables reuse each other's field names.
+
+  Superstore has no cross-table name clash, so it never exercised the scoping
+  the engine depends on: every reference in it resolves the same way whether or
+  not the resolver knows which table asked. This fixture is deliberately the
+  opposite, and small enough to reason about by hand.
+
+  The clashes, and what each one is for:
+
+  * `Sales` is a physical column of Orders **and** a calculation in Targets.
+    The Targets one classifies as a measure, so a resolver that consults its
+    global measure index before the calculation's own table makes
+    `SUM([Sales])` inside Orders read Targets' number instead.
+
+  * `Quantity` is a physical column of Orders **and** a calculation in Returns
+    that is refused (RUNNING_SUM is a table calculation). That makes
+    `Orders.Units per Order` the interesting case: it must convert, even though
+    a refused calculation elsewhere shares the name of the column it reads.
+
+  * `Returns.Return Rate` really does read the refused `Returns.Quantity`, so
+    it must still be refused. Precision has to cut both ways, or the fix is
+    just a different wrong answer.
+
+  Three datasources rather than one federated datasource with three objects,
+  because calculations attach to the largest table within a datasource - so
+  calculations in different tables have to come from different datasources.
+-->
+<workbook version='2021.4'>
+  <datasources>
+    <datasource name='Parameters'>
+      <column caption='Growth' datatype='real' name='[Parameter 1]' param-domain-type='range' role='measure' value='0.1'>
+        <calculation class='tableau' formula='0.1' />
+        <range granularity='0.01' max='1.0' min='0.0' />
+      </column>
+    </datasource>
+
+    <datasource name='federated.orders' caption='Orders'>
+      <connection class='sqlserver' />
+      <column name='[Order ID]' datatype='string' role='dimension' />
+      <column name='[Region]' datatype='string' role='dimension' />
+      <column name='[Profit]' datatype='real' role='measure' />
+      <column name='[Sales]' datatype='real' role='measure' />
+      <column name='[Quantity]' datatype='integer' role='measure' />
+      <!-- Reads Orders' own Sales, not the Targets calculation of that name. -->
+      <column name='[Profit Ratio]' caption='Profit Ratio' datatype='real' role='measure'>
+        <calculation class='tableau' formula='SUM([Profit]) / SUM([Sales])' />
+      </column>
+      <!-- Reads Orders' own Quantity, whose name a refused calculation in
+           Returns also carries. Fires two rules, so it is also the case where
+           one translation has to cite more than one. -->
+      <column name='[Units per Order]' caption='Units per Order' datatype='real' role='measure'>
+        <calculation class='tableau' formula='SUM([Quantity]) / COUNTD([Order ID])' />
+      </column>
+      <column name='[Projected Sales]' caption='Projected Sales' datatype='real' role='measure'>
+        <calculation class='tableau' formula='SUM([Sales]) * (1 + [Parameter 1])' />
+      </column>
+    </datasource>
+
+    <datasource name='federated.targets' caption='Targets'>
+      <connection class='sqlserver' />
+      <column name='[Region]' datatype='string' role='dimension' />
+      <column name='[Quota]' datatype='real' role='measure' />
+      <!-- A measure named after a physical column of another table. -->
+      <column name='[Sales]' caption='Sales' datatype='real' role='measure'>
+        <calculation class='tableau' formula='SUM([Quota]) * 2' />
+      </column>
+      <!-- Inside Targets, [Sales] really is the calculation above. -->
+      <column name='[Attainment]' caption='Attainment' datatype='real' role='measure'>
+        <calculation class='tableau' formula='[Sales] / SUM([Quota])' />
+      </column>
+    </datasource>
+
+    <datasource name='federated.returns' caption='Returns'>
+      <connection class='sqlserver' />
+      <column name='[Return ID]' datatype='string' role='dimension' />
+      <column name='[Return Count]' datatype='integer' role='measure' />
+      <!-- Refused: RUNNING_SUM is a table calculation. Named after a physical
+           column of Orders. -->
+      <column name='[Quantity]' caption='Quantity' datatype='real' role='measure'>
+        <calculation class='tableau' formula='RUNNING_SUM(SUM([Return Count]))' />
+      </column>
+      <!-- Genuinely depends on the refused calculation above. -->
+      <column name='[Return Rate]' caption='Return Rate' datatype='real' role='measure'>
+        <calculation class='tableau' formula='[Quantity] * 1.0' />
+      </column>
+    </datasource>
+  </datasources>
+
+  <worksheets>
+    <worksheet name='Profit by Region'>
+      <table>
+        <view>
+          <rows>[federated.orders].[Profit Ratio]</rows>
+          <cols>[federated.orders].[Region]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Bar' />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+    <worksheet name='Attainment by Region'>
+      <table>
+        <view>
+          <rows>[federated.targets].[Attainment]</rows>
+          <cols>[federated.targets].[Region]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Bar' />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+  </worksheets>
+
+  <dashboards>
+    <dashboard name='Clash Overview'>
+      <zones>
+        <zone name='Profit by Region' />
+        <zone name='Attainment by Region' />
+      </zones>
+    </dashboard>
+  </dashboards>
+</workbook>

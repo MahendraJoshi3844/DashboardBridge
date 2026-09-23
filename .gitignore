@@ -1,0 +1,60 @@
+
+# Editors
+# Env / secrets
+# Large reference docs (kept locally, not in git)
+# Local manual-test material (real workbooks + notes, kept out of git)
+# Node
+# OS
+# Python
+# Tableau / Power BI artifacts
+# Transient
+*.egg-info/
+*.local
+*.py[cod]
+*.twb.bak
+.data/
+.DS_Store
+.env
+.idea/
+.pytest_cache/
+.tmp_demo/
+.tmp-pbi/
+.venv/
+.vscode/
+__pycache__/
+_a/
+_b/
+_ss_out/
+_ui*/
+_ui_*.png
+~$*
+apps/web/.next/
+apps/web/node_modules/
+apps/web/screenshots/
+build/
+dist/
+env/
+Instructions.pdf
+node_modules/
+out/
+# The desktop shell's built assets. Produced by `cd ui && npm run build`,
+# never committed. The path moved with `P2.1`; the stale rule silently
+# stopped matching and three build artefacts went into a commit.
+engines/t2pbi/desktop/web/
+testing_content/
+Thumbs.db
+ui/node_modules/
+venv/
+
+# Walkthrough screenshots are regenerated from the running app on demand; the
+# checked-in `screenshots/` set is the curated one.
+apps/web/screenshots/walkthrough/
+apps/web/screenshots/live-*.png
+
+# Vendor licensing keys never enter the repository (engines/licensing/cli.py
+# refuses to write one here; this is the belt to that pair of braces).
+*.pem
+*.lic
+
+# Scratch screenshots and the Chrome profile the shot script uses.
+apps/web/.shots/

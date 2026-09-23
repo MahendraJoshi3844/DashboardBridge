@@ -1,0 +1,28 @@
+# Runtime dependencies for apps/api.
+#
+# The contracts package is not listed: it is a workspace package imported from
+# packages/contracts/src via PYTHONPATH, so there is exactly one copy of the
+# models and no chance of a stale installed one drifting from the source.
+#
+# Pinned to lower bounds, not exact versions: this file feeds a dev container
+# and CI, and a lockfile belongs to a deployment, not to a source tree.
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+python-multipart>=0.0.9        # multipart artifact upload (05-api-spec § Artifacts)
+
+sqlalchemy>=2.0.36
+alembic>=1.13
+psycopg[binary]>=3.2           # Postgres driver for the deployed target
+
+# SQLite needs no driver — it is in the standard library, which is why the
+# local default works with no database server running.
+
+# The conversion engine's own runtime dependencies. They are here, not only in
+# pyproject.toml, because this file is everything the API container installs -
+# lxml was missing from it, so a containerised API could not parse a workbook,
+# and pyyaml was satisfied only by accident as an extra of uvicorn[standard].
+lxml>=5.0                      # .twb/.twbx parsing
+pyyaml>=6.0                    # the DAX rule pack
+cryptography>=42.0             # Ed25519 licence signatures

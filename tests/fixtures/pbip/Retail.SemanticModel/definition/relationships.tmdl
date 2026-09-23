@@ -1,0 +1,4 @@
+relationship 5c9e2f01-1111-2222-3333-444455556666
+	fromColumn: Sales.'Store Key'
+	toColumn: Store.'Store Key'
+	crossFilteringBehavior: bothDirections

@@ -1,0 +1,87 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook version="18.1">
+  <datasources>
+    <datasource caption="Sales + Store" inline='true' name="federated.sales_store" version="18.1">
+      <connection class='federated'>
+        <relation type='collection'>
+          <relation name="Sales" table="[Sales]" type='table' />
+          <relation name="Store" table="[Store]" type='table' />
+        </relation>
+        <cols>
+          <map key="[Net Revenue]" value="[Sales].[Net Revenue]" />
+          <map key="[Order Date]" value="[Sales].[Order Date]" />
+          <map key="[Order ID]" value="[Sales].[Order ID]" />
+          <map key="[Revenue]" value="[Sales].[Revenue]" />
+          <map key="[Revenue per Unit]" value="[Sales].[Revenue per Unit]" />
+          <map key="[Store Key]" value="[Sales].[Store Key]" />
+          <map key="[Total Revenue]" value="[Sales].[Total Revenue]" />
+          <map key="[Units]" value="[Sales].[Units]" />
+          <map key="[Region]" value="[Store].[Region]" />
+          <map key="[Store Key (Store)]" value="[Store].[Store Key]" />
+          <map key="[Store Name]" value="[Store].[Store Name]" />
+        </cols>
+      </connection>
+      <column caption="Order ID" datatype="string" name="[Order ID]" role="dimension" type="nominal" />
+      <column caption="Order Date" datatype="datetime" name="[Order Date]" role="dimension" type="nominal" />
+      <column caption="Store Key" datatype="integer" name="[Store Key]" role="measure" type="quantitative" />
+      <column caption="Revenue" datatype="real" name="[Revenue]" role="measure" type="quantitative" />
+      <column caption="Units" datatype="integer" name="[Units]" role="measure" type="quantitative" />
+      <column caption="Net Revenue" datatype="real" name="[Net Revenue]" role="measure" type="quantitative">
+        <calculation class='tableau' formula="[Revenue] * (1 - 0.05)" />
+      </column>
+      <column caption="Total Revenue" datatype="real" name="[Total Revenue]" role="measure" type="quantitative">
+        <calculation class='tableau' formula="SUM([Revenue])" />
+      </column>
+      <column caption="Revenue per Unit" datatype="real" name="[Revenue per Unit]" role="measure" type="quantitative" />
+      <!-- not carried: No rule maps the DAX function DIVIDE to a Tableau one. Approximating it would produce a formula that looks converted and is not. -->
+      <column caption="Store Key" datatype="integer" name="[Store Key (Store)]" role="measure" type="quantitative" />
+      <column caption="Store Name" datatype="string" name="[Store Name]" role="dimension" type="nominal" />
+      <column caption="Region" datatype="string" name="[Region]" role="dimension" type="nominal" />
+      <object-graph>
+        <objects>
+          <object caption="Sales" id="Sales_D0EDFB6E8C55C8742A83F0F192886E0E">
+            <properties context=''>
+              <relation name="Sales" table="[Sales]" type='table' />
+            </properties>
+          </object>
+          <object caption="Store" id="Store_0D8A7046C8D39D9CBD86ABCDFB704B16">
+            <properties context=''>
+              <relation name="Store" table="[Store]" type='table' />
+            </properties>
+          </object>
+        </objects>
+        <relationships>
+          <relationship>
+            <expression op='='>
+              <expression op="[Store Key]" />
+              <expression op="[Store Key (Store)]" />
+            </expression>
+            <first-end-point object-id="Sales_D0EDFB6E8C55C8742A83F0F192886E0E" />
+            <second-end-point object-id="Store_0D8A7046C8D39D9CBD86ABCDFB704B16" />
+          </relationship>
+        </relationships>
+      </object-graph>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name="Revenue by Region">
+      <table>
+        <view />
+        <rows>[federated.sales_store].[sum:Total Revenue:qk]</rows>
+        <cols>[federated.sales_store].[none:Region:nk]</cols>
+        <panes>
+          <pane>
+            <mark class="Bar" />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name="Revenue by Region">
+      <zones>
+        <zone name="v1" />
+      </zones>
+    </dashboard>
+  </dashboards>
+</workbook>

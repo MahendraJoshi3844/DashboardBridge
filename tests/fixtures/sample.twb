@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook version='2021.4'>
+  <datasources>
+    <datasource name='Parameters' />
+    <datasource name='federated.sales' caption='Sales'>
+      <connection class='sqlserver' />
+      <column name='[Order ID]' datatype='string' role='dimension' />
+      <column name='[Sales]' datatype='real' role='measure' />
+      <column name='[Quantity]' datatype='integer' role='measure' />
+      <column name='[Order Date]' datatype='date' role='dimension' />
+      <column name='[Profit Ratio]' caption='Profit Ratio' datatype='real' role='measure'>
+        <calculation class='tableau' formula='SUM([Sales]) / SUM([Quantity])' />
+      </column>
+      <column name='[Running Total]' caption='Running Total' datatype='real' role='measure'>
+        <calculation class='tableau' formula='RUNNING_SUM(SUM([Sales]))' />
+      </column>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Sales by Date'>
+      <table>
+        <view>
+          <rows>[federated.sales].[Sales]</rows>
+          <cols>[federated.sales].[Order Date]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Bar' />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name='Overview'>
+      <zones>
+        <zone name='Sales by Date' />
+      </zones>
+    </dashboard>
+  </dashboards>
+</workbook>

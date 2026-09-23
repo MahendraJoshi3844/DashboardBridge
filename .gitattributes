@@ -1,0 +1,30 @@
+# Line endings, declared rather than left to each machine's git configuration.
+#
+# This exists because of a real corruption. One file's blob had been committed
+# with CRLF while `core.autocrlf` was true, so checking it out applied the
+# LF-to-CRLF conversion to endings that were already CRLF: every line ending
+# became `\r\r\n`, the file doubled in length, and the content still looked
+# correct in an editor. It was found only because an edit stopped matching.
+#
+# `text=auto` puts the decision in the repository instead of in each
+# contributor's config: text files are stored LF whatever the working tree
+# looks like, so the conversion can never be applied twice.
+
+* text=auto
+
+# Explicitly text, because these are formats where a wrong guess is expensive.
+*.py     text
+*.ts     text
+*.tsx    text
+*.md     text
+*.yml    text
+*.yaml   text
+*.json   text
+*.toml   text
+*.twb    text
+*.tmdl   text
+
+# Never touched.
+*.png    binary
+*.twbx   binary
+*.pbix   binary

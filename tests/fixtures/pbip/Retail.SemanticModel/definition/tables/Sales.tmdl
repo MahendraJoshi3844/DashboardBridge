@@ -1,0 +1,79 @@
+/// Sales transactions, one row per line item.
+table Sales
+	lineageTag: 8f2c1a44-0d3e-4b91-9f6a-1c2d3e4f5a6b
+
+	column 'Order ID'
+		dataType: string
+		lineageTag: 1a2b3c4d-0001-0000-0000-000000000001
+		summarizeBy: none
+		sourceColumn: Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Order Date'
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 1a2b3c4d-0002-0000-0000-000000000002
+		summarizeBy: none
+		sourceColumn: Order Date
+
+		variation Variation
+			isDefault
+			relationship: 5c9e2f01-1111-2222-3333-444455556666
+			defaultHierarchy: LocalDateTable_abc.'Date Hierarchy'
+
+	column 'Store Key'
+		dataType: int64
+		isHidden
+		lineageTag: 1a2b3c4d-0003-0000-0000-000000000003
+		summarizeBy: none
+		sourceColumn: Store Key
+
+	column Revenue
+		dataType: double
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 1a2b3c4d-0004-0000-0000-000000000004
+		summarizeBy: sum
+		sourceColumn: Revenue
+
+	column Units
+		dataType: int64
+		lineageTag: 1a2b3c4d-0005-0000-0000-000000000005
+		summarizeBy: sum
+		sourceColumn: Units
+
+	/// Revenue net of the standard discount, computed per row.
+	column 'Net Revenue' = Sales[Revenue] * (1 - 0.05)
+		dataType: double
+		lineageTag: 1a2b3c4d-0006-0000-0000-000000000006
+		summarizeBy: sum
+
+	measure 'Total Revenue' = SUM(Sales[Revenue])
+		formatString: \$#,0.00;(\$#,0.00);\$#,0.00
+		lineageTag: 2b3c4d5e-0001-0000-0000-000000000001
+
+	measure 'Revenue per Unit' = ```
+			DIVIDE(
+			    SUM(Sales[Revenue]),
+			    SUM(Sales[Units])
+			)
+			```
+		formatString: #,0.00
+		lineageTag: 2b3c4d5e-0002-0000-0000-000000000002
+
+	hierarchy 'Order Date Hierarchy'
+		lineageTag: 3c4d5e6f-0001-0000-0000-000000000001
+
+		level Year
+			column: 'Order Date'
+
+	partition Sales = m
+		mode: import
+		source =
+				let
+				    Source = Sql.Database("server", "retail"),
+				    Sales = Source{[Schema="dbo",Item="Sales"]}[Data]
+				in
+				    Sales
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<!--
+  Worksheets that cannot become a Power BI visual, and one that can.
+
+  Written on 2026-09-04, after Power BI Desktop refused to render a generated
+  project. Bisecting it showed the report opened with its visuals removed and
+  crashed with them present, and five of Superstore's twenty-one visuals were
+  being written with an empty `queryState` - a visual container claiming a
+  chart exists with no field on it.
+
+  Superstore is not in this repository (`testing_content/` is gitignored), so
+  the case it exposed had no fixture and no test could see it. This is that
+  fixture.
+
+  Three worksheets, each a different reason:
+
+  * `Bindable` is the control. Ordinary columns on rows and cols, which map to
+    Power BI field wells and must keep producing a visual.
+  * `AllConstructs` places only Tableau's own constructs - `Measure Names` and
+    `Multiple Values` - which have no column behind them and no Power BI well
+    to bind to. Nothing can map, so nothing should be written.
+  * `ScatterNoX` asks for a scatter with a category and one measure. Power BI's
+    scatter needs X and Y; choosing which measure goes on X is a guess, and
+    this converter does not guess.
+-->
+<workbook version='2021.4'>
+  <datasources>
+    <datasource name='Parameters' />
+    <datasource name='federated.unbindable' caption='Orders'>
+      <connection class='sqlserver' />
+      <column name='[Order Date]' datatype='date' role='dimension' />
+      <column name='[Category]' datatype='string' role='dimension' />
+      <column name='[Sales]' datatype='real' role='measure' />
+      <column name='[Profit]' datatype='real' role='measure' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Bindable'>
+      <table>
+        <view>
+          <rows>[federated.unbindable].[Sales]</rows>
+          <cols>[federated.unbindable].[Order Date]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Bar' />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+
+    <worksheet name='AllConstructs'>
+      <table>
+        <view>
+          <rows>[federated.unbindable].[Multiple Values]</rows>
+          <cols>[federated.unbindable].[:Measure Names]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Bar' />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+
+    <worksheet name='ScatterNoX'>
+      <table>
+        <view>
+          <rows>[federated.unbindable].[Sales]</rows>
+          <cols>[federated.unbindable].[Category]</cols>
+        </view>
+        <panes>
+          <pane>
+            <mark class='Circle' />
+          </pane>
+        </panes>
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards />
+</workbook>

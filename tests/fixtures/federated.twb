@@ -1,0 +1,70 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook version='2021.4'>
+  <datasources>
+    <datasource name='Parameters'>
+      <column caption='Growth' datatype='real' name='[Parameter 1]' param-domain-type='range' role='measure' value='0.6'>
+        <calculation class='tableau' formula='0.6' />
+        <range granularity='0.01' max='1.0' min='0.0' />
+      </column>
+      <column caption='Sort by' datatype='string' name='[Parameter 2]' param-domain-type='list' role='measure' value='&quot;Names&quot;'>
+        <calculation class='tableau' formula='&quot;Names&quot;' />
+        <members>
+          <member value='&quot;\% asc&quot;' />
+          <member value='&quot;Names&quot;' />
+        </members>
+      </column>
+    </datasource>
+    <datasource caption='Superstore' inline='true' name='federated.abc'>
+      <connection class='federated' />
+      <column datatype='string' name='[Region]' role='dimension' />
+      <column datatype='real' name='[Sales]' role='measure' />
+      <column caption='Forecast' datatype='real' name='[Forecast]' role='measure'>
+        <calculation class='tableau' formula='SUM([Sales])*(1+[Parameter 1])' />
+      </column>
+      <column caption='Row Forecast' datatype='real' name='[Row Forecast]' role='measure'>
+        <calculation class='tableau' formula='[Sales]*(1+[Parameter 1])' />
+      </column>
+      <column datatype='string' name='[__tableau_internal_object_id__].[Orders_AAA]' role='dimension' />
+      <connection>
+        <metadata-records>
+          <metadata-record class='column'>
+            <local-name>[Region]</local-name>
+            <parent-name>[Orders]</parent-name>
+            <local-type>string</local-type>
+            <object-id>[Orders_AAA]</object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <local-name>[Sales]</local-name>
+            <parent-name>[Orders]</parent-name>
+            <local-type>real</local-type>
+            <object-id>[Orders_AAA]</object-id>
+          </metadata-record>
+          <metadata-record class='column'>
+            <local-name>[Region (People)]</local-name>
+            <parent-name>[People]</parent-name>
+            <local-type>string</local-type>
+            <object-id>[People_BBB]</object-id>
+          </metadata-record>
+        </metadata-records>
+      </connection>
+      <object-graph>
+        <objects>
+          <object caption='Orders' id='Orders_AAA' />
+          <object caption='People' id='People_BBB' />
+        </objects>
+        <relationships>
+          <relationship>
+            <expression op='='>
+              <expression op='[Region]' />
+              <expression op='[Region (People)]' />
+            </expression>
+            <first-end-point object-id='Orders_AAA' />
+            <second-end-point object-id='People_BBB' />
+          </relationship>
+        </relationships>
+      </object-graph>
+    </datasource>
+  </datasources>
+  <worksheets />
+  <dashboards />
+</workbook>
