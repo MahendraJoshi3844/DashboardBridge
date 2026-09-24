@@ -49,6 +49,8 @@ from xml.sax.saxutils import escape, quoteattr
 from dashboardbridge_contracts import (
     CanonicalModel,
     Column,
+    ConversionFlag,
+    Dashboard,
     Relationship,
     Table,
     Visual,
@@ -56,8 +58,12 @@ from dashboardbridge_contracts import (
 from dashboardbridge_contracts.enums import (
     Aggregation,
     BindingRole,
+    ConversionMethod,
+    ConversionStatus,
     DataType,
     Grain,
+    Severity,
+    Stage,
 )
 
 #: What this writer declares itself to be. Tableau refuses a workbook with no
@@ -94,12 +100,72 @@ _ROWS = {BindingRole.VALUE}
 _COLUMNS = {BindingRole.CATEGORY}
 
 
-def write_twb(model: CanonicalModel, out_dir: str | Path) -> Path:
-    """Write one `.twb`. Returns its path.
+@dataclass(frozen=True)
+class TwbEmission:
+    """The written workbook, and everything about it a person has to know.
 
-    Deterministic: the same model produces the same bytes, because a person may
-    diff two runs and a file that differs for no reason cannot be reviewed.
+    `flags` is the only place some of this is recorded. A parameter, a visual
+    filter or a dashboard layout that is not written leaves nothing behind in
+    the file, and a refusal that *is* written there is a comment nobody using
+    the web application will open the file to read.
     """
+
+    path: Path
+    flags: list[ConversionFlag]
+
+
+class _Notes:
+    """What the writer did not carry, collected as it writes.
+
+    A refusal that also goes into the file as a comment is built here first and
+    the comment is written from the returned text, so the comment and the flag
+    are the same sentence by construction rather than by care.
+    """
+
+    _SEVERITY = {
+        ConversionStatus.CONVERTED: Severity.INFO,
+        ConversionStatus.PARTIAL: Severity.WARNING,
+        ConversionStatus.UNSUPPORTED: Severity.MANUAL,
+    }
+
+    def __init__(self) -> None:
+        self.flags: list[ConversionFlag] = []
+
+    def add(
+        self, item: str, stage: Stage, status: ConversionStatus, reason: str
+    ) -> str:
+        text = _comment_text(reason)
+        self.flags.append(
+            ConversionFlag(
+                item=item,
+                stage=stage,
+                method=(
+                    ConversionMethod.DETERMINISTIC
+                    if status is ConversionStatus.CONVERTED
+                    else ConversionMethod.MANUAL
+                ),
+                status=status,
+                severity=self._SEVERITY[status],
+                reason=text,
+                ref=item,
+            )
+        )
+        return text
+
+
+def write_twb(model: CanonicalModel, out_dir: str | Path) -> Path:
+    """Write one `.twb`. Returns its path. See `emit_twb` for what it left out."""
+    return emit_twb(model, out_dir).path
+
+
+def emit_twb(model: CanonicalModel, out_dir: str | Path) -> TwbEmission:
+    """Write one `.twb`, and report everything it did not carry across.
+
+    Deterministic: the same model produces the same bytes and the same flags,
+    because a person may diff two runs and a file that differs for no reason
+    cannot be reviewed.
+    """
+    notes = _Notes()
     root = Path(out_dir)
     root.mkdir(parents=True, exist_ok=True)
     name = _safe_stem(model.name or "workbook")
@@ -110,29 +176,83 @@ def write_twb(model: CanonicalModel, out_dir: str | Path) -> Path:
         f"<workbook version={quoteattr(WORKBOOK_VERSION)}>",
         "  <datasources>",
     ]
-    sources = _sources(model)
+    sources = _sources(model, notes)
     for source in sources:
-        lines.extend(_datasource(source))
+        lines.extend(_datasource(source, notes))
     lines.append("  </datasources>")
 
     lines.append("  <worksheets>")
     for visual in sorted(model.visuals or [], key=lambda visual: visual.name):
-        lines.extend(_worksheet(visual, sources))
+        lines.extend(_worksheet(visual, sources, notes))
     lines.append("  </worksheets>")
 
+    by_id = {visual.id: visual for visual in model.visuals or []}
     lines.append("  <dashboards>")
     for dashboard in sorted(model.dashboards or [], key=lambda item: item.name):
-        lines.append(f"    <dashboard name={quoteattr(dashboard.name)}>")
-        lines.append("      <zones>")
-        for visual_id in dashboard.visual_ids:
-            lines.append(f"        <zone name={quoteattr(visual_id)} />")
-        lines.append("      </zones>")
-        lines.append("    </dashboard>")
+        lines.extend(_dashboard(dashboard, by_id, notes))
     lines.append("  </dashboards>")
     lines.append("</workbook>")
 
+    for parameter in sorted(model.parameters or [], key=lambda item: item.name):
+        notes.add(
+            parameter.caption or parameter.name,
+            Stage.GENERATE,
+            ConversionStatus.UNSUPPORTED,
+            "This parameter was not written: the Tableau writer does not "
+            "produce parameters yet. Recreate it in Tableau and point anything "
+            "that used it at the new parameter.",
+        )
+
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return path
+    return TwbEmission(
+        path=path,
+        flags=sorted(
+            notes.flags,
+            key=lambda flag: (flag.item, flag.stage.value, flag.reason),
+        ),
+    )
+
+
+def _dashboard(
+    dashboard: Dashboard, visuals: dict[str, Visual], notes: _Notes
+) -> list[str]:
+    """A dashboard as the list of worksheets it holds, and nothing more.
+
+    A zone names a *worksheet*, and worksheets are named after visuals. A Power
+    BI visual id (`v1`, or a hex string) is not a worksheet name, so writing the
+    id produced a dashboard pointing at nothing - found in `golden/retail.twb`.
+    For a Tableau source the id and the name are the same, so its output is
+    unchanged.
+    """
+    lines = [
+        f"    <dashboard name={quoteattr(dashboard.name)}>",
+        "      <zones>",
+    ]
+    missing: list[str] = []
+    for visual_id in dashboard.visual_ids:
+        visual = visuals.get(visual_id)
+        if visual is None:
+            missing.append(visual_id)
+            continue
+        lines.append(f"        <zone name={quoteattr(visual.name)} />")
+    lines.extend(["      </zones>", "    </dashboard>"])
+
+    notes.add(
+        dashboard.name,
+        Stage.GENERATE,
+        ConversionStatus.PARTIAL,
+        "Only the sheets this dashboard holds are carried; its layout, sizes "
+        "and positions are not. Arrange the sheets on the dashboard in Tableau.",
+    )
+    if missing:
+        notes.add(
+            dashboard.name,
+            Stage.GENERATE,
+            ConversionStatus.PARTIAL,
+            f"It refers to {', '.join(missing)}, which is not a visual in this "
+            "model, so no zone was written for it.",
+        )
+    return lines
 
 
 # --- data sources ---------------------------------------------------------------
@@ -235,17 +355,28 @@ def _components(model: CanonicalModel) -> list[tuple[Table, ...]]:
     )
 
 
-def _sources(model: CanonicalModel) -> list[_Source]:
+def _sources(model: CanonicalModel, notes: _Notes) -> list[_Source]:
     sources: list[_Source] = []
     for group in _components(model):
         names = {table.name for table in group}
         stem = "_".join(_safe_stem(table.name).lower() for table in group)
+        keys = _flat_keys(group)
+        for (table_name, column_name), flat in sorted(keys.items()):
+            if flat != column_name:
+                notes.add(
+                    f"{table_name}.{column_name}",
+                    Stage.GENERATE,
+                    ConversionStatus.CONVERTED,
+                    f"Renamed to {flat} in Tableau: related tables share one "
+                    f"list of field names there, and another table already "
+                    f"uses {column_name}.",
+                )
         sources.append(
             _Source(
                 id=f"federated.{stem}",
                 caption=" + ".join(table.name for table in group),
                 tables=group,
-                keys=_flat_keys(group),
+                keys=keys,
                 relationships=tuple(
                     relationship
                     for relationship in model.relationships or []
@@ -274,7 +405,7 @@ def _relation(table: Table) -> str:
     )
 
 
-def _datasource(source: _Source) -> list[str]:
+def _datasource(source: _Source, notes: _Notes) -> list[str]:
     lines = [
         f"    <datasource caption={quoteattr(source.caption)} "
         f"inline='true' name={quoteattr(source.id)} "
@@ -299,14 +430,14 @@ def _datasource(source: _Source) -> list[str]:
 
     for table in source.tables:
         for column in table.columns or []:
-            lines.extend(_column(column, table, source))
+            lines.extend(_column(column, table, source, notes))
 
-    lines.extend(_object_graph(source))
+    lines.extend(_object_graph(source, notes))
     lines.append("    </datasource>")
     return lines
 
 
-def _object_graph(source: _Source) -> list[str]:
+def _object_graph(source: _Source, notes: _Notes) -> list[str]:
     """The relationships, in the form Tableau writes them.
 
     Omitted for a lone table: Tableau's own single-table data sources have no
@@ -338,13 +469,16 @@ def _object_graph(source: _Source) -> list[str]:
             # cannot resolve; dropping it quietly loses the only statement the
             # source made about how these tables meet.
             missing = relationship.from_column if left is None else relationship.to_column
-            lines.append(
-                f"          <!-- not carried: {_comment_text(
-                    f'{relationship.from_table} and {relationship.to_table} are '
-                    f'related on {missing}, which is not a column of either '
-                    'table in this model, so the relationship was not written'
-                )} -->"
+            reason = notes.add(
+                f"{relationship.from_table}.{relationship.from_column} -> "
+                f"{relationship.to_table}.{relationship.to_column}",
+                Stage.GENERATE,
+                ConversionStatus.UNSUPPORTED,
+                f"{relationship.from_table} and {relationship.to_table} are "
+                f"related on {missing}, which is not a column of either "
+                "table in this model, so the relationship was not written",
             )
+            lines.append(f"          <!-- not carried: {reason} -->")
             continue
         lines.extend(
             [
@@ -365,10 +499,22 @@ def _object_graph(source: _Source) -> list[str]:
     return lines
 
 
-def _column(column: Column, table: Table, source: _Source) -> list[str]:
+def _column(
+    column: Column, table: Table, source: _Source, notes: _Notes | None = None
+) -> list[str]:
+    notes = notes if notes is not None else _Notes()
     name = _display(column)
     key = source.key(table.name, name) or name
     datatype, role = _role(column)
+    if column.grain is Grain.AGGREGATE and column.datatype is DataType.UNKNOWN:
+        notes.add(
+            f"{table.name}.{name}",
+            Stage.GENERATE,
+            ConversionStatus.CONVERTED,
+            "Written as a real number: Power BI records no data type for a "
+            "measure and Tableau requires one. Change it in Tableau if the "
+            "measure is not numeric.",
+        )
     attributes = (
         f"caption={quoteattr(name)} datatype={quoteattr(datatype)} "
         f"name={quoteattr('[' + key + ']')} role={quoteattr(role)} "
@@ -381,9 +527,15 @@ def _column(column: Column, table: Table, source: _Source) -> list[str]:
     if formula is None:
         if refusal is None:
             return [f"      <column {attributes} />"]
+        reason = notes.add(
+            f"{table.name}.{name}",
+            Stage.TRANSLATE,
+            ConversionStatus.UNSUPPORTED,
+            refusal,
+        )
         return [
             f"      <column {attributes} />",
-            f"      <!-- not carried: {_comment_text(refusal)} -->",
+            f"      <!-- not carried: {reason} -->",
         ]
     return [
         f"      <column {attributes}>",
@@ -499,7 +651,7 @@ def _comment_text(reason: str) -> str:
 # --- worksheets ----------------------------------------------------------------
 
 
-def _worksheet(visual: Visual, sources: list[_Source]) -> list[str]:
+def _worksheet(visual: Visual, sources: list[_Source], notes: _Notes) -> list[str]:
     placed = [
         binding
         for binding in visual.bindings or []
@@ -530,7 +682,30 @@ def _worksheet(visual: Visual, sources: list[_Source]) -> list[str]:
             "one data source. Relate the tables and convert again, or rebuild "
             "the worksheet by hand"
         )
+        refusal = notes.add(
+            visual.name, Stage.GENERATE, ConversionStatus.UNSUPPORTED, refusal
+        )
         placed = []
+    else:
+        _report_unplaced(visual, sources, notes)
+
+    if visual.filters:
+        notes.add(
+            visual.name,
+            Stage.GENERATE,
+            ConversionStatus.PARTIAL,
+            f"Its filters on {_field_list(visual.filters)} were not written. "
+            "Add them to the worksheet's Filters shelf in Tableau.",
+        )
+    if visual.visual_type not in _MARKS:
+        notes.add(
+            visual.name,
+            Stage.GENERATE,
+            ConversionStatus.PARTIAL,
+            f"No Tableau mark is mapped for the {visual.visual_type} visual, so "
+            "the worksheet uses Tableau's Automatic mark. Choose the mark in "
+            "Tableau.",
+        )
 
     rows = [
         _shelf(binding, sources) for binding in placed if binding.role in _ROWS
@@ -540,11 +715,7 @@ def _worksheet(visual: Visual, sources: list[_Source]) -> list[str]:
     ]
     return [
         f"    <worksheet name={quoteattr(visual.name)}>",
-        *(
-            [f"      <!-- not carried: {_comment_text(refusal)} -->"]
-            if refusal
-            else []
-        ),
+        *([f"      <!-- not carried: {refusal} -->"] if refusal else []),
         "      <table>",
         "        <view />",
         f"        <rows>{escape(' + '.join(filter(None, rows)))}</rows>",
@@ -557,6 +728,39 @@ def _worksheet(visual: Visual, sources: list[_Source]) -> list[str]:
         "      </table>",
         "    </worksheet>",
     ]
+
+
+def _report_unplaced(visual: Visual, sources: list[_Source], notes: _Notes) -> None:
+    """Every field on the visual that did not reach a shelf, named once.
+
+    The writer places row and column fields only. A field in any other well, a
+    binding the reader could not resolve, and a field whose table is in no data
+    source used to vanish from the worksheet with nothing said.
+    """
+    unplaced: list[str] = []
+    for binding in visual.bindings or []:
+        label = binding.field.column if binding.field else (binding.raw or "a field")
+        if binding.role not in _ROWS | _COLUMNS:
+            unplaced.append(f"{label} ({binding.role.value})")
+        elif not binding.resolvable or binding.field is None:
+            unplaced.append(f"{label} (could not be resolved)")
+        elif _owner(binding, sources) is None:
+            unplaced.append(f"{label} (its table is not in this workbook)")
+    if unplaced:
+        notes.add(
+            visual.name,
+            Stage.GENERATE,
+            ConversionStatus.PARTIAL,
+            f"Not placed on the worksheet: {', '.join(unplaced)}. Only row and "
+            "column fields are written; add the rest in Tableau.",
+        )
+
+
+def _field_list(bindings) -> str:
+    names = sorted(
+        {binding.field.column if binding.field else binding.raw for binding in bindings}
+    )
+    return ", ".join(name for name in names if name) or "fields"
 
 
 def _owner(binding, sources: list[_Source]) -> _Source | None:

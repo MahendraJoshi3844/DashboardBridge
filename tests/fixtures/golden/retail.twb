@@ -80,7 +80,7 @@
   <dashboards>
     <dashboard name="Revenue by Region">
       <zones>
-        <zone name="v1" />
+        <zone name="Revenue by Region" />
       </zones>
     </dashboard>
   </dashboards>
