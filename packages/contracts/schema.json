@@ -238,6 +238,206 @@
       "title": "ArtifactKind",
       "type": "string"
     },
+    "AssistantFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "item": {
+          "title": "Item",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "check": {
+          "title": "Check",
+          "type": "string"
+        }
+      },
+      "required": [
+        "severity",
+        "item",
+        "message",
+        "check"
+      ],
+      "title": "AssistantFinding",
+      "type": "object"
+    },
+    "AssistantMessage": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "system",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "model": {
+          "default": "",
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "text"
+      ],
+      "title": "AssistantMessage",
+      "type": "object"
+    },
+    "AssistantProposal": {
+      "additionalProperties": false,
+      "description": "A change offered to a person. Never applied by the step that made it.\n\n`origin` says what produced it: `rule` for a deterministic rewrite whose\neffect is stated in `reason`, `model` for a model's draft that has passed the\nproposal checks. Either way a person puts it into their draft changes, or\ndoes not.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "measure",
+            "partition"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "expression": {
+          "title": "Expression",
+          "type": "string"
+        },
+        "current": {
+          "default": "",
+          "title": "Current",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "rule",
+            "model"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "model": {
+          "default": "",
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "table",
+        "name",
+        "expression",
+        "reason",
+        "origin"
+      ],
+      "title": "AssistantProposal",
+      "type": "object"
+    },
+    "AssistantStepRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Items",
+          "type": "array"
+        },
+        "message": {
+          "default": "",
+          "maxLength": 4000,
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "title": "AssistantStepRequest",
+      "type": "object"
+    },
+    "AssistantStepResult": {
+      "additionalProperties": false,
+      "properties": {
+        "step": {
+          "enum": [
+            "inventory",
+            "check_references",
+            "check_mquery",
+            "model_health",
+            "draft_dax",
+            "format_mquery",
+            "summarize",
+            "chat"
+          ],
+          "title": "Step",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/definitions/AssistantMessage"
+          },
+          "title": "Messages",
+          "type": "array"
+        },
+        "findings": {
+          "items": {
+            "$ref": "#/definitions/AssistantFinding"
+          },
+          "title": "Findings",
+          "type": "array"
+        },
+        "proposals": {
+          "items": {
+            "$ref": "#/definitions/AssistantProposal"
+          },
+          "title": "Proposals",
+          "type": "array"
+        },
+        "checks_run": {
+          "default": 0,
+          "title": "Checks Run",
+          "type": "integer"
+        },
+        "checks_clean": {
+          "default": 0,
+          "title": "Checks Clean",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "step",
+        "title"
+      ],
+      "title": "AssistantStepResult",
+      "type": "object"
+    },
     "AuditEntry": {
       "additionalProperties": false,
       "description": "One object the conversion handled, and what became of it (P5.7, \u00a741).\n\nTaken from the engine's own recording, not reconstructed. The flags say\nwhat did *not* come across; this is the only record of what did, and of the\nexpression each translation actually produced - which is what \"defend every\ntransformation to a sceptical stakeholder\" needs.\n\n**No timing.** The event stream carries `elapsed_ms` because it is about a\nrun in progress. A record of a finished run must be byte-stable, or two\nconversions of one workbook produce reports that cannot be diffed, and a\nduration differs on every run.",

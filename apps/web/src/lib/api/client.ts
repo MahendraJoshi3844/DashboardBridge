@@ -10,6 +10,8 @@
  */
 
 import type {
+  AssistantStepRequest,
+  AssistantStepResult,
   Analysis,
   ApiError,
   Artifact,
@@ -723,4 +725,19 @@ export async function publishSelection(
     blob: await response.blob(),
     filename: filenameFrom(response.headers.get("content-disposition")) ?? fallbackFilename,
   };
+}
+
+export type AssistantStepName = AssistantStepResult["step"];
+
+export function runAssistantStep(
+  projectId: string,
+  step: AssistantStepName,
+  body: AssistantStepRequest = {},
+  options: RequestOptions = {},
+): Promise<AssistantStepResult> {
+  return request<AssistantStepResult>(`/projects/${projectId}/workspace/assistant/${step}`, {
+    ...options,
+    method: "POST",
+    body,
+  });
 }

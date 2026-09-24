@@ -52,7 +52,7 @@ from enum import Enum
 
 from dashboardbridge_contracts.enums import PrivacyMode, ProviderKind
 
-from engines.ai.prompts import PromptNotFound, load_prompt, render
+from engines.ai.prompts import PromptNotFound, load_prompt, render, render_advice
 from engines.ai.provider import LLMProvider
 from engines.ai.providers import OllamaProvider, OpenAICompatibleProvider
 from engines.ai.types import LLMRequest, ProviderUnavailable
@@ -88,6 +88,9 @@ class AISettings:
     host: str = "127.0.0.1"
     port: int = 11434
     model: str = ""
+    #: Seconds to wait for an answer. A local 8B model on a CPU takes tens of
+    #: seconds for a paragraph; None keeps the provider's own default.
+    timeout_s: float | None = None
 
 
 @dataclass(frozen=True)
@@ -129,6 +132,7 @@ def build_provider(settings: AISettings) -> LLMProvider | None:
             host=settings.host,
             port=settings.port,
             **({"model": settings.model} if settings.model else {}),
+            **({"timeout_s": settings.timeout_s} if settings.timeout_s else {}),
         )
     return OpenAICompatibleProvider(
         base_url=settings.base_url,
@@ -190,7 +194,14 @@ async def route(
         )
 
     try:
-        response = await provider.generate(render(prompt, request))
+        # A proposal is checked as JSON, so a provider that can be held to
+        # JSON is. llama3.1 wraps an otherwise correct answer in a code fence
+        # when it is merely asked, and reading one out of a fence is the
+        # guessing `vet` refuses to do.
+        if getattr(provider, "supports_json_mode", False):
+            response = await provider.generate(render(prompt, request), json_mode=True)
+        else:
+            response = await provider.generate(render(prompt, request))
     except ProviderUnavailable as exc:
         return Routed(
             Disposition.PROVIDER_UNAVAILABLE,
@@ -214,4 +225,76 @@ async def route(
             provider=kind,
             prompt_version=prompt.version,
         ),
+    )
+
+
+@dataclass(frozen=True)
+class AdviceRequest:
+    """A question whose answer is prose for a person, never something applied.
+
+    `context` describes the model being worked on - table, column and measure
+    names, counts, findings. Every name in it came out of a file we did not
+    write, so it is fenced as USER DATA with the person's own `question`; the
+    prompt's authored regions are the only trusted text sent.
+    """
+
+    operation: str
+    context: str
+    question: str = ""
+
+
+async def advise(
+    request: AdviceRequest,
+    settings: AISettings,
+    provider: LLMProvider | None = None,
+) -> Routed:
+    """Ask a model for advice. The same gates as `route`, in the same order.
+
+    Nothing an answer says is applied. It is shown, labelled as a model's, and
+    any change it suggests is still made by a person in the editor (ADR-007).
+    """
+    if not settings.enabled:
+        return Routed(
+            Disposition.NOT_ENABLED,
+            "AI assistance is switched off, so nothing was sent to a model.",
+        )
+    if provider is None:
+        try:
+            provider = build_provider(settings)
+        except ValueError as exc:
+            return Routed(Disposition.REFUSED_BY_PRIVACY, str(exc))
+    if provider is None:
+        return Routed(
+            Disposition.NO_PROVIDER,
+            "AI assistance is on, but no provider is configured, so there was "
+            "nothing to ask.",
+        )
+    try:
+        prompt = load_prompt(request.operation)
+    except PromptNotFound as exc:
+        return Routed(Disposition.NO_PROMPT, str(exc))
+
+    kind = type(provider).__name__
+    if not provider.available():
+        return Routed(
+            Disposition.PROVIDER_UNAVAILABLE,
+            f"The configured provider ({kind}) is not answering. Nothing was "
+            "sent anywhere else.",
+        )
+    try:
+        response = await provider.generate(
+            render_advice(prompt, request.context, request.question)
+        )
+    except ProviderUnavailable as exc:
+        return Routed(
+            Disposition.PROVIDER_UNAVAILABLE,
+            f"The configured provider ({kind}) stopped answering: {exc}",
+        )
+    text = (response.text or "").strip()
+    if text.lower() in _DECLINED:
+        return Routed(Disposition.NO_ANSWER, "The model was asked and had nothing to say.")
+    return Routed(
+        Disposition.DRAFTED,
+        "Advice from a model. Nothing it says has been applied.",
+        draft=Draft(text=text, model=response.model, provider=kind, prompt_version=prompt.version),
     )

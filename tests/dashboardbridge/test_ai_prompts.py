@@ -93,7 +93,10 @@ def test_the_current_version_is_pinned_so_a_bump_is_visible():
     changing. Failing here is the point: bumping a prompt should be a diff
     someone reads.
     """
-    assert load_prompt("translate_calculation").version == 1
+    # v2 (2026-09-24): v1 asked for the bare expression while `vet` accepts
+    # only the JSON shape, so every real model's draft was discarded as
+    # NOT_JSON. v2 asks for the shape `vet` checks.
+    assert load_prompt("translate_calculation").version == 2
 
 
 def test_the_authored_regions_carry_no_placeholders_for_user_data():

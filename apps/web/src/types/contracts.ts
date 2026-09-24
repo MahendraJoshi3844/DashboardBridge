@@ -4,7 +4,7 @@
  * Source: packages/contracts/schema.json (Pydantic → JSON Schema).
  * Regenerate: npm run gen:types
  *
- * 77 contract definitions.
+ * 82 contract definitions.
  */
 
 /* eslint-disable */
@@ -244,6 +244,38 @@ export type Sha256 = string;
  * via the `definition` "ArtifactKind".
  */
 export type ArtifactKind1 = "source" | "target";
+export type Severity1 = "info" | "warning" | "error";
+export type Item1 = string;
+export type Message1 = string;
+export type Check = string;
+export type Role1 = "system" | "assistant";
+export type Text = string;
+export type Model1 = string;
+export type Kind2 = "measure" | "partition";
+export type Table2 = string;
+export type Name7 = string;
+export type Expression1 = string;
+export type Current = string;
+export type Reason1 = string;
+export type Origin = "rule" | "model";
+export type Model2 = string;
+export type Items = string[];
+export type Message2 = string;
+export type Step1 =
+  | "inventory"
+  | "check_references"
+  | "check_mquery"
+  | "model_health"
+  | "draft_dax"
+  | "format_mquery"
+  | "summarize"
+  | "chat";
+export type Title = string;
+export type Messages = AssistantMessage[];
+export type Findings = AssistantFinding[];
+export type Proposals = AssistantProposal[];
+export type ChecksRun = number;
+export type ChecksClean = number;
 /**
  * Position in the recording. Ordering, not time.
  */
@@ -251,8 +283,8 @@ export type Seq = number;
 /**
  * table | column | calc | visual | parameter | relationship
  */
-export type Kind2 = string;
-export type Name7 = string;
+export type Kind3 = string;
+export type Name8 = string;
 /**
  * Which side of the seam an object ended on.
  *
@@ -287,7 +319,7 @@ export type ConversionId = string;
 export type ArtifactId1 = string | null;
 export type Flags2 = ConversionFlag[];
 export type ProjectId1 = string;
-export type Name8 = string;
+export type Name9 = string;
 export type CreatedAt = string;
 /**
  * What the product is allowed to claim (§63). Never 'success'.
@@ -305,7 +337,7 @@ export type Verdict1 = "verified" | "partially_verified" | "unverified" | "faile
 export type Score2 = number | null;
 export type Formula1 = string;
 export type Measured = boolean;
-export type Reason1 = string;
+export type Reason2 = string;
 export type RuleId = string;
 export type Status = string;
 export type Note = string;
@@ -324,7 +356,7 @@ export type PrivacyMode = "standard" | "local_only" | "enterprise_private";
  * via the `definition` "ConversionStatus".
  */
 export type ConversionStatus1 = "converted" | "partial" | "ai_required" | "unsupported" | "failed";
-export type Name9 = string;
+export type Name10 = string;
 export type Email = string;
 export type DisplayName = string;
 export type Password = string;
@@ -341,8 +373,8 @@ export type Version = string;
  */
 export type PrivacyMode1 = "standard" | "local_only" | "enterprise_private";
 export type AiAvailable = boolean;
-export type Kind3 = string;
-export type Name10 = string;
+export type Kind4 = string;
+export type Name11 = string;
 export type Outcome1 = string;
 export type Method = string;
 export type Ref2 = string;
@@ -362,7 +394,7 @@ export type DaysRemaining = number | null;
 export type Seats = number | null;
 export type Features = string[];
 export type ExpiringSoon = boolean;
-export type Message1 = string | null;
+export type Message3 = string | null;
 export type Email1 = string;
 export type Password1 = string;
 export type Completed = number;
@@ -380,7 +412,7 @@ export type ProposalDecision = "pending" | "accepted" | "rejected";
 /**
  * `'<table>.<name>'` - the object it is about.
  */
-export type Item1 = string;
+export type Item2 = string;
 export type RefusalReason = string;
 /**
  * Verbatim. Shown to the reviewer, never re-rendered.
@@ -395,12 +427,12 @@ export type PromptSent = string;
 export type ProposalDecision1 = "pending" | "accepted" | "rejected";
 export type ProjectId2 = string;
 export type Reviews = ProposalReview[];
-export type Item2 = string;
+export type Item3 = string;
 /**
  * Router disposition or gauntlet rejection.
  */
 export type Outcome2 = string;
-export type Reason2 = string;
+export type Reason3 = string;
 export type Skipped = SkippedItem[];
 export type Summary = string;
 /**
@@ -410,14 +442,14 @@ export type Summary = string;
 export type ProviderKind1 = "none" | "ollama" | "openai_compatible";
 export type ProviderKind2 = "none" | "ollama" | "openai_compatible";
 export type BaseUrl = string;
-export type Model1 = string;
+export type Model3 = string;
 export type Configured = boolean;
 export type Available = boolean;
 export type UnavailableBecause = string;
 export type VisualIds1 = string[];
 export type Version1 = number;
 export type Id6 = string;
-export type Name11 = string;
+export type Name12 = string;
 export type Width = number;
 export type Height = number;
 export type Id7 = string;
@@ -437,7 +469,7 @@ export type Pages = ReportPage[];
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "Severity".
  */
-export type Severity1 = "info" | "warning" | "manual";
+export type Severity2 = "info" | "warning" | "manual";
 export type IsActive = boolean | null;
 export type IsAdmin = boolean | null;
 export type UserId = string;
@@ -457,7 +489,7 @@ export type SeatsUsed = number;
  * via the `definition` "Verdict".
  */
 export type Verdict2 = "verified" | "partially_verified" | "unverified" | "failed";
-export type Name12 = string;
+export type Name13 = string;
 export type DataType3 = string;
 export type BaseVersion = number;
 export type Note1 = string;
@@ -465,34 +497,34 @@ export type Note1 = string;
  * @minItems 1
  */
 export type Edits = [WorkspaceEdit, ...WorkspaceEdit[]];
-export type Kind4 = "measure" | "partition";
-export type Table2 = string;
-export type Name13 = string;
-export type Expression1 = string;
-export type Path = string;
-export type SizeBytes1 = number;
-export type Item3 = string;
+export type Kind5 = "measure" | "partition";
 export type Table3 = string;
 export type Name14 = string;
-export type Source1 = string;
-export type Reason3 = string;
-export type Name15 = string;
 export type Expression2 = string;
-export type ProjectId3 = string;
+export type Path = string;
+export type SizeBytes1 = number;
+export type Item4 = string;
+export type Table4 = string;
+export type Name15 = string;
+export type Source1 = string;
+export type Reason4 = string;
 export type Name16 = string;
+export type Expression3 = string;
+export type ProjectId3 = string;
+export type Name17 = string;
 export type Version2 = number;
 export type Version3 = number;
 export type ArtifactId2 = string;
 export type CreatedAt2 = string;
 export type Note2 = string;
 export type Versions = WorkspaceVersion[];
-export type Name17 = string;
+export type Name18 = string;
 export type Columns2 = WorkspaceColumn[];
 export type Measures = WorkspaceMeasure[];
-export type Name18 = string;
+export type Name19 = string;
 export type Mode = string;
 export type SourceKind = string;
-export type Expression3 = string;
+export type Expression4 = string;
 export type Partitions = WorkspacePartition[];
 export type Tables2 = WorkspaceTable[];
 export type Files = WorkspaceFile[];
@@ -762,6 +794,67 @@ export interface Artifact {
   detected_platform?: Platform | null;
 }
 /**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "AssistantFinding".
+ */
+export interface AssistantFinding {
+  severity: Severity1;
+  item: Item1;
+  message: Message1;
+  check: Check;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "AssistantMessage".
+ */
+export interface AssistantMessage {
+  role: Role1;
+  text: Text;
+  model?: Model1;
+}
+/**
+ * A change offered to a person. Never applied by the step that made it.
+ *
+ * `origin` says what produced it: `rule` for a deterministic rewrite whose
+ * effect is stated in `reason`, `model` for a model's draft that has passed the
+ * proposal checks. Either way a person puts it into their draft changes, or
+ * does not.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "AssistantProposal".
+ */
+export interface AssistantProposal {
+  kind: Kind2;
+  table: Table2;
+  name: Name7;
+  expression: Expression1;
+  current?: Current;
+  reason: Reason1;
+  origin: Origin;
+  model?: Model2;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "AssistantStepRequest".
+ */
+export interface AssistantStepRequest {
+  items?: Items;
+  message?: Message2;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "AssistantStepResult".
+ */
+export interface AssistantStepResult {
+  step: Step1;
+  title: Title;
+  messages?: Messages;
+  findings?: Findings;
+  proposals?: Proposals;
+  checks_run?: ChecksRun;
+  checks_clean?: ChecksClean;
+}
+/**
  * One object the conversion handled, and what became of it (P5.7, §41).
  *
  * Taken from the engine's own recording, not reconstructed. The flags say
@@ -780,8 +873,8 @@ export interface Artifact {
 export interface AuditEntry {
   seq: Seq;
   stage: Stage;
-  kind: Kind2;
-  name: Name7;
+  kind: Kind3;
+  name: Name8;
   outcome: Outcome;
   detail?: Detail1;
   ref?: Ref1;
@@ -841,7 +934,7 @@ export interface ConversionReport {
  */
 export interface Project {
   project_id: ProjectId1;
-  name: Name8;
+  name: Name9;
   source_platform: Platform;
   target_platform: Platform;
   created_at: CreatedAt;
@@ -874,7 +967,7 @@ export interface Categories {
  */
 export interface NumericalValidation {
   measured?: Measured;
-  reason?: Reason1;
+  reason?: Reason2;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
@@ -901,7 +994,7 @@ export interface ConversionRequest {
 export interface CreateProjectRequest {
   source_platform: Platform;
   target_platform: Platform;
-  name: Name9;
+  name: Name10;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
@@ -927,8 +1020,8 @@ export interface HealthResponse {
  * via the `definition` "ItemEvent".
  */
 export interface ItemEvent {
-  kind: Kind3;
-  name: Name10;
+  kind: Kind4;
+  name: Name11;
   outcome: Outcome1;
   method: Method;
   ref?: Ref2;
@@ -966,7 +1059,7 @@ export interface LicenseStatusResponse {
   seats?: Seats;
   features?: Features;
   expiring_soon?: ExpiringSoon;
-  message?: Message1;
+  message?: Message3;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
@@ -1001,7 +1094,7 @@ export interface ProgressEvent {
  * via the `definition` "ProposalReview".
  */
 export interface ProposalReview {
-  item: Item1;
+  item: Item2;
   refusal_reason: RefusalReason;
   proposal: AIProposal;
   prompt_sent: PromptSent;
@@ -1030,9 +1123,9 @@ export interface ProposalSet {
  * via the `definition` "SkippedItem".
  */
 export interface SkippedItem {
-  item: Item2;
+  item: Item3;
   outcome: Outcome2;
-  reason: Reason2;
+  reason: Reason3;
 }
 /**
  * Keys are write-only over the API.
@@ -1046,7 +1139,7 @@ export interface SkippedItem {
 export interface ProviderSettings {
   provider?: ProviderKind2;
   base_url?: BaseUrl;
-  model?: Model1;
+  model?: Model3;
   configured?: Configured;
   available?: Available;
   unavailable_because?: UnavailableBecause;
@@ -1074,7 +1167,7 @@ export interface ReportExplorer {
  */
 export interface ReportPage {
   id: Id6;
-  name: Name11;
+  name: Name12;
   width?: Width;
   height?: Height;
   visuals?: Visuals2;
@@ -1153,7 +1246,7 @@ export interface UserList {
  * via the `definition` "WorkspaceColumn".
  */
 export interface WorkspaceColumn {
-  name: Name12;
+  name: Name13;
   data_type?: DataType3;
 }
 /**
@@ -1180,10 +1273,10 @@ export interface WorkspaceCommit {
  * via the `definition` "WorkspaceEdit".
  */
 export interface WorkspaceEdit {
-  kind: Kind4;
-  table: Table2;
-  name: Name13;
-  expression: Expression1;
+  kind: Kind5;
+  table: Table3;
+  name: Name14;
+  expression: Expression2;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
@@ -1204,19 +1297,19 @@ export interface WorkspaceFile {
  * via the `definition` "WorkspaceHeld".
  */
 export interface WorkspaceHeld {
-  item: Item3;
-  table: Table3;
-  name: Name14;
+  item: Item4;
+  table: Table4;
+  name: Name15;
   source?: Source1;
-  reason: Reason3;
+  reason: Reason4;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "WorkspaceMeasure".
  */
 export interface WorkspaceMeasure {
-  name: Name15;
-  expression: Expression2;
+  name: Name16;
+  expression: Expression3;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
@@ -1224,7 +1317,7 @@ export interface WorkspaceMeasure {
  */
 export interface WorkspaceModel {
   project_id: ProjectId3;
-  name: Name16;
+  name: Name17;
   version: Version2;
   versions?: Versions;
   tables?: Tables2;
@@ -1248,7 +1341,7 @@ export interface WorkspaceVersion {
  * via the `definition` "WorkspaceTable".
  */
 export interface WorkspaceTable {
-  name: Name17;
+  name: Name18;
   columns?: Columns2;
   measures?: Measures;
   partitions?: Partitions;
@@ -1263,8 +1356,8 @@ export interface WorkspaceTable {
  * via the `definition` "WorkspacePartition".
  */
 export interface WorkspacePartition {
-  name: Name18;
+  name: Name19;
   mode?: Mode;
   source_kind?: SourceKind;
-  expression: Expression3;
+  expression: Expression4;
 }

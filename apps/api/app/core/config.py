@@ -37,6 +37,8 @@ class Settings(BaseModel):
     #: restated here: one constant in two places is one that drifts, and this
     #: module has no business knowing which port a runtime happens to use.
     ai_port: int = 0
+    #: Seconds to wait for a model's answer. 0 keeps the provider's default.
+    ai_timeout_s: float = 0
 
     @property
     def local_only(self) -> bool:
@@ -94,4 +96,5 @@ def settings() -> Settings:
         ai_model=os.getenv("AI_MODEL", ""),
         ai_host=os.getenv("AI_HOST", "127.0.0.1"),
         ai_port=int(os.getenv("AI_PORT", "0")),
+        ai_timeout_s=float(os.getenv("AI_TIMEOUT_S", "0")),
     )

@@ -272,7 +272,7 @@ def test_the_draft_records_which_prompt_version_produced_it():
         )
     )
     assert result.draft is not None
-    assert result.draft.prompt_version == 1
+    assert result.draft.prompt_version == 2
 
 
 def test_an_operation_with_no_prompt_is_refused_before_anything_is_sent():

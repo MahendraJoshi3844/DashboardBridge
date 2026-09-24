@@ -22,6 +22,7 @@ from app.core.rate_limit import CostBasedLimiter
 from app.api import (
     accounts,
     analysis,
+    assistant,
     artifacts,
     conversion,
     events,
@@ -221,3 +222,4 @@ app.include_router(report.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(settings_api.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(proposals.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(workspace.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
+app.include_router(assistant.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)

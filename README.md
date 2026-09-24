@@ -47,7 +47,29 @@ halves; `-Reset` starts from an empty deployment.
   came across, each with its Tableau worksheet, mark type, fields and the
   converter's notes. Nothing is ticked by default; the `.pbip` export carries
   the full semantic model and only the ticked visuals.
+  **Run menu / AI Chat**: Optimize Model, Validate Calculations, Validate &
+  Fix DAX, Validate & Fix M-Query, Full Health Check, and Batch Fix DAX /
+  M-Query / All. Each job runs as tasks shown in the AI Chat tab as they
+  return. Deterministic checks run first (references, `DIVIDE()` rewrites,
+  placeholder sources, unused columns, untyped columns, possible missing
+  relationships); a model is asked only to draft DAX for held calculations,
+  to summarise, and to answer chat. Every proposed change is applied by a
+  person into draft changes, never automatically.
 - **Migration Jobs** (`/jobs`) — every job, with status and resume.
+
+### Local AI (optional)
+
+With [Ollama](https://ollama.com) running on this machine and `llama3.1`
+pulled, start the API with:
+
+```powershell
+$env:AI_PROVIDER = "ollama"; $env:AI_MODEL = "llama3.1"; $env:AI_TIMEOUT_S = "180"
+```
+
+Only a loopback address is accepted, so nothing leaves the machine. On a CPU
+an answer takes roughly 30 seconds to 2 minutes. Model drafts are checked
+twice — the proposal gauntlet, then against this model's own tables and
+measures — and are discarded with the reason when they fail.
 
 The guided single-screen flow is still at `/classic`.
 

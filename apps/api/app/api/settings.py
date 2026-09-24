@@ -40,6 +40,7 @@ def _ai_settings() -> AISettings:
         model=current.ai_model,
         # Only when configured; otherwise the provider's own default stands.
         **({"port": current.ai_port} if current.ai_port else {}),
+        **({"timeout_s": current.ai_timeout_s} if current.ai_timeout_s else {}),
     )
 
 

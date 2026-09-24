@@ -28,6 +28,7 @@ import {
   toApiError,
 } from "@/lib/api/client";
 import { saveBlob } from "@/lib/download";
+import { RUN_JOBS } from "@/lib/migrator/assistant";
 import { useHealth } from "@/lib/hooks/useHealth";
 import {
   checkReferences,
@@ -38,8 +39,9 @@ import {
   type Drafts,
   type ReferenceProblem,
 } from "@/lib/migrator/workspace";
-import type { ApiError, ReportExplorer, Validation, WorkspaceCommit, WorkspaceEdit, WorkspaceModel } from "@/types/contracts";
+import type { ApiError, AssistantProposal, ReportExplorer, Validation, WorkspaceCommit, WorkspaceEdit, WorkspaceModel } from "@/types/contracts";
 
+import { AssistantPane, type JobRequest } from "./AssistantPane";
 import {
   IconChart,
   IconCheck,
@@ -66,7 +68,7 @@ import {
 } from "./MgIcons";
 
 type LeftMode = "tables" | "measures" | "held" | "mquery" | "report" | "files";
-type CenterTab = "tree" | "validation" | "dax" | "mquery" | "report";
+type CenterTab = "ai" | "tree" | "validation" | "dax" | "mquery" | "report";
 
 type Selection =
   | { readonly kind: "measure"; readonly table: string; readonly name: string }
@@ -189,6 +191,33 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
   const [validating, setValidating] = useState(false);
   const [rightTab, setRightTab] = useState<"versions" | "changes">("versions");
   const [showRight, setShowRight] = useState(true);
+  const [jobRequest, setJobRequest] = useState<JobRequest | null>(null);
+
+  /** Start a Run-menu job in the AI Chat tab. */
+  function runJob(jobId: string) {
+    setCenter("ai");
+    setJobRequest({ jobId, nonce: Date.now() });
+  }
+
+  /** A proposal is in the drafts when the draft for its object says exactly it. */
+  const isApplied = (proposal: AssistantProposal) =>
+    drafts.get(draftKey(proposal.kind, proposal.table, proposal.name))?.expression === proposal.expression;
+
+  /** Proposals go into draft changes - never straight into a saved version. */
+  function applyProposals(proposals: readonly AssistantProposal[]) {
+    setDrafts((current) =>
+      proposals.reduce<Drafts>(
+        (acc, proposal) =>
+          withDraft(acc, { kind: proposal.kind, table: proposal.table, name: proposal.name, expression: proposal.expression }),
+        current,
+      ),
+    );
+    setShowRight(true);
+    setRightTab("changes");
+    setNotice(
+      `${proposals.length} change${proposals.length === 1 ? "" : "s"} added to draft changes. Review them, then save a version to keep them.`,
+    );
+  }
   const [report, setReport] = useState<ReportExplorer | null>(null);
   // Nothing is chosen until a person chooses it: the .pbip carries no visual
   // that was not ticked.
@@ -937,8 +966,18 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
             <MenuItem onClick={() => setLeft("files")}>Project files</MenuItem>
           </Menu>
           <Menu label="Run">
+            <MenuItem onClick={() => setCenter("ai")}>Chat</MenuItem>
+            {RUN_JOBS.map((job) => (
+              <MenuItem
+                key={job.id}
+                onClick={() => runJob(job.id)}
+                title={job.usesAi && !aiAvailable ? "Its checks run; the model step will say no model is configured." : undefined}
+              >
+                {job.label}
+                {job.usesAi && <span className="mg-note"> · AI</span>}
+              </MenuItem>
+            ))}
             <MenuItem onClick={() => void validate()}>Validate project</MenuItem>
-            <MenuItem onClick={referenceCheck}>Check DAX references</MenuItem>
           </Menu>
           <Menu label="Help">
             <MenuItem onClick={() => setNotice("Select a measure or table on the left, edit it, stage the change (Ctrl+S), then save a version on the right. The download always serves the newest version.")}>
@@ -1009,11 +1048,9 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
 
         <section className="mg-ide__center" aria-label="Editor">
           <div className="mg-tabs mg-tabs--line" role="tablist" style={{ padding: "0 14px" }}>
-            {aiAvailable && (
-              <button type="button" role="tab" className="mg-tab" aria-selected={false} disabled title="The assistant proposes; a person applies. Coming to this screen.">
-                AI Chat
-              </button>
-            )}
+            <button type="button" role="tab" className="mg-tab" aria-selected={center === "ai"} onClick={() => setCenter("ai")}>
+              AI Chat
+            </button>
             {(
               [
                 ["tree", "Model Tree"],
@@ -1042,6 +1079,16 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
             {center === "validation" && validationPane()}
             {center === "tree" && treePane()}
             {center === "report" && reportPane()}
+            <AssistantPane
+              projectId={projectId}
+              aiAvailable={aiAvailable}
+              selection={isExpression(selection) ? { kind: selection.kind, table: selection.table, name: selection.name } : null}
+              request={jobRequest}
+              isApplied={isApplied}
+              onApply={applyProposals}
+              onRunJob={runJob}
+              hidden={center !== "ai"}
+            />
           </div>
         </section>
 

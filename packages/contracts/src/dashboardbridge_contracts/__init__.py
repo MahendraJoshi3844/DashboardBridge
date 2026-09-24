@@ -11,6 +11,7 @@ from dashboardbridge_contracts.api import (
     WorkspaceColumn, WorkspaceCommit, WorkspaceEdit, WorkspaceFile, WorkspaceHeld,
     WorkspaceMeasure, WorkspaceModel, WorkspacePartition, WorkspaceTable, WorkspaceVersion,
     PublishRequest, ReportExplorer, ReportPage, ReportVisual,
+    AssistantFinding, AssistantMessage, AssistantProposal, AssistantStepRequest, AssistantStepResult,
 )
 from dashboardbridge_contracts.canonical import (
     CanonicalModel, Column, ConversionFlag, DataSource, Expression, FieldRef,

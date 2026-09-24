@@ -30,15 +30,20 @@ class OllamaProvider:
     remote host sits in a configured object waiting to be used.
     """
 
+    #: Ollama can constrain an answer to JSON (`format: json`).
+    supports_json_mode = True
+
     def __init__(
         self,
         host: str = "127.0.0.1",
         port: int = 11434,
         model: str = "llama3.1",
+        timeout_s: float = _GENERATE_TIMEOUT_S,
     ) -> None:
         self.host = require_loopback(host)
         self.port = port
         self.model = model
+        self.timeout_s = timeout_s
 
     @property
     def endpoint(self) -> str:
@@ -55,7 +60,7 @@ class OllamaProvider:
         except OSError:
             return False
 
-    async def generate(self, prompt: str) -> LLMResponse:
+    async def generate(self, prompt: str, json_mode: bool = False) -> LLMResponse:
         if not self.available():
             raise ProviderUnavailable(
                 f"No model runtime is listening on {self.host}:{self.port}."
@@ -63,22 +68,26 @@ class OllamaProvider:
         # `urllib` is blocking, so it runs off the event loop rather than
         # stalling it. A dedicated async HTTP client would be a dependency
         # bought for one call.
-        return await asyncio.to_thread(self._generate_blocking, prompt)
+        return await asyncio.to_thread(self._generate_blocking, prompt, json_mode)
 
-    def _generate_blocking(self, prompt: str) -> LLMResponse:
+    def _generate_blocking(self, prompt: str, json_mode: bool = False) -> LLMResponse:
         payload = json.dumps(
             {
                 "model": self.model,
                 "prompt": prompt,
                 "stream": False,
-                "options": {"temperature": 0.1},
+                **({"format": "json"} if json_mode else {}),
+                # A cap on the answer, not the question: every operation here
+                # wants a paragraph or an expression, and an unbounded one on a
+                # CPU is minutes of waiting for text nobody asked for.
+                "options": {"temperature": 0.1, "num_predict": 400},
             }
         ).encode("utf-8")
         http = urllib.request.Request(
             self.endpoint, data=payload, headers={"Content-Type": "application/json"}
         )
         try:
-            with urllib.request.urlopen(http, timeout=_GENERATE_TIMEOUT_S) as response:
+            with urllib.request.urlopen(http, timeout=self.timeout_s) as response:
                 body = json.loads(response.read().decode("utf-8"))
         except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
             raise ProviderUnavailable(f"{self.host}:{self.port} did not answer: {exc}") from exc

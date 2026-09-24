@@ -616,3 +616,72 @@ class PublishRequest(ApiModel):
     """The visuals to carry in the exported project. Empty carries none."""
 
     visual_ids: list[str] = Field(default_factory=list)
+
+
+# --------------------------------------------------------------------------
+# workspace assistant: the Run menu's checks, fixes and AI advice
+# --------------------------------------------------------------------------
+
+AssistantStepName = Literal[
+    "inventory",
+    "check_references",
+    "check_mquery",
+    "model_health",
+    "draft_dax",
+    "format_mquery",
+    "summarize",
+    "chat",
+]
+
+
+class AssistantStepRequest(ApiModel):
+    #: Which objects to work on - `Table.Name` for a measure or held
+    #: calculation, a table name for a Power Query source. Empty means all.
+    items: list[str] = Field(default_factory=list)
+    #: The person's question, for `chat`.
+    message: str = Field(default="", max_length=4000)
+
+
+class AssistantMessage(ApiModel):
+    role: Literal["system", "assistant"]
+    text: str
+    #: Set on an assistant message: which model wrote it.
+    model: str = ""
+
+
+class AssistantFinding(ApiModel):
+    severity: Literal["info", "warning", "error"]
+    item: str
+    message: str
+    check: str
+
+
+class AssistantProposal(ApiModel):
+    """A change offered to a person. Never applied by the step that made it.
+
+    `origin` says what produced it: `rule` for a deterministic rewrite whose
+    effect is stated in `reason`, `model` for a model's draft that has passed the
+    proposal checks. Either way a person puts it into their draft changes, or
+    does not.
+    """
+
+    kind: Literal["measure", "partition"]
+    table: str
+    name: str
+    expression: str
+    current: str = ""
+    reason: str
+    origin: Literal["rule", "model"]
+    model: str = ""
+
+
+class AssistantStepResult(ApiModel):
+    step: AssistantStepName
+    title: str
+    messages: list[AssistantMessage] = Field(default_factory=list)
+    findings: list[AssistantFinding] = Field(default_factory=list)
+    proposals: list[AssistantProposal] = Field(default_factory=list)
+    #: Checks that ran and how many found nothing, so a summary can state its
+    #: denominator.
+    checks_run: int = 0
+    checks_clean: int = 0
