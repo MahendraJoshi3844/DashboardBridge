@@ -576,3 +576,43 @@ class WorkspaceCommit(ApiModel):
     base_version: int
     note: str = ""
     edits: list[WorkspaceEdit] = Field(min_length=1)
+
+
+class ReportVisual(ApiModel):
+    """One Power BI visual in the produced report, and where it came from.
+
+    `source_name` is the Tableau worksheet it was converted from and
+    `source_mark` that worksheet's mark type. `status` is `converted` when no
+    flag names the worksheet, `partial` when one does, and `notes` are those
+    flags' reasons, verbatim.
+    """
+
+    id: str
+    page_id: str
+    visual_type: str
+    source_name: str = ""
+    source_mark: str = ""
+    fields: list[str] = Field(default_factory=list)
+    status: Literal["converted", "partial"] = "converted"
+    notes: list[str] = Field(default_factory=list)
+
+
+class ReportPage(ApiModel):
+    id: str
+    name: str
+    width: int = 0
+    height: int = 0
+    visuals: list[ReportVisual] = Field(default_factory=list)
+    #: Why a page carries no visual, when it carries none.
+    notes: list[str] = Field(default_factory=list)
+
+
+class ReportExplorer(ApiModel):
+    version: int
+    pages: list[ReportPage] = Field(default_factory=list)
+
+
+class PublishRequest(ApiModel):
+    """The visuals to carry in the exported project. Empty carries none."""
+
+    visual_ids: list[str] = Field(default_factory=list)

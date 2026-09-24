@@ -1180,3 +1180,62 @@
 .mg-table--fixed td {
   overflow-wrap: anywhere;
 }
+
+/* --- report explorer --------------------------------------------------------- */
+
+.mg-page {
+  border-bottom: 1px solid var(--mg-line);
+}
+
+.mg-page__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border-radius: 7px;
+}
+
+.mg-page__row[aria-current="true"] {
+  background: var(--mg-accent-soft);
+}
+
+.mg-page__row--visual {
+  padding-left: 30px;
+}
+
+.mg-page__row input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--mg-accent);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.mg-page__chevron {
+  width: 22px;
+  height: 22px;
+}
+
+.mg-page__name {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.mg-page__visuals {
+  padding-bottom: 6px;
+}
+
+.mg-map {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}

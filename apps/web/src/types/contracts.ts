@@ -4,7 +4,7 @@
  * Source: packages/contracts/schema.json (Pydantic → JSON Schema).
  * Regenerate: npm run gen:types
  *
- * 73 contract definitions.
+ * 77 contract definitions.
  */
 
 /* eslint-disable */
@@ -414,6 +414,23 @@ export type Model1 = string;
 export type Configured = boolean;
 export type Available = boolean;
 export type UnavailableBecause = string;
+export type VisualIds1 = string[];
+export type Version1 = number;
+export type Id6 = string;
+export type Name11 = string;
+export type Width = number;
+export type Height = number;
+export type Id7 = string;
+export type PageId = string;
+export type VisualType1 = string;
+export type SourceName = string;
+export type SourceMark = string;
+export type Fields = string[];
+export type Status2 = "converted" | "partial";
+export type Notes = string[];
+export type Visuals2 = ReportVisual[];
+export type Notes1 = string[];
+export type Pages = ReportPage[];
 /**
  * How loudly the report says so.
  *
@@ -440,7 +457,7 @@ export type SeatsUsed = number;
  * via the `definition` "Verdict".
  */
 export type Verdict2 = "verified" | "partially_verified" | "unverified" | "failed";
-export type Name11 = string;
+export type Name12 = string;
 export type DataType3 = string;
 export type BaseVersion = number;
 export type Note1 = string;
@@ -450,29 +467,29 @@ export type Note1 = string;
 export type Edits = [WorkspaceEdit, ...WorkspaceEdit[]];
 export type Kind4 = "measure" | "partition";
 export type Table2 = string;
-export type Name12 = string;
+export type Name13 = string;
 export type Expression1 = string;
 export type Path = string;
 export type SizeBytes1 = number;
 export type Item3 = string;
 export type Table3 = string;
-export type Name13 = string;
+export type Name14 = string;
 export type Source1 = string;
 export type Reason3 = string;
-export type Name14 = string;
+export type Name15 = string;
 export type Expression2 = string;
 export type ProjectId3 = string;
-export type Name15 = string;
-export type Version1 = number;
+export type Name16 = string;
 export type Version2 = number;
+export type Version3 = number;
 export type ArtifactId2 = string;
 export type CreatedAt2 = string;
 export type Note2 = string;
 export type Versions = WorkspaceVersion[];
-export type Name16 = string;
+export type Name17 = string;
 export type Columns2 = WorkspaceColumn[];
 export type Measures = WorkspaceMeasure[];
-export type Name17 = string;
+export type Name18 = string;
 export type Mode = string;
 export type SourceKind = string;
 export type Expression3 = string;
@@ -1035,6 +1052,56 @@ export interface ProviderSettings {
   unavailable_because?: UnavailableBecause;
 }
 /**
+ * The visuals to carry in the exported project. Empty carries none.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "PublishRequest".
+ */
+export interface PublishRequest {
+  visual_ids?: VisualIds1;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "ReportExplorer".
+ */
+export interface ReportExplorer {
+  version: Version1;
+  pages?: Pages;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "ReportPage".
+ */
+export interface ReportPage {
+  id: Id6;
+  name: Name11;
+  width?: Width;
+  height?: Height;
+  visuals?: Visuals2;
+  notes?: Notes1;
+}
+/**
+ * One Power BI visual in the produced report, and where it came from.
+ *
+ * `source_name` is the Tableau worksheet it was converted from and
+ * `source_mark` that worksheet's mark type. `status` is `converted` when no
+ * flag names the worksheet, `partial` when one does, and `notes` are those
+ * flags' reasons, verbatim.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "ReportVisual".
+ */
+export interface ReportVisual {
+  id: Id7;
+  page_id: PageId;
+  visual_type: VisualType1;
+  source_name?: SourceName;
+  source_mark?: SourceMark;
+  fields?: Fields;
+  status?: Status2;
+  notes?: Notes;
+}
+/**
  * Only the two things an administrator may change about someone else.
  *
  * Not the password: an administrator who can set another person's password
@@ -1086,7 +1153,7 @@ export interface UserList {
  * via the `definition` "WorkspaceColumn".
  */
 export interface WorkspaceColumn {
-  name: Name11;
+  name: Name12;
   data_type?: DataType3;
 }
 /**
@@ -1115,7 +1182,7 @@ export interface WorkspaceCommit {
 export interface WorkspaceEdit {
   kind: Kind4;
   table: Table2;
-  name: Name12;
+  name: Name13;
   expression: Expression1;
 }
 /**
@@ -1139,7 +1206,7 @@ export interface WorkspaceFile {
 export interface WorkspaceHeld {
   item: Item3;
   table: Table3;
-  name: Name13;
+  name: Name14;
   source?: Source1;
   reason: Reason3;
 }
@@ -1148,7 +1215,7 @@ export interface WorkspaceHeld {
  * via the `definition` "WorkspaceMeasure".
  */
 export interface WorkspaceMeasure {
-  name: Name14;
+  name: Name15;
   expression: Expression2;
 }
 /**
@@ -1157,8 +1224,8 @@ export interface WorkspaceMeasure {
  */
 export interface WorkspaceModel {
   project_id: ProjectId3;
-  name: Name15;
-  version: Version1;
+  name: Name16;
+  version: Version2;
   versions?: Versions;
   tables?: Tables2;
   files?: Files;
@@ -1171,7 +1238,7 @@ export interface WorkspaceModel {
  * via the `definition` "WorkspaceVersion".
  */
 export interface WorkspaceVersion {
-  version: Version2;
+  version: Version3;
   artifact_id: ArtifactId2;
   created_at: CreatedAt2;
   note?: Note2;
@@ -1181,7 +1248,7 @@ export interface WorkspaceVersion {
  * via the `definition` "WorkspaceTable".
  */
 export interface WorkspaceTable {
-  name: Name16;
+  name: Name17;
   columns?: Columns2;
   measures?: Measures;
   partitions?: Partitions;
@@ -1196,7 +1263,7 @@ export interface WorkspaceTable {
  * via the `definition` "WorkspacePartition".
  */
 export interface WorkspacePartition {
-  name: Name17;
+  name: Name18;
   mode?: Mode;
   source_kind?: SourceKind;
   expression: Expression3;

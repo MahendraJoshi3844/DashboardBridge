@@ -24,6 +24,7 @@ person's DAX; the conversion report still says what the converter did.
 from __future__ import annotations
 
 import io
+import json
 import re
 import zipfile
 from dataclasses import dataclass
@@ -239,3 +240,126 @@ def apply_edits(files: dict[str, bytes], edits: list[WorkspaceEdit]) -> dict[str
         text = changed[path].decode("utf-8")
         changed[path] = _apply_one(text, edit).encode("utf-8")
     return changed
+
+
+# --- the report: pages, visuals, and publishing a chosen few --------------------
+
+
+_PAGES_DIR = "/definition/pages/"
+
+
+def _pages_root(files: dict[str, bytes]) -> str | None:
+    """`<Name>.Report/definition/pages/`, or None for a project with no report."""
+    for path in files:
+        if path.endswith(f"{_PAGES_DIR}pages.json"):
+            return path[: -len("pages.json")]
+    return None
+
+
+@dataclass(frozen=True)
+class ReadVisual:
+    id: str
+    page_id: str
+    visual_type: str
+    fields: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class ReadPage:
+    id: str
+    name: str
+    width: int
+    height: int
+    visuals: tuple[ReadVisual, ...]
+
+
+def _fields(visual: dict) -> tuple[str, ...]:
+    """`Well: Table.Field` for every projection, in the order the file lists them."""
+    found: list[str] = []
+    state = ((visual.get("visual") or {}).get("query") or {}).get("queryState") or {}
+    for well, body in state.items():
+        for projection in (body or {}).get("projections") or []:
+            reference = projection.get("queryRef") or projection.get("nativeQueryRef") or ""
+            found.append(f"{well}: {reference}")
+    return tuple(found)
+
+
+def read_report(files: dict[str, bytes]) -> list[ReadPage]:
+    root = _pages_root(files)
+    if root is None:
+        return []
+    order = json.loads(files[f"{root}pages.json"]).get("pageOrder") or []
+    pages: list[ReadPage] = []
+    for page_id in order:
+        meta_path = f"{root}{page_id}/page.json"
+        if meta_path not in files:
+            continue
+        meta = json.loads(files[meta_path])
+        visuals = []
+        prefix = f"{root}{page_id}/visuals/"
+        for path in sorted(files):
+            if path.startswith(prefix) and path.endswith("/visual.json"):
+                body = json.loads(files[path])
+                visuals.append(
+                    ReadVisual(
+                        id=body.get("name") or path[len(prefix) :].split("/")[0],
+                        page_id=page_id,
+                        visual_type=(body.get("visual") or {}).get("visualType", "unknown"),
+                        fields=_fields(body),
+                    )
+                )
+        pages.append(
+            ReadPage(
+                id=page_id,
+                name=meta.get("displayName") or page_id,
+                width=int(meta.get("width") or 0),
+                height=int(meta.get("height") or 0),
+                visuals=tuple(visuals),
+            )
+        )
+    return pages
+
+
+def filter_report(files: dict[str, bytes], keep: set[str]) -> dict[str, bytes]:
+    """The project with only the visuals in `keep`, and the pages that hold them.
+
+    The semantic model is always carried. A page left with no chosen visual is
+    dropped; if that is every page, the first remains, empty and renamed
+    "Page 1", because Power BI Desktop does not open a report with no page and
+    a page named after a worksheet it no longer shows would say otherwise.
+    """
+    root = _pages_root(files)
+    if root is None:
+        return dict(files)
+    pages = read_report(files)
+    kept_pages = [page for page in pages if any(v.id in keep for v in page.visuals)]
+    empty = not kept_pages and bool(pages)
+    if empty:
+        kept_pages = [pages[0]]
+    kept_ids = {page.id for page in kept_pages}
+
+    result: dict[str, bytes] = {}
+    for path, body in files.items():
+        if not path.startswith(root) or path == f"{root}pages.json":
+            if path != f"{root}pages.json":
+                result[path] = body
+            continue
+        page_id = path[len(root) :].split("/")[0]
+        if page_id not in kept_ids:
+            continue
+        if "/visuals/" in path:
+            visual_id = path.split("/visuals/")[1].split("/")[0]
+            if visual_id not in keep:
+                continue
+        result[path] = body
+
+    order = json.loads(files[f"{root}pages.json"])
+    order["pageOrder"] = [page.id for page in kept_pages]
+    order["activePageName"] = kept_pages[0].id if kept_pages else ""
+    result[f"{root}pages.json"] = (json.dumps(order, indent=2) + "\n").encode("utf-8")
+    if empty:
+        meta_path = f"{root}{kept_pages[0].id}/page.json"
+        meta = json.loads(files[meta_path])
+        meta["displayName"] = "Page 1"
+        result[meta_path] = (json.dumps(meta, indent=2) + "\n").encode("utf-8")
+    return result

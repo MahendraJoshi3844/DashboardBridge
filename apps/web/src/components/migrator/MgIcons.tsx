@@ -219,3 +219,9 @@ export const IconWifi = (p: IconProps) => (
     <path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01" />
   </Icon>
 );
+export const IconReport = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="4" y="3" width="16" height="18" rx="2" />
+    <path d="M8 16v-3M12 16V9M16 16v-5" />
+  </Icon>
+);

@@ -27,6 +27,7 @@ import type {
   ProviderSettings,
   UserAccount,
   Validation,
+  ReportExplorer,
   WorkspaceCommit,
   WorkspaceModel,
 } from "@/types/contracts";
@@ -669,4 +670,57 @@ export async function getRecordedRun(
 
 export function reportUrl(projectId: string): string {
   return `${API_BASE_URL}${API_PREFIX}/projects/${projectId}/report?format=html`;
+}
+
+export function getReportExplorer(
+  projectId: string,
+  options: RequestOptions = {},
+): Promise<ReportExplorer> {
+  return request<ReportExplorer>(`/projects/${projectId}/workspace/report`, options);
+}
+
+/** The newest version as a .pbip archive carrying only the chosen visuals. */
+export async function publishSelection(
+  projectId: string,
+  visualIds: readonly string[],
+  fallbackFilename: string,
+): Promise<DownloadedArtifact> {
+  const url = `${API_BASE_URL}${API_PREFIX}/projects/${projectId}/workspace/publish`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/zip, application/json" },
+      credentials: WITH_SESSION,
+      cache: "no-store",
+      body: JSON.stringify({ visual_ids: visualIds }),
+    });
+  } catch (cause) {
+    throw new ApiRequestError(
+      fallbackError(
+        "We cannot reach the DashboardBridge service. Check that it is running, then try again.",
+        `POST ${url} — ${cause instanceof Error ? cause.message : String(cause)}`,
+      ),
+    );
+  }
+  if (!response.ok) {
+    let body: unknown = null;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+    throw new ApiRequestError(
+      asApiError(body) ??
+        fallbackError(
+          "The project could not be exported.",
+          `POST ${url} responded ${response.status} ${response.statusText}`,
+        ),
+      response.status,
+    );
+  }
+  return {
+    blob: await response.blob(),
+    filename: filenameFrom(response.headers.get("content-disposition")) ?? fallbackFilename,
+  };
 }

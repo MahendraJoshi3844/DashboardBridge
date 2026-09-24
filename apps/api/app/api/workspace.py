@@ -16,6 +16,10 @@ from uuid import UUID, uuid4
 
 from dashboardbridge_contracts import (
     Conversion,
+    PublishRequest,
+    ReportExplorer,
+    ReportPage,
+    ReportVisual,
     WorkspaceCommit,
     WorkspaceHeld,
     WorkspaceModel,
@@ -29,13 +33,14 @@ from dashboardbridge_contracts.enums import (
     Stage,
 )
 from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.projects import load_project
 from app.core.db import get_session
 from app.core.errors import ApiException
+from app.core.headers import header_safe_filename
 from app.db.models import Artifact as ArtifactRow
 from app.db.models import JobKind as DbJobKind
 from app.db.queries import latest_job
@@ -233,3 +238,106 @@ def save_version(
         extra={"project_id": str(project_id), "operation": "workspace.save"},
     )
     return _model(session, project, _versions(session, project_id), store)
+
+
+def _visual_notes(session: Session, project_id: UUID) -> tuple[dict[str, str], dict[str, list[str]]]:
+    """Worksheet name to its Tableau mark, and to the reasons flags give about it.
+
+    A visual's flags are named after its worksheet - `Sheet` or `Sheet: Field` -
+    which is also the name of the page it was written on.
+    """
+    job = latest_job(session, project_id, DbJobKind.CONVERSION)
+    if job is None or job.result is None:
+        return {}, {}
+    conversion = Conversion.model_validate(job.result)
+    marks = {
+        visual.name: visual.visual_type
+        for visual in (conversion.model.visuals if conversion.model else [])
+    }
+    notes: dict[str, list[str]] = {}
+    for flag in conversion.flags:
+        if flag.status is ConversionStatus.CONVERTED:
+            continue
+        for sheet in marks:
+            if flag.item == sheet or flag.item.startswith(f"{sheet}: "):
+                notes.setdefault(sheet, []).append(flag.reason)
+    return marks, notes
+
+
+@router.get("/projects/{project_id}/workspace/report", response_model=ReportExplorer)
+def get_report_explorer(
+    project_id: UUID,
+    session: Session = Depends(get_session),
+    store: ArtifactStore = Depends(get_artifact_store),
+) -> ReportExplorer:
+    """Every page and visual of the newest version, with its Tableau source."""
+    _power_bi_only(session, project_id)
+    rows = _versions(session, project_id)
+    marks, notes = _visual_notes(session, project_id)
+    pages = ws.read_report(ws.unzip(store.read(rows[-1].storage_key)))
+    return ReportExplorer(
+        version=len(rows) - 1,
+        pages=[
+            ReportPage(
+                id=page.id,
+                name=page.name,
+                width=page.width,
+                height=page.height,
+                notes=[] if page.visuals else notes.get(page.name, []),
+                visuals=[
+                    ReportVisual(
+                        id=visual.id,
+                        page_id=page.id,
+                        visual_type=visual.visual_type,
+                        source_name=page.name if page.name in marks else "",
+                        source_mark=marks.get(page.name, ""),
+                        fields=list(visual.fields),
+                        status="partial" if notes.get(page.name) else "converted",
+                        notes=notes.get(page.name, []),
+                    )
+                    for visual in page.visuals
+                ],
+            )
+            for page in pages
+        ],
+    )
+
+
+@router.post("/projects/{project_id}/workspace/publish")
+def publish_selection(
+    project_id: UUID,
+    body: PublishRequest,
+    session: Session = Depends(get_session),
+    store: ArtifactStore = Depends(get_artifact_store),
+) -> Response:
+    """The newest version as a .pbip archive carrying only the chosen visuals.
+
+    An id that names no visual is refused rather than skipped: a person who
+    ticked something expects it in the file, and a silently shorter report is
+    the kind of loss this product exists to prevent.
+    """
+    _power_bi_only(session, project_id)
+    rows = _versions(session, project_id)
+    files = ws.unzip(store.read(rows[-1].storage_key))
+    known = {visual.id for page in ws.read_report(files) for visual in page.visuals}
+    unknown = sorted(set(body.visual_ids) - known)
+    if unknown:
+        raise ApiException(
+            ErrorCategory.VALIDATION_ERROR,
+            "Some of the chosen visuals are not in this version of the report. "
+            "Reload the Report Explorer and choose again.",
+            detail=f"unknown visual ids {unknown}",
+            status_code=400,
+        )
+    payload = ws.rezip(ws.filter_report(files, set(body.visual_ids)))
+    logger.info(
+        "workspace published",
+        extra={"project_id": str(project_id), "operation": "workspace.publish"},
+    )
+    return Response(
+        content=payload,
+        media_type="application/zip",
+        headers={
+            "content-disposition": f'attachment; filename="{header_safe_filename(rows[-1].filename)}"'
+        },
+    )

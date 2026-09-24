@@ -17,10 +17,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
-  downloadArtifact,
   getValidation,
   getWorkspace,
+  getReportExplorer,
   getWorkspaceFile,
+  publishSelection,
   reportUrl,
   saveWorkspaceVersion,
   startValidation,
@@ -37,9 +38,10 @@ import {
   type Drafts,
   type ReferenceProblem,
 } from "@/lib/migrator/workspace";
-import type { ApiError, Validation, WorkspaceCommit, WorkspaceEdit, WorkspaceModel } from "@/types/contracts";
+import type { ApiError, ReportExplorer, Validation, WorkspaceCommit, WorkspaceEdit, WorkspaceModel } from "@/types/contracts";
 
 import {
+  IconChart,
   IconCheck,
   IconChevron,
   IconClose,
@@ -55,6 +57,7 @@ import {
   IconPlay,
   IconPlug,
   IconRefresh,
+  IconReport,
   IconSearch,
   IconSigma,
   IconTable,
@@ -62,14 +65,22 @@ import {
   IconWifi,
 } from "./MgIcons";
 
-type LeftMode = "tables" | "measures" | "held" | "mquery" | "files";
-type CenterTab = "tree" | "validation" | "dax" | "mquery";
+type LeftMode = "tables" | "measures" | "held" | "mquery" | "report" | "files";
+type CenterTab = "tree" | "validation" | "dax" | "mquery" | "report";
 
 type Selection =
   | { readonly kind: "measure"; readonly table: string; readonly name: string }
   | { readonly kind: "held"; readonly table: string; readonly name: string; readonly item: string }
   | { readonly kind: "partition"; readonly table: string; readonly name: string }
-  | { readonly kind: "file"; readonly path: string };
+  | { readonly kind: "file"; readonly path: string }
+  | { readonly kind: "page"; readonly pageId: string }
+  | { readonly kind: "visual"; readonly pageId: string; readonly visualId: string };
+
+type ExpressionSelection = Extract<Selection, { kind: "measure" | "held" | "partition" }>;
+
+function isExpression(selection: Selection | null): selection is ExpressionSelection {
+  return selection !== null && (selection.kind === "measure" || selection.kind === "held" || selection.kind === "partition");
+}
 
 const UNAVAILABLE = {
   connections: "Server and warehouse connections are not configured on this deployment yet.",
@@ -178,10 +189,21 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
   const [validating, setValidating] = useState(false);
   const [rightTab, setRightTab] = useState<"versions" | "changes">("versions");
   const [showRight, setShowRight] = useState(true);
+  const [report, setReport] = useState<ReportExplorer | null>(null);
+  // Nothing is chosen until a person chooses it: the .pbip carries no visual
+  // that was not ticked.
+  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
       setModel(await getWorkspace(projectId));
+      const explorer = await getReportExplorer(projectId);
+      setReport(explorer);
+      // A reload can remove a visual; a tick on something gone is dropped
+      // rather than sent and refused.
+      const present = new Set(explorer.pages?.flatMap((page) => page.visuals?.map((visual) => visual.id) ?? []) ?? []);
+      setChosen((current) => new Set([...current].filter((id) => present.has(id))));
       setError(null);
     } catch (cause) {
       setError(toApiError(cause));
@@ -201,7 +223,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
   /** What the selected object says now: its draft if there is one, else the model. */
   const currentExpression = useCallback(
     (target: Selection): string => {
-      if (!model || target.kind === "file") return "";
+      if (!model || !isExpression(target)) return "";
       const kind = target.kind === "partition" ? "partition" : "measure";
       const draft = drafts.get(draftKey(kind, target.table, target.name));
       if (draft) return draft.expression;
@@ -217,6 +239,10 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
   function select(next: Selection) {
     setSelection(next);
     setProblems(null);
+    if (next.kind === "page" || next.kind === "visual") {
+      setCenter("report");
+      return;
+    }
     if (next.kind === "file") {
       setCenter("tree");
       setFileText("Loading…");
@@ -229,12 +255,12 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
     setText(currentExpression(next));
   }
 
-  const editable = selection !== null && selection.kind !== "file";
-  const original = selection && selection.kind !== "file" ? currentExpression(selection) : "";
+  const editable = isExpression(selection);
+  const original = isExpression(selection) ? currentExpression(selection) : "";
   const dirty = editable && text.trim() !== original.trim() && text.trim() !== "";
 
   function stage() {
-    if (!selection || selection.kind === "file" || !text.trim()) return;
+    if (!isExpression(selection) || !text.trim()) return;
     const edit: WorkspaceEdit = {
       kind: selection.kind === "partition" ? "partition" : "measure",
       table: selection.table,
@@ -290,8 +316,13 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
 
   async function download() {
     try {
-      const { blob, filename } = await downloadArtifact(projectId, `${model?.name ?? "project"}.pbip.zip`);
+      const { blob, filename } = await publishSelection(projectId, [...chosen], `${model?.name ?? "project"}.pbip.zip`);
       saveBlob(blob, filename);
+      setNotice(
+        chosen.size === 0
+          ? "Exported the .pbip with the semantic model and no visuals. Tick visuals in the Report Explorer to carry them."
+          : `Exported the .pbip with ${chosen.size} of ${visualCount} visuals.`,
+      );
     } catch (cause) {
       setError(toApiError(cause));
     }
@@ -310,6 +341,219 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
 
   const query = search.toLowerCase();
   const matches = (value: string) => value.toLowerCase().includes(query);
+
+  /* --- report explorer ------------------------------------------------------ */
+
+  const pages = report?.pages ?? [];
+  const visualCount = pages.reduce((sum, page) => sum + (page.visuals?.length ?? 0), 0);
+
+  function toggleVisual(id: string) {
+    const next = new Set(chosen);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setChosen(next);
+  }
+
+  function togglePage(ids: readonly string[]) {
+    const next = new Set(chosen);
+    const all = ids.every((id) => next.has(id));
+    for (const id of ids) {
+      if (all) next.delete(id);
+      else next.add(id);
+    }
+    setChosen(next);
+  }
+
+  function toggleExpanded(id: string) {
+    const next = new Set(expanded);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setExpanded(next);
+  }
+
+  function reportPanel(): ReactNode {
+    return (
+      <>
+        <div className="mg-panelhead" style={{ padding: "8px 12px" }}>
+          <span>
+            <strong style={{ fontSize: 12, letterSpacing: "0.05em", textTransform: "uppercase", display: "block" }}>Report Explorer</strong>
+            <span className="mg-note">
+              {pages.length} pages, {visualCount} visuals
+            </span>
+          </span>
+          <button type="button" className="mg-iconbtn" aria-label="Reload the report" title="Reload" onClick={() => void load()}>
+            <IconRefresh size={14} />
+          </button>
+        </div>
+        <div className="mg-list" style={{ paddingTop: 6 }}>
+          {report === null && <p className="mg-empty">Loading the report…</p>}
+          {pages.map((page) => {
+            const ids = (page.visuals ?? []).map((visual) => visual.id);
+            const picked = ids.filter((id) => chosen.has(id)).length;
+            const open = expanded.has(page.id);
+            return (
+              <div key={page.id} className="mg-page">
+                <div className="mg-page__row" aria-current={selection?.kind === "page" && selection.pageId === page.id}>
+                  <input
+                    type="checkbox"
+                    aria-label={`Include every visual on ${page.name}`}
+                    disabled={ids.length === 0}
+                    checked={ids.length > 0 && picked === ids.length}
+                    ref={(box) => {
+                      if (box) box.indeterminate = picked > 0 && picked < ids.length;
+                    }}
+                    onChange={() => togglePage(ids)}
+                  />
+                  <button
+                    type="button"
+                    className="mg-iconbtn mg-page__chevron"
+                    aria-expanded={open}
+                    aria-label={open ? `Collapse ${page.name}` : `Expand ${page.name}`}
+                    onClick={() => toggleExpanded(page.id)}
+                  >
+                    <IconChevron size={13} style={{ transform: open ? "rotate(90deg)" : undefined }} />
+                  </button>
+                  <button type="button" className="mg-page__name" onClick={() => { select({ kind: "page", pageId: page.id }); toggleExpanded(page.id); }}>
+                    <IconReport size={14} style={{ color: "var(--mg-accent)" }} />
+                    <span>
+                      <span className="mg-listitem__name">{page.name}</span>
+                      <span className="mg-listitem__meta" style={{ display: "block" }}>
+                        {page.width}×{page.height} · {page.visuals?.length ?? 0} visual{(page.visuals?.length ?? 0) === 1 ? "" : "s"}
+                      </span>
+                    </span>
+                  </button>
+                </div>
+                {open && (
+                  <div className="mg-page__visuals">
+                    {(page.visuals ?? []).length === 0 && (
+                      <p className="mg-note" style={{ margin: "4px 0 8px 30px" }}>
+                        No visual was written for this worksheet{page.notes?.length ? `: ${page.notes[0]}` : "."}
+                      </p>
+                    )}
+                    {(page.visuals ?? []).map((visual) => (
+                      <div key={visual.id} className="mg-page__row mg-page__row--visual" aria-current={selection?.kind === "visual" && selection.visualId === visual.id}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Include ${visual.visual_type} from ${visual.source_name || page.name}`}
+                          checked={chosen.has(visual.id)}
+                          onChange={() => toggleVisual(visual.id)}
+                        />
+                        <button type="button" className="mg-page__name" onClick={() => select({ kind: "visual", pageId: page.id, visualId: visual.id })}>
+                          <IconChart size={14} style={{ color: "var(--mg-powerbi)" }} />
+                          <span>
+                            <span className="mg-listitem__name">{visual.visual_type}</span>
+                            <span className="mg-listitem__meta" style={{ display: "block" }}>
+                              {visual.fields?.length ?? 0} field{(visual.fields?.length ?? 0) === 1 ? "" : "s"}
+                              {visual.status === "partial" && <span style={{ color: "var(--mg-warn)" }}> · needs a look</span>}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <div className="mg-section" style={{ borderTop: "1px solid var(--mg-line)", borderBottom: 0 }}>
+          <div className="mg-note">
+            {chosen.size} of {visualCount} visuals selected. The .pbip carries only the selected visuals, with the full semantic model.
+          </div>
+          <button type="button" className="mg-btn mg-btn--primary mg-btn--block mg-btn--sm" style={{ marginTop: 8 }} onClick={() => void download()}>
+            <IconDownload size={13} /> Export .pbip with {chosen.size} visual{chosen.size === 1 ? "" : "s"}
+          </button>
+        </div>
+      </>
+    );
+  }
+
+  function reportPane(): ReactNode {
+    const page = selection && (selection.kind === "page" || selection.kind === "visual")
+      ? pages.find((candidate) => candidate.id === selection.pageId)
+      : undefined;
+    if (!page) {
+      return (
+        <div className="mg-placeholder">
+          <div>
+            <IconReport size={28} />
+            <p>Open the Report Explorer and select a page or visual to see what came across from Tableau.</p>
+          </div>
+        </div>
+      );
+    }
+    const visuals = selection?.kind === "visual"
+      ? (page.visuals ?? []).filter((visual) => visual.id === selection.visualId)
+      : page.visuals ?? [];
+    return (
+      <div style={{ overflowY: "auto", padding: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <IconReport size={16} style={{ color: "var(--mg-accent)" }} />
+          <strong>{page.name}</strong>
+          <span className="mg-note">
+            {page.width}×{page.height} · {page.visuals?.length ?? 0} visual{(page.visuals?.length ?? 0) === 1 ? "" : "s"}
+          </span>
+        </div>
+        {visuals.length === 0 && (
+          <p className="mg-note">
+            No visual was written for this worksheet.{page.notes?.length ? ` ${page.notes.join(" ")}` : ""}
+          </p>
+        )}
+        {visuals.map((visual) => (
+          <div key={visual.id} className="mg-card" style={{ padding: 14, marginBottom: 12 }}>
+            <div className="mg-map">
+              <div>
+                <div className="mg-stat__label">Tableau</div>
+                <div className="mg-stat__value">
+                  <IconLayers size={14} style={{ color: "var(--mg-tableau)" }} /> {visual.source_name || page.name}
+                </div>
+                <div className="mg-note">Mark: {visual.source_mark || "not recorded"}</div>
+              </div>
+              <span aria-hidden="true" style={{ color: "var(--mg-ink-3)" }}>→</span>
+              <div>
+                <div className="mg-stat__label">Power BI</div>
+                <div className="mg-stat__value">
+                  <IconChart size={14} style={{ color: "var(--mg-powerbi)" }} /> {visual.visual_type}
+                </div>
+                <div className="mg-note">
+                  {visual.status === "partial" ? <span style={{ color: "var(--mg-warn)" }}>Converted with notes</span> : "Converted"}
+                </div>
+              </div>
+              <label className="mg-btn mg-btn--sm" style={{ marginLeft: "auto" }}>
+                <input type="checkbox" checked={chosen.has(visual.id)} onChange={() => toggleVisual(visual.id)} /> Include in .pbip
+              </label>
+            </div>
+            <table className="mg-table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr>
+                  <th>Well</th>
+                  <th>Field</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(visual.fields ?? []).map((field) => {
+                  const [well, ...rest] = field.split(": ");
+                  return (
+                    <tr key={field}>
+                      <td>{well}</td>
+                      <td className="mg-mono" style={{ fontSize: 12 }}>{rest.join(": ")}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {(visual.notes?.length ?? 0) > 0 && (
+              <div className="mg-section" style={{ background: "var(--mg-warn-soft)", marginTop: 10, borderRadius: 8, borderBottom: 0 }}>
+                {visual.notes?.map((note) => (
+                  <div key={note} className="mg-note" style={{ color: "var(--mg-ink-2)" }}>{note}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   /* --- left panel ---------------------------------------------------------- */
 
@@ -427,6 +671,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
         </>
       );
     }
+    if (left === "report") return reportPanel();
     if (left === "files") {
       return (
         <>
@@ -494,7 +739,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
   /* --- centre ------------------------------------------------------------------ */
 
   function editorPane(kind: "dax" | "mquery"): ReactNode {
-    const target = selection !== null && selection.kind !== "file" ? selection : null;
+    const target = isExpression(selection) ? selection : null;
     const matchesKind = target !== null && (kind === "mquery") === (target.kind === "partition");
     if (!matchesKind || target === null) {
       return (
@@ -677,7 +922,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
         <span className="mg-note" style={{ fontWeight: 700, letterSpacing: "0.05em" }}>POWER BI</span>
         <nav style={{ display: "flex", gap: 2 }} aria-label="Menu">
           <Menu label="File">
-            <MenuItem onClick={() => void download()}>Download .pbip</MenuItem>
+            <MenuItem onClick={() => void download()}>Export .pbip (selected visuals)</MenuItem>
             <MenuItem onClick={() => window.open(reportUrl(projectId), "_blank", "noreferrer")}>Migration report</MenuItem>
             <MenuItem disabled title={UNAVAILABLE.pbit}>Export .pbit</MenuItem>
             <MenuItem onClick={() => (window.location.href = `/jobs/${projectId}`)}>Back to the job</MenuItem>
@@ -738,7 +983,12 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
         </ToolGroup>
         <ToolGroup label="Publish">
           <Tool icon={<IconDownload />} label=".pbit" disabled title={UNAVAILABLE.pbit} />
-          <Tool icon={<IconDownload />} label=".pbip" onClick={() => void download()} />
+          <Tool
+            icon={<IconDownload />}
+            label=".pbip"
+            onClick={() => void download()}
+            title={`Export the project with ${chosen.size} of ${visualCount} visuals selected in the Report Explorer`}
+          />
           <Tool icon={<IconUpload />} label="Publish" disabled title={UNAVAILABLE.publish} />
         </ToolGroup>
       </div>
@@ -749,6 +999,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
           {railButton("measures", "Measures", <IconSigma />)}
           {railButton("held", "Held for you", <IconHand />)}
           {railButton("mquery", "M-Query", <IconCode />)}
+          {railButton("report", "Report Explorer", <IconReport />)}
           {railButton("files", "Project files", <IconDoc />)}
         </nav>
 
@@ -769,6 +1020,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
                 ["validation", "Data Validation"],
                 ["dax", "DAX Studio"],
                 ["mquery", "M-Query"],
+                ["report", "Report"],
               ] as const
             ).map(([id, label]) => (
               <button key={id} type="button" role="tab" className="mg-tab" aria-selected={center === id} onClick={() => setCenter(id)}>
@@ -789,6 +1041,7 @@ export function PowerBiWorkspace({ projectId }: { readonly projectId: string }) 
             {center === "mquery" && editorPane("mquery")}
             {center === "validation" && validationPane()}
             {center === "tree" && treePane()}
+            {center === "report" && reportPane()}
           </div>
         </section>
 

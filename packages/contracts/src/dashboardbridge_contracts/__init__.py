@@ -10,6 +10,7 @@ from dashboardbridge_contracts.api import (
     SkippedItem, Validation, ValidationRuleResult,
     WorkspaceColumn, WorkspaceCommit, WorkspaceEdit, WorkspaceFile, WorkspaceHeld,
     WorkspaceMeasure, WorkspaceModel, WorkspacePartition, WorkspaceTable, WorkspaceVersion,
+    PublishRequest, ReportExplorer, ReportPage, ReportVisual,
 )
 from dashboardbridge_contracts.canonical import (
     CanonicalModel, Column, ConversionFlag, DataSource, Expression, FieldRef,

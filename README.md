@@ -43,6 +43,10 @@ halves; `-Reset` starts from an empty deployment.
   table Power Query, write DAX for calculations the converter held, check DAX
   references, run validation, and save the edits as a new version. The
   download always serves the newest version.
+  **Report Explorer** (rail, after M-Query) lists every page and visual that
+  came across, each with its Tableau worksheet, mark type, fields and the
+  converter's notes. Nothing is ticked by default; the `.pbip` export carries
+  the full semantic model and only the ticked visuals.
 - **Migration Jobs** (`/jobs`) — every job, with status and resume.
 
 The guided single-screen flow is still at `/classic`.

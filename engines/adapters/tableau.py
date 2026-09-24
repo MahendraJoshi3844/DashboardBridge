@@ -117,6 +117,28 @@ class UnreadableArtifact(Exception):
     """
 
 
+def _twb_from_package(data: bytes) -> bytes:
+    """The `.twb` inside a `.twbx`, through the engine's capped extractor.
+
+    The extractor reads a path, because the CLI and desktop hand it one, so the
+    bytes go to a temporary file first. An archive with no workbook in it, or
+    one that lies about its members, is refused as unreadable rather than
+    parsed as whatever it happens to contain.
+    """
+    import tempfile  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    from engines.t2pbi.core.extract import InvalidWorkbookError, extract  # noqa: PLC0415
+
+    with tempfile.TemporaryDirectory(prefix="dbb-twbx-") as scratch:
+        package = Path(scratch) / "source.twbx"
+        package.write_bytes(data)
+        try:
+            return extract(package).twb_bytes
+        except InvalidWorkbookError as exc:
+            raise UnreadableArtifact(str(exc)) from exc
+
+
 def _datatype(raw: str | None) -> DataType:
     return _DATATYPES.get((raw or "").lower(), DataType.UNKNOWN)
 
@@ -146,7 +168,16 @@ class TableauAdapter:
     def parse(self, data: bytes) -> Workbook:
         """Bytes -> the engine's IR. Grain is classified here because the
         canonical model records grain per column, and classification needs the
-        whole workbook to reach a fixpoint."""
+        whole workbook to reach a fixpoint.
+
+        A `.twbx` is a zip, and the `.twb` inside it is what gets parsed. It is
+        taken out by the engine's own extractor - the one the conversion uses -
+        so the member cap and the lying-member check apply here too. Handing the
+        zip itself to the XML parser under `recover=True` produced no document
+        at all, and every packaged workbook failed analysis.
+        """
+        if data[:2] == b"PK":
+            data = _twb_from_package(data)
         workbook = parse_workbook(data)
         _classify_calculations(workbook)
         return workbook

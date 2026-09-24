@@ -1535,6 +1535,21 @@
       "title": "ProviderSettings",
       "type": "object"
     },
+    "PublishRequest": {
+      "additionalProperties": false,
+      "description": "The visuals to carry in the exported project. Empty carries none.",
+      "properties": {
+        "visual_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Visual Ids",
+          "type": "array"
+        }
+      },
+      "title": "PublishRequest",
+      "type": "object"
+    },
     "Relationship": {
       "additionalProperties": false,
       "properties": {
@@ -1567,6 +1582,128 @@
         "to_column"
       ],
       "title": "Relationship",
+      "type": "object"
+    },
+    "ReportExplorer": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "pages": {
+          "items": {
+            "$ref": "#/definitions/ReportPage"
+          },
+          "title": "Pages",
+          "type": "array"
+        }
+      },
+      "required": [
+        "version"
+      ],
+      "title": "ReportExplorer",
+      "type": "object"
+    },
+    "ReportPage": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "width": {
+          "default": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "default": 0,
+          "title": "Height",
+          "type": "integer"
+        },
+        "visuals": {
+          "items": {
+            "$ref": "#/definitions/ReportVisual"
+          },
+          "title": "Visuals",
+          "type": "array"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "ReportPage",
+      "type": "object"
+    },
+    "ReportVisual": {
+      "additionalProperties": false,
+      "description": "One Power BI visual in the produced report, and where it came from.\n\n`source_name` is the Tableau worksheet it was converted from and\n`source_mark` that worksheet's mark type. `status` is `converted` when no\nflag names the worksheet, `partial` when one does, and `notes` are those\nflags' reasons, verbatim.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "page_id": {
+          "title": "Page Id",
+          "type": "string"
+        },
+        "visual_type": {
+          "title": "Visual Type",
+          "type": "string"
+        },
+        "source_name": {
+          "default": "",
+          "title": "Source Name",
+          "type": "string"
+        },
+        "source_mark": {
+          "default": "",
+          "title": "Source Mark",
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fields",
+          "type": "array"
+        },
+        "status": {
+          "default": "converted",
+          "enum": [
+            "converted",
+            "partial"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "page_id",
+        "visual_type"
+      ],
+      "title": "ReportVisual",
       "type": "object"
     },
     "Severity": {
