@@ -7,6 +7,8 @@ stays callable from a CLI, the desktop shell, or a test with no server running.
 from __future__ import annotations
 
 import logging
+import tempfile
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from dashboardbridge_contracts import Analysis, Job
@@ -46,9 +48,6 @@ def _adapter_for(platform: Platform):
         from engines.adapters.tableau import TableauAdapter  # noqa: PLC0415
 
         _ADAPTERS[Platform.TABLEAU] = TableauAdapter
-        # Reading Power BI is not converting from it: `P6a` reads a PBIP into
-        # the canonical model, and `P6b` - writing Tableau - does not exist, so
-        # the conversion endpoint still refuses this platform.
         _ADAPTERS[Platform.POWERBI] = PowerBIAdapter
     factory = _ADAPTERS.get(platform)
     if factory is None:
@@ -144,14 +143,25 @@ def start_analysis(
         ) from exc
 
     inventory = analysis_service.inventory_of(model)
+    compatibility = analysis_service.compatibility_of(inventory, model.flags)
+    flags = model.flags
+    if Platform(project.source_platform) is Platform.POWERBI:
+        # Most of what will not cross is only known when the workbook is
+        # written, so the prediction is a dry run of the real conversion rather
+        # than a guess from what reading found. The analysis and the results
+        # then come from the same code and cannot disagree.
+        model, compatibility, flags = _dry_run(
+            session, job, data, project.name or "project", project_id
+        )
+
     job.result = Analysis(
         analysis_id=job.job_id,
         status=JobStatus.COMPLETED,
         model=model,
         inventory=inventory,
         complexity=analysis_service.complexity_of(inventory),
-        compatibility=analysis_service.compatibility_of(inventory, model.flags),
-        flags=model.flags,
+        compatibility=compatibility,
+        flags=flags,
     ).model_dump(mode="json")
     job.transition_to(DbJobStatus.COMPLETED)
     session.commit()
@@ -165,6 +175,27 @@ def start_analysis(
         },
     )
     return Job(job_id=job.job_id, kind=JobKind.ANALYSIS, status=JobStatus.COMPLETED)
+
+
+def _dry_run(session: Session, job: JobRow, data: bytes, name: str, project_id: UUID):
+    """Convert into a directory that is thrown away, and keep only the report."""
+    from engines.conversion.to_tableau import (  # noqa: PLC0415
+        NoSemanticModel,
+        convert_powerbi_to_tableau,
+    )
+
+    try:
+        with tempfile.TemporaryDirectory(prefix="dbb-dry-run-") as scratch:
+            outcome = convert_powerbi_to_tableau(data, Path(scratch) / "out", name)
+    except NoSemanticModel as exc:
+        _fail(session, job, ErrorCategory.UNSUPPORTED_ARTIFACT)
+        raise ApiException(
+            ErrorCategory.UNSUPPORTED_ARTIFACT,
+            str(exc),
+            detail=f"NoSemanticModel: {exc}",
+            project_id=project_id,
+        ) from exc
+    return outcome.model, outcome.compatibility, outcome.flags
 
 
 @router.get("/projects/{project_id}/analysis", response_model=Analysis)

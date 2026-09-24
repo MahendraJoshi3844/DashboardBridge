@@ -18,13 +18,19 @@ import tempfile
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from dashboardbridge_contracts import Conversion, Job, Validation
+from dashboardbridge_contracts import (
+    Conversion,
+    Job,
+    Validation,
+    ValidationRuleResult,
+)
 from dashboardbridge_contracts.enums import (
     ArtifactKind,
     ErrorCategory,
     JobKind,
     JobStatus,
     Platform,
+    Verdict,
 )
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
@@ -94,6 +100,14 @@ def start_validation(
     job.transition_to(DbJobStatus.RUNNING)
     session.flush()
 
+    if Platform(project.target_platform) is Platform.TABLEAU:
+        job.result = _unverified_tableau(job.job_id).model_dump(mode="json")
+        job.transition_to(DbJobStatus.COMPLETED)
+        session.commit()
+        return Job(
+            job_id=job.job_id, kind=JobKind.VALIDATION, status=JobStatus.COMPLETED
+        )
+
     try:
         target = TargetProject.from_zip(store.read(produced.storage_key))
         replica = _reconvert(store, session, project_id, project.name or "project")
@@ -131,6 +145,37 @@ def start_validation(
         },
     )
     return Job(job_id=job.job_id, kind=JobKind.VALIDATION, status=JobStatus.COMPLETED)
+
+
+#: Why a Tableau workbook is never more than unverified today. Shown to people.
+TABLEAU_READBACK_NOTE = (
+    "No check reads a produced Tableau workbook back yet, so nothing about "
+    "this one has been verified against the Power BI project it came from. "
+    "The flags above are the writer's own account of what it left out."
+)
+
+
+def _unverified_tableau(validation_id: UUID) -> Validation:
+    """A completed validation that ran nothing, and says so.
+
+    Every check in `engines/validation` reads TMDL and PBIR. Running them against
+    a `.twb` would measure nothing, and reporting a category with no checks as
+    scored would be a claim - so the verdict is `unverified`, no category or
+    score is given, and one rule states why (spec FR8). A read-back check is its
+    own spec.
+    """
+    return Validation(
+        validation_id=validation_id,
+        status=JobStatus.COMPLETED,
+        verdict=Verdict.UNVERIFIED,
+        rules=[
+            ValidationRuleResult(
+                rule_id="TABLEAU_READBACK",
+                status="NOT_APPLICABLE",
+                note=TABLEAU_READBACK_NOTE,
+            )
+        ],
+    )
 
 
 def _reconvert(

@@ -233,6 +233,50 @@ def test_uploading_analysing_and_converting_over_the_api_opens_no_connection(
     assert seen == []
 
 
+def test_power_bi_to_tableau_over_the_api_opens_no_connection(api, monkeypatch):
+    """`SPEC-powerbi-to-tableau-web.md` AC9: the second direction, end to end.
+
+    Includes the analysis dry run and the validation step, both of which are
+    new for this direction and both of which run the writer.
+    """
+    import io
+    import zipfile
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        for path in sorted((FIXTURES / "pbip").rglob("*")):
+            if path.is_file():
+                archive.write(path, path.relative_to(FIXTURES / "pbip").as_posix())
+
+    client = api.client
+    with watched(monkeypatch) as seen:
+        project_id = client.post(
+            f"{PREFIX}/projects",
+            json={
+                "source_platform": "powerbi",
+                "target_platform": "tableau",
+                "name": "Egress test",
+            },
+        ).json()["project_id"]
+        client.post(
+            f"{PREFIX}/projects/{project_id}/artifacts",
+            files={"file": ("Retail.zip", buffer.getvalue(), "application/zip")},
+        )
+        client.post(f"{PREFIX}/projects/{project_id}/analysis")
+        started = client.post(
+            f"{PREFIX}/projects/{project_id}/conversion",
+            json={"ai_enabled": False, "provider": "none", "privacy_mode": "local_only"},
+        )
+        assert started.status_code == 202, started.text
+        client.post(f"{PREFIX}/projects/{project_id}/validation")
+        report = client.get(f"{PREFIX}/projects/{project_id}/report")
+        download = client.get(f"{PREFIX}/projects/{project_id}/artifact")
+
+    assert report.status_code == 200
+    assert download.status_code == 200
+    assert seen == []
+
+
 # --- the one path that is allowed to reach a socket -------------------------------
 
 

@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from html import escape
 
 from dashboardbridge_contracts import ConversionReport
-from dashboardbridge_contracts.enums import ConversionMethod, Verdict
+from dashboardbridge_contracts.enums import ConversionMethod, Platform, Verdict
 
 
 @dataclass(frozen=True)
@@ -207,6 +207,10 @@ def _ai_note(count: int) -> str:
     return "Drafted by a model and accepted by a person before it was written."
 
 
+#: A platform as a reader of the report names it.
+_PLATFORM = {Platform.TABLEAU: "Tableau", Platform.POWERBI: "Power BI"}
+
+
 def render_html(report: ConversionReport) -> str:
     label, meaning = _VERDICT[report.verdict]
     counts = report.compatibility
@@ -219,7 +223,8 @@ def render_html(report: ConversionReport) -> str:
         f"<style>{_CSS}</style>",
         "</head><body>",
         f"<h1>{escape(name)}</h1>",
-        f'<p class="sub">Tableau to Power BI · '
+        f'<p class="sub">{_PLATFORM[report.project.source_platform]} to '
+        f'{_PLATFORM[report.project.target_platform]} · '
         f'<span class="mono">{escape(str(report.project.project_id))}</span></p>',
         # The lead line, with its denominator. Never a bare percentage.
         f'<p class="lead"><strong>{counts.converted}</strong> of '

@@ -186,8 +186,10 @@ def test_analysing_it_twice_gives_the_same_answer(api):
 # --- what it must not claim --------------------------------------------------
 
 
-def test_converting_a_power_bi_source_is_refused_not_attempted(api):
-    """`P6b` does not exist. Reading a platform is not converting from it."""
+def test_converting_a_power_bi_source_now_produces_a_tableau_workbook(api):
+    """This asserted a refusal while `P6b` did not exist. It does now, and
+    `SPEC-powerbi-to-tableau-web.md` wires it through; the direction is
+    covered in depth by `test_powerbi_conversion_api.py`."""
     project_id = _uploaded(api.client)
     api.client.post(f"{PREFIX}/projects/{project_id}/analysis")
 
@@ -195,5 +197,6 @@ def test_converting_a_power_bi_source_is_refused_not_attempted(api):
         f"{PREFIX}/projects/{project_id}/conversion", json={"ai_enabled": False}
     )
 
-    assert response.status_code == 400
-    assert "powerbi" in response.json()["detail"].lower()
+    assert response.status_code == 202, response.text
+    produced = api.client.get(f"{PREFIX}/projects/{project_id}/artifact")
+    assert produced.headers["content-disposition"].endswith('.twb"')

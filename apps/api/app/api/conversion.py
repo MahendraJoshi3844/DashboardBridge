@@ -50,6 +50,51 @@ router = APIRouter(tags=["conversion"])
 _latest = latest_job
 
 
+#: The directions there is an engine for. Anything else is refused by name.
+_DIRECTIONS = {
+    (Platform.TABLEAU, Platform.POWERBI),
+    (Platform.POWERBI, Platform.TABLEAU),
+}
+
+#: What the stored target is served as, by its file name.
+_MEDIA_TYPES = {".zip": "application/zip", ".twb": "application/xml"}
+
+
+def _produce(
+    direction: tuple[Platform, Platform],
+    data: bytes,
+    out: Path,
+    name: str,
+    session: Session,
+    project_id: UUID,
+):
+    """Run the engine for this direction. Returns the outcome, bytes and file name.
+
+    A PBIP is a folder, so it is delivered zipped. A `.twb` is one file, and
+    zipping it would hand a person an archive they have to open to find the
+    thing they asked for.
+    """
+    if direction == (Platform.POWERBI, Platform.TABLEAU):
+        from engines.conversion.to_tableau import convert_powerbi_to_tableau  # noqa: PLC0415
+
+        outcome = convert_powerbi_to_tableau(data, out / "project", name)
+        workbook = next(outcome.project_dir.glob("*.twb"))
+        return outcome, workbook.read_bytes(), f"{name}.twb"
+
+    outcome = convert_tableau_to_powerbi(
+        data,
+        out / "project",
+        name,
+        # Only what a person accepted. A pending proposal is a draft nobody has
+        # read, and a rejected one is a draft someone turned down; using either
+        # here would be the auto-apply path ADR-007 rejects, arrived at from the
+        # conversion endpoint.
+        accepted=accepted_proposals(session, project_id),
+    )
+    archive = zip_project(outcome.project_dir, out / "produced")
+    return outcome, archive.read_bytes(), f"{name}.pbip.zip"
+
+
 def _source(session: Session, project_id: UUID) -> ArtifactRow:
     row = session.scalars(
         select(ArtifactRow)
@@ -105,11 +150,13 @@ def start_conversion(
         )
 
     project = load_project(session, project_id)
-    if Platform(project.source_platform) is not Platform.TABLEAU:
+    direction = (Platform(project.source_platform), Platform(project.target_platform))
+    if direction not in _DIRECTIONS:
         raise ApiException(
             ErrorCategory.UNSUPPORTED_ARTIFACT,
-            f"Converting from {project.source_platform} is not supported yet.",
-            detail=f"no conversion path from {project.source_platform}",
+            f"Converting from {project.source_platform} to "
+            f"{project.target_platform} is not supported yet.",
+            detail=f"no conversion path for {direction[0].value} -> {direction[1].value}",
         )
     if _latest(session, project_id, DbJobKind.ANALYSIS) is None:
         raise ApiException(
@@ -139,21 +186,17 @@ def start_conversion(
     try:
         data = store.read(artifact.storage_key)
         with tempfile.TemporaryDirectory(prefix="dbb-out-") as out:
-            outcome = convert_tableau_to_powerbi(
+            outcome, payload, filename = _produce(
+                direction,
                 data,
-                Path(out) / "project",
+                Path(out),
                 project.name or "project",
-                # Only what a person accepted. A pending proposal is a draft
-                # nobody has read, and a rejected one is a draft someone turned
-                # down; using either here would be the auto-apply path ADR-007
-                # rejects, arrived at from the conversion endpoint.
-                accepted=accepted_proposals(session, project_id),
+                session,
+                project_id,
             )
-            archive = zip_project(outcome.project_dir, Path(out) / "produced")
-            payload = archive.read_bytes()
             # Same staged write the upload path uses, so nothing enters the
             # store until it is complete.
-            storage_key = store.new_key(suffix=".zip")
+            storage_key = store.new_key(suffix=Path(filename).suffix)
             with store.stage() as staged:
                 staged.write(payload)
                 staged.commit(storage_key)
@@ -174,11 +217,11 @@ def start_conversion(
         artifact_id=uuid4(),
         project_id=project_id,
         kind=ArtifactKind.TARGET.value,
-        filename=f"{project.name or 'project'}.pbip.zip",
+        filename=filename,
         size_bytes=len(payload),
         sha256=hashlib.sha256(payload).hexdigest(),
         storage_key=storage_key,
-        detected_platform=Platform.POWERBI.value,
+        detected_platform=direction[1].value,
     )
     session.add(produced)
 
@@ -230,10 +273,10 @@ def download_artifact(
     session: Session = Depends(get_session),
     store: ArtifactStore = Depends(get_artifact_store),
 ) -> Response:
-    """The produced project, as an archive.
+    """What the conversion produced: a zipped PBIP, or a `.twb`.
 
-    A PBIP is a folder, so it is delivered zipped. Refuses while the conversion
-    is unfinished: a partial artifact must never be served as if it were done.
+    Refuses while the conversion is unfinished: a partial artifact must never be
+    served as if it were done.
     """
     load_project(session, project_id)
     produced = session.scalars(
@@ -253,7 +296,9 @@ def download_artifact(
         )
     return Response(
         content=store.read(produced.storage_key),
-        media_type="application/zip",
+        media_type=_MEDIA_TYPES.get(
+            Path(produced.filename).suffix.lower(), "application/octet-stream"
+        ),
         headers={
             "content-disposition": f'attachment; filename="{header_safe_filename(produced.filename)}"'
         },
