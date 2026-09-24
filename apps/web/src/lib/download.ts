@@ -14,24 +14,30 @@
  *   not know how a browser is persuaded to save it.
  */
 
-/** Tableau's own extensions, longest first so `.twbx` is not left as `x`. */
-const SOURCE_EXTENSIONS: readonly string[] = [".twbx", ".twb"];
+/** Source extensions, longest first so `.twbx` is not left as `x`. */
+const SOURCE_EXTENSIONS: readonly string[] = [".twbx", ".twb", ".zip"];
 
 /**
- * The name to save the produced project under.
+ * The name to save the produced file under.
  *
  * A PBIP is a folder, so what arrives is an archive of one — the name says so
- * rather than implying a single Power BI file the user could double-click.
+ * rather than implying a single Power BI file the user could double-click. A
+ * Tableau workbook is one file, and is named as one.
  */
-export function producedName(sourceFilename: string): string {
+export function producedName(
+  sourceFilename: string,
+  target: "powerbi" | "tableau" = "powerbi",
+): string {
+  const suffix = target === "tableau" ? ".twb" : ".pbip.zip";
+  const fallback = target === "tableau" ? "dashboardbridge-workbook" : "dashboardbridge-project";
   const trimmed = sourceFilename.trim();
-  if (trimmed === "") return "dashboardbridge-project.pbip.zip";
+  if (trimmed === "") return `${fallback}${suffix}`;
   const lower = trimmed.toLowerCase();
   const matched = SOURCE_EXTENSIONS.find((extension) =>
     lower.endsWith(extension),
   );
   const stem = matched ? trimmed.slice(0, -matched.length) : trimmed;
-  return `${stem === "" ? "dashboardbridge-project" : stem}.pbip.zip`;
+  return `${stem === "" ? fallback : stem}${suffix}`;
 }
 
 /**

@@ -6,6 +6,7 @@ source of truth and are generated into TypeScript for the web app.
 
 from __future__ import annotations
 
+from typing import Literal
 from datetime import datetime
 from uuid import UUID
 
@@ -476,3 +477,102 @@ class LicenseStatusResponse(ApiModel):
     expiring_soon: bool = False
     #: Present whenever something needs doing, including "valid, expiring soon".
     message: str | None = None
+
+
+# --------------------------------------------------------------------------
+# workspace: the produced Power BI project, read and edited after conversion
+# --------------------------------------------------------------------------
+
+
+class WorkspaceColumn(ApiModel):
+    name: str
+    data_type: str = ""
+
+
+class WorkspaceMeasure(ApiModel):
+    name: str
+    expression: str
+
+
+class WorkspacePartition(ApiModel):
+    """A table's source, as written in its TMDL partition.
+
+    `source_kind` is what the expression is written in: `m` for Power Query,
+    `calculated` for a calculated table, whose source is DAX.
+    """
+
+    name: str
+    mode: str = ""
+    source_kind: str = "m"
+    expression: str
+
+
+class WorkspaceTable(ApiModel):
+    name: str
+    columns: list[WorkspaceColumn] = Field(default_factory=list)
+    measures: list[WorkspaceMeasure] = Field(default_factory=list)
+    partitions: list[WorkspacePartition] = Field(default_factory=list)
+
+
+class WorkspaceFile(ApiModel):
+    path: str
+    size_bytes: int
+
+
+class WorkspaceVersion(ApiModel):
+    """One saved state of the produced project. v0 is what the converter wrote."""
+
+    version: int
+    artifact_id: UUID
+    created_at: datetime
+    note: str = ""
+
+
+class WorkspaceHeld(ApiModel):
+    """A calculation the converter refused, offered for a person to write.
+
+    `source` is the original expression, verbatim. Nothing in the produced
+    model stands for it: the converter emits no placeholder (AGENTS.md rule 1),
+    so this list is the only place it appears in the workspace.
+    """
+
+    item: str
+    table: str
+    name: str
+    source: str = ""
+    reason: str
+
+
+class WorkspaceModel(ApiModel):
+    project_id: UUID
+    name: str
+    version: int
+    versions: list[WorkspaceVersion] = Field(default_factory=list)
+    tables: list[WorkspaceTable] = Field(default_factory=list)
+    files: list[WorkspaceFile] = Field(default_factory=list)
+    held: list[WorkspaceHeld] = Field(default_factory=list)
+
+
+class WorkspaceEdit(ApiModel):
+    """Set a measure's DAX, or a partition's Power Query, in one table.
+
+    A measure that does not exist is added; that is how a held calculation is
+    written by hand. A partition must already exist.
+    """
+
+    kind: Literal["measure", "partition"]
+    table: str
+    name: str
+    expression: str = Field(min_length=1)
+
+
+class WorkspaceCommit(ApiModel):
+    """Edits saved together as one new version, on top of `base_version`.
+
+    `base_version` makes a stale save fail loudly: two people editing the same
+    version would otherwise have the second silently discard the first.
+    """
+
+    base_version: int
+    note: str = ""
+    edits: list[WorkspaceEdit] = Field(min_length=1)

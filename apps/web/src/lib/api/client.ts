@@ -27,6 +27,8 @@ import type {
   ProviderSettings,
   UserAccount,
   Validation,
+  WorkspaceCommit,
+  WorkspaceModel,
 } from "@/types/contracts";
 
 /**
@@ -113,7 +115,7 @@ function fallbackError(message: string, detail: string): ApiError {
 interface RequestOptions {
   readonly signal?: AbortSignal;
   /** Defaults to GET. Every verb goes through the one error path below. */
-  readonly method?: "GET" | "POST";
+  readonly method?: "GET" | "POST" | "PUT";
   /** A JSON body, or a FormData body for multipart. Never both. */
   readonly body?: unknown;
 }
@@ -538,4 +540,133 @@ export function toApiError(cause: unknown): ApiError {
     "Something went wrong on this machine before the service was reached.",
     cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
   );
+}
+
+
+/* -------------------------------------------------------------------------
+ * The migrator screens: jobs, their recorded run, and the workspace.
+ * ---------------------------------------------------------------------- */
+
+export function listProjects(options: RequestOptions = {}): Promise<Project[]> {
+  return request<Project[]>("/projects", options);
+}
+
+export function getProject(projectId: string, options: RequestOptions = {}): Promise<Project> {
+  return request<Project>(`/projects/${projectId}`, options);
+}
+
+export function getWorkspace(
+  projectId: string,
+  options: RequestOptions = {},
+): Promise<WorkspaceModel> {
+  return request<WorkspaceModel>(`/projects/${projectId}/workspace`, options);
+}
+
+export function saveWorkspaceVersion(
+  projectId: string,
+  body: WorkspaceCommit,
+  options: RequestOptions = {},
+): Promise<WorkspaceModel> {
+  return request<WorkspaceModel>(`/projects/${projectId}/workspace/versions`, {
+    ...options,
+    method: "POST",
+    body,
+  });
+}
+
+/** A text resource, through the same error path as every JSON one. */
+async function requestText(path: string, options: RequestOptions = {}): Promise<string> {
+  const url = `${API_BASE_URL}${API_PREFIX}${path}`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      credentials: WITH_SESSION,
+      cache: "no-store",
+      ...(options.signal ? { signal: options.signal } : {}),
+    });
+  } catch (cause) {
+    throw new ApiRequestError(
+      fallbackError(
+        "We cannot reach the DashboardBridge service. Check that it is running, then try again.",
+        `GET ${url} — ${cause instanceof Error ? cause.message : String(cause)}`,
+      ),
+    );
+  }
+  const text = await response.text();
+  if (!response.ok) {
+    let body: unknown = null;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = null;
+    }
+    throw new ApiRequestError(
+      asApiError(body) ??
+        fallbackError(
+          "The service could not complete that request.",
+          `GET ${url} responded ${response.status} ${response.statusText}`,
+        ),
+      response.status,
+    );
+  }
+  return text;
+}
+
+export function getWorkspaceFile(
+  projectId: string,
+  path: string,
+  options: RequestOptions = {},
+): Promise<string> {
+  return requestText(
+    `/projects/${projectId}/workspace/file?path=${encodeURIComponent(path)}`,
+    options,
+  );
+}
+
+/** One item the engine handled, as the recorded run reports it. */
+export interface RecordedEvent {
+  readonly name: string;
+  readonly outcome: string;
+  readonly stage: string;
+  readonly kind: string;
+  readonly detail: string;
+  readonly ref: string;
+  readonly source: string;
+  readonly result: string;
+  readonly elapsed_ms: number;
+}
+
+export interface RecordedRun {
+  readonly events: readonly RecordedEvent[];
+  readonly durationMs: number;
+}
+
+/**
+ * The finished conversion's recording, read in one request.
+ *
+ * The gateway serves it as server-sent events because the desktop replay
+ * consumes it that way. It is a *finished* run, so there is nothing to wait
+ * for: reading the whole stream and parsing it is the same data without a
+ * connection held open.
+ */
+export async function getRecordedRun(
+  projectId: string,
+  options: RequestOptions = {},
+): Promise<RecordedRun> {
+  const text = await requestText(`/projects/${projectId}/events`, options);
+  const events: RecordedEvent[] = [];
+  let durationMs = 0;
+  for (const frame of text.split(/\r?\n\r?\n/)) {
+    const name = /^event: (.*)$/m.exec(frame)?.[1];
+    const data = /^data: (.*)$/m.exec(frame)?.[1];
+    if (!name || !data) continue;
+    const parsed = JSON.parse(data) as Record<string, unknown>;
+    if (name === "conversion.item") events.push(parsed as unknown as RecordedEvent);
+    if (name === "conversion.completed") durationMs = Number(parsed.duration_ms ?? 0);
+  }
+  return { events, durationMs };
+}
+
+export function reportUrl(projectId: string): string {
+  return `${API_BASE_URL}${API_PREFIX}/projects/${projectId}/report?format=html`;
 }

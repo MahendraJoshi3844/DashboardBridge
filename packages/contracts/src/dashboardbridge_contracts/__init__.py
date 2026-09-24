@@ -8,6 +8,8 @@ from dashboardbridge_contracts.api import (
     CreateUserRequest, UpdateUserRequest, UserAccount, UserList,
     NumericalValidation, Project, ProposalReview, ProposalSet, ProviderSettings,
     SkippedItem, Validation, ValidationRuleResult,
+    WorkspaceColumn, WorkspaceCommit, WorkspaceEdit, WorkspaceFile, WorkspaceHeld,
+    WorkspaceMeasure, WorkspaceModel, WorkspacePartition, WorkspaceTable, WorkspaceVersion,
 )
 from dashboardbridge_contracts.canonical import (
     CanonicalModel, Column, ConversionFlag, DataSource, Expression, FieldRef,

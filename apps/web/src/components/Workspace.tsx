@@ -632,7 +632,7 @@ function NoDirection() {
         has no engine behind it yet (ADR-005).
       </p>
       <p className="mt-5">
-        <Link className="btn" href="/">
+        <Link className="btn" href="/classic">
           Choose a direction
           <ArrowRightIcon className="h-4 w-4" />
         </Link>

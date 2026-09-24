@@ -38,7 +38,9 @@ describe("copyFor", () => {
   });
 
   it("never mentions a Tableau output format when the output is Power BI", () => {
-    for (const text of everyString(toPowerBi)) {
+    // `accept` and the input label describe what goes *in*, which is Tableau.
+    const { accept: _accept, inputLabel: _label, ...output } = toPowerBi;
+    for (const text of everyString(output)) {
       expect(text).not.toMatch(/\.twb\b|Tableau Desktop/);
     }
   });

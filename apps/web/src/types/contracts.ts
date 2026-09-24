@@ -4,7 +4,7 @@
  * Source: packages/contracts/schema.json (Pydantic → JSON Schema).
  * Regenerate: npm run gen:types
  *
- * 63 contract definitions.
+ * 73 contract definitions.
  */
 
 /* eslint-disable */
@@ -440,6 +440,46 @@ export type SeatsUsed = number;
  * via the `definition` "Verdict".
  */
 export type Verdict2 = "verified" | "partially_verified" | "unverified" | "failed";
+export type Name11 = string;
+export type DataType3 = string;
+export type BaseVersion = number;
+export type Note1 = string;
+/**
+ * @minItems 1
+ */
+export type Edits = [WorkspaceEdit, ...WorkspaceEdit[]];
+export type Kind4 = "measure" | "partition";
+export type Table2 = string;
+export type Name12 = string;
+export type Expression1 = string;
+export type Path = string;
+export type SizeBytes1 = number;
+export type Item3 = string;
+export type Table3 = string;
+export type Name13 = string;
+export type Source1 = string;
+export type Reason3 = string;
+export type Name14 = string;
+export type Expression2 = string;
+export type ProjectId3 = string;
+export type Name15 = string;
+export type Version1 = number;
+export type Version2 = number;
+export type ArtifactId2 = string;
+export type CreatedAt2 = string;
+export type Note2 = string;
+export type Versions = WorkspaceVersion[];
+export type Name16 = string;
+export type Columns2 = WorkspaceColumn[];
+export type Measures = WorkspaceMeasure[];
+export type Name17 = string;
+export type Mode = string;
+export type SourceKind = string;
+export type Expression3 = string;
+export type Partitions = WorkspacePartition[];
+export type Tables2 = WorkspaceTable[];
+export type Files = WorkspaceFile[];
+export type Held = WorkspaceHeld[];
 
 export interface DashboardBridgeContracts {
   [k: string]: unknown;
@@ -1040,4 +1080,124 @@ export interface UserList {
   users?: Users;
   seats_total?: SeatsTotal;
   seats_used?: SeatsUsed;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceColumn".
+ */
+export interface WorkspaceColumn {
+  name: Name11;
+  data_type?: DataType3;
+}
+/**
+ * Edits saved together as one new version, on top of `base_version`.
+ *
+ * `base_version` makes a stale save fail loudly: two people editing the same
+ * version would otherwise have the second silently discard the first.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceCommit".
+ */
+export interface WorkspaceCommit {
+  base_version: BaseVersion;
+  note?: Note1;
+  edits: Edits;
+}
+/**
+ * Set a measure's DAX, or a partition's Power Query, in one table.
+ *
+ * A measure that does not exist is added; that is how a held calculation is
+ * written by hand. A partition must already exist.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceEdit".
+ */
+export interface WorkspaceEdit {
+  kind: Kind4;
+  table: Table2;
+  name: Name12;
+  expression: Expression1;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceFile".
+ */
+export interface WorkspaceFile {
+  path: Path;
+  size_bytes: SizeBytes1;
+}
+/**
+ * A calculation the converter refused, offered for a person to write.
+ *
+ * `source` is the original expression, verbatim. Nothing in the produced
+ * model stands for it: the converter emits no placeholder (AGENTS.md rule 1),
+ * so this list is the only place it appears in the workspace.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceHeld".
+ */
+export interface WorkspaceHeld {
+  item: Item3;
+  table: Table3;
+  name: Name13;
+  source?: Source1;
+  reason: Reason3;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceMeasure".
+ */
+export interface WorkspaceMeasure {
+  name: Name14;
+  expression: Expression2;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceModel".
+ */
+export interface WorkspaceModel {
+  project_id: ProjectId3;
+  name: Name15;
+  version: Version1;
+  versions?: Versions;
+  tables?: Tables2;
+  files?: Files;
+  held?: Held;
+}
+/**
+ * One saved state of the produced project. v0 is what the converter wrote.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceVersion".
+ */
+export interface WorkspaceVersion {
+  version: Version2;
+  artifact_id: ArtifactId2;
+  created_at: CreatedAt2;
+  note?: Note2;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspaceTable".
+ */
+export interface WorkspaceTable {
+  name: Name16;
+  columns?: Columns2;
+  measures?: Measures;
+  partitions?: Partitions;
+}
+/**
+ * A table's source, as written in its TMDL partition.
+ *
+ * `source_kind` is what the expression is written in: `m` for Power Query,
+ * `calculated` for a calculated table, whose source is DAX.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "WorkspacePartition".
+ */
+export interface WorkspacePartition {
+  name: Name17;
+  mode?: Mode;
+  source_kind?: SourceKind;
+  expression: Expression3;
 }

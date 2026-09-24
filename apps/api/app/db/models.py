@@ -160,6 +160,8 @@ class Artifact(Base):
     detected_platform: Mapped[Platform | None] = mapped_column(
         _enum(Platform, "platform"), nullable=True
     )
+    #: A person's line about a saved workspace version. None for everything else.
+    note: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow
     )

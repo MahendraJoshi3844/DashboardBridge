@@ -30,10 +30,25 @@ Then open <http://localhost:3000> and sign in with the account it prints. The
 script creates a development licence, migrates the database and starts both
 halves; `-Reset` starts from an empty deployment.
 
-`testing_content/Superstore.twb` is there to try. The flow is: choose a
-direction → open the workbook → **Analyse** (reads it and counts what is in it,
-converting nothing) → **Convert** → results, with a Migration Report and a
-downloadable PBIP project.
+`testing_content/Superstore.twb` is there to try (or any file in
+`tests/fixtures/`). The screens:
+
+- **Migrate** (`/migrate`) — pick a migration path; Tableau → Power BI opens the
+  upload dialog. **Start Migration** creates the job and sends the workbook.
+- **Job detail** (`/jobs/<id>`) — status, migration settings, and the
+  **Migration Logs**: each step as its request returns, then the engine's own
+  recording of every object it handled. **Files** and **Power BI Model** tabs
+  show the produced project. Download the `.pbip`, or open it in the workspace.
+- **Power BI workspace** (`/workspace/powerbi/<id>`) — edit measure DAX and
+  table Power Query, write DAX for calculations the converter held, check DAX
+  references, run validation, and save the edits as a new version. The
+  download always serves the newest version.
+- **Migration Jobs** (`/jobs`) — every job, with status and resume.
+
+The guided single-screen flow is still at `/classic`.
+
+`run-local.ps1` needs PowerShell 7 (`pwsh`); under Windows PowerShell 5.1 it
+stops at the database step because alembic logs to stderr.
 
 Headless, without the web app:
 

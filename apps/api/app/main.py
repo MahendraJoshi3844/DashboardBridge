@@ -32,6 +32,7 @@ from app.api import (
     report,
     settings as settings_api,
     validation,
+    workspace,
 )
 from app.core import logging as log
 from app.core.config import settings
@@ -219,3 +220,4 @@ app.include_router(events.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(report.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(settings_api.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(proposals.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
+app.include_router(workspace.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)

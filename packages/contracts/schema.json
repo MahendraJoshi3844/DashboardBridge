@@ -2006,6 +2006,312 @@
       ],
       "title": "VisualBinding",
       "type": "object"
+    },
+    "WorkspaceColumn": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "data_type": {
+          "default": "",
+          "title": "Data Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "WorkspaceColumn",
+      "type": "object"
+    },
+    "WorkspaceCommit": {
+      "additionalProperties": false,
+      "description": "Edits saved together as one new version, on top of `base_version`.\n\n`base_version` makes a stale save fail loudly: two people editing the same\nversion would otherwise have the second silently discard the first.",
+      "properties": {
+        "base_version": {
+          "title": "Base Version",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "edits": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceEdit"
+          },
+          "minItems": 1,
+          "title": "Edits",
+          "type": "array"
+        }
+      },
+      "required": [
+        "base_version",
+        "edits"
+      ],
+      "title": "WorkspaceCommit",
+      "type": "object"
+    },
+    "WorkspaceEdit": {
+      "additionalProperties": false,
+      "description": "Set a measure's DAX, or a partition's Power Query, in one table.\n\nA measure that does not exist is added; that is how a held calculation is\nwritten by hand. A partition must already exist.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "measure",
+            "partition"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "expression": {
+          "minLength": 1,
+          "title": "Expression",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "table",
+        "name",
+        "expression"
+      ],
+      "title": "WorkspaceEdit",
+      "type": "object"
+    },
+    "WorkspaceFile": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "size_bytes": {
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "size_bytes"
+      ],
+      "title": "WorkspaceFile",
+      "type": "object"
+    },
+    "WorkspaceHeld": {
+      "additionalProperties": false,
+      "description": "A calculation the converter refused, offered for a person to write.\n\n`source` is the original expression, verbatim. Nothing in the produced\nmodel stands for it: the converter emits no placeholder (AGENTS.md rule 1),\nso this list is the only place it appears in the workspace.",
+      "properties": {
+        "item": {
+          "title": "Item",
+          "type": "string"
+        },
+        "table": {
+          "title": "Table",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "title": "Source",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "item",
+        "table",
+        "name",
+        "reason"
+      ],
+      "title": "WorkspaceHeld",
+      "type": "object"
+    },
+    "WorkspaceMeasure": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "expression": {
+          "title": "Expression",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "expression"
+      ],
+      "title": "WorkspaceMeasure",
+      "type": "object"
+    },
+    "WorkspaceModel": {
+      "additionalProperties": false,
+      "properties": {
+        "project_id": {
+          "format": "uuid",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "versions": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceVersion"
+          },
+          "title": "Versions",
+          "type": "array"
+        },
+        "tables": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceTable"
+          },
+          "title": "Tables",
+          "type": "array"
+        },
+        "files": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceFile"
+          },
+          "title": "Files",
+          "type": "array"
+        },
+        "held": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceHeld"
+          },
+          "title": "Held",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project_id",
+        "name",
+        "version"
+      ],
+      "title": "WorkspaceModel",
+      "type": "object"
+    },
+    "WorkspacePartition": {
+      "additionalProperties": false,
+      "description": "A table's source, as written in its TMDL partition.\n\n`source_kind` is what the expression is written in: `m` for Power Query,\n`calculated` for a calculated table, whose source is DAX.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "mode": {
+          "default": "",
+          "title": "Mode",
+          "type": "string"
+        },
+        "source_kind": {
+          "default": "m",
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "expression": {
+          "title": "Expression",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "expression"
+      ],
+      "title": "WorkspacePartition",
+      "type": "object"
+    },
+    "WorkspaceTable": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "columns": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceColumn"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "measures": {
+          "items": {
+            "$ref": "#/definitions/WorkspaceMeasure"
+          },
+          "title": "Measures",
+          "type": "array"
+        },
+        "partitions": {
+          "items": {
+            "$ref": "#/definitions/WorkspacePartition"
+          },
+          "title": "Partitions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "WorkspaceTable",
+      "type": "object"
+    },
+    "WorkspaceVersion": {
+      "additionalProperties": false,
+      "description": "One saved state of the produced project. v0 is what the converter wrote.",
+      "properties": {
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "artifact_id": {
+          "format": "uuid",
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "artifact_id",
+        "created_at"
+      ],
+      "title": "WorkspaceVersion",
+      "type": "object"
     }
   }
 }

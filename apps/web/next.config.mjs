@@ -11,6 +11,9 @@ const nextConfig = {
   reactStrictMode: true,
   // Deterministic output: same source in, same bundle out.
   poweredByHeader: false,
+  // The dev-mode badge sits over the bottom-left of every screen, which is
+  // where the migrator's icon rail is. Build errors still surface as overlays.
+  devIndicators: false,
   productionBrowserSourceMaps: false,
   typescript: {
     // A type error is a build failure. It is never routed around.

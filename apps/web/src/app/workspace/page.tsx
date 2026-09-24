@@ -27,7 +27,7 @@ export default function WorkspacePage() {
       <div className="mx-auto flex min-h-screen max-w-shell flex-col px-5 sm:px-8">
         <header className="flex items-center justify-between gap-4 py-6">
           <Link
-            href="/"
+            href="/classic"
             className="flex items-center gap-2.5 rounded-control"
             aria-label="DashboardBridge AI — back to the landing screen"
           >

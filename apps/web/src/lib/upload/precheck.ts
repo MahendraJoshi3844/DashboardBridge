@@ -111,8 +111,14 @@ export function precheck(file: File, source: Platform = "tableau"): PrecheckResu
 
   const remedy = REMEDIES[extension];
   if (remedy !== undefined) {
+    // A Power BI file opened for a Tableau migration also needs telling what
+    // this migration does read, or the remedy sends them somewhere it cannot go.
+    const also =
+      source === "tableau" && extension.startsWith(".pb")
+        ? ` This migration reads Tableau workbooks: ${accepted.join(" or ")}.`
+        : "";
     return refuse(
-      remedy,
+      remedy + also,
       `client pre-check: extension ${extension} has a stated remedy`,
     );
   }
