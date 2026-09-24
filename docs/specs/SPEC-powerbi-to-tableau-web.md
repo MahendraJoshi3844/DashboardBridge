@@ -4,7 +4,7 @@
 > The *How* goes in a Technical Design Plan, written only after this spec is
 > reviewed.
 >
-> **Status:** Draft — awaiting review · **Owner:** Mahendra Joshi ·
+> **Status:** Reviewed and approved 2026-09-24 · **Owner:** Mahendra Joshi ·
 > **Last updated:** 2026-09-24 · **Branch:** `ui-enhancements`
 
 ---
@@ -185,23 +185,16 @@ Each item is *demonstrated* (test or recorded run), not asserted.
 - [ ] AC12 — Screenshots of every screen in both directions, in light and
       dark mode, show no copy that names the wrong platform.
 
-## 7. Open Questions
+## 7. Open Questions — resolved at review, 2026-09-24
 
-1. **Verification for this direction — in scope or later?** FR8 settles for an
-   honest *Unverified*. Building a structural check that reads the `.twb`
-   back independently would let the page say *Partially verified*. That adds
-   a fair amount of work, so the proposal is to make it a follow-up spec.
-2. **"Expected outcome" before conversion.** For Tableau sources this comes
-   from flags raised while reading. For Power BI sources, most refusals
-   happen only when the workbook is written. Should analysis run the DAX →
-   Tableau rules as a dry run, so the prediction is real? Or should it show
-   inventory only and say the prediction is not available for this direction?
-3. **AI proposals for held DAX.** The review-and-apply flow exists for
-   Tableau → DAX. Should held DAX → Tableau items offer it too? The proposal
-   is **not in this spec**: this direction ships deterministic-only.
-4. **Packaged output.** Is a plain `.twb` enough, or do buyers expect `.twbx`?
-   A plain `.twb` is proposed, because there is no data to package.
-5. **Tableau Desktop evidence.** No generated `.twb` has ever been opened in
-   Tableau Desktop. Should enabling the card in a *customer* build wait for
-   that manual check? Or is it acceptable in the demo build, with the
-   caveat shown on the results page (as the Power BI direction does today)?
+1. **Read-back validation of the `.twb`:** deferred to its own spec. This
+   feature ships an honest *Unverified* (FR8).
+2. **Expected outcome before conversion:** analysis runs the real DAX →
+   Tableau rules as a dry run, so the prediction comes from the same code as
+   the result (FR3).
+3. **AI proposals for held DAX:** not in this feature. This direction is
+   deterministic-only.
+4. **Packaged output:** a plain `.twb`.
+5. **Tableau Desktop evidence:** the card is enabled in all builds. The
+   results page states that no generated workbook has been opened in Tableau
+   Desktop.
