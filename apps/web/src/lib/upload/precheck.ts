@@ -20,26 +20,41 @@
  * second, weaker error path in the UI.
  */
 
-import type { ApiError } from "@/types/contracts";
+import type { ApiError, Platform } from "@/types/contracts";
 
 /**
- * Mirrors `ALLOWED_EXTENSIONS` in the gateway. Tableau only: reading Power BI
- * does not exist yet (ADR-005), and offering it here would be a promise the
- * engine cannot keep.
+ * Mirrors `ALLOWED_EXTENSIONS` in the gateway, per source platform. A Power BI
+ * project is a folder, so it arrives zipped; the gateway confirms from the
+ * member list that the archive really is one.
  */
-export const ACCEPTED_EXTENSIONS = [".twb", ".twbx"] as const;
-
-/**
- * Mirrors the gateway's `NOT_YET_SUPPORTED`. These get a reason rather than a
- * shrug: "not yet, and here is what is" respects the user's time in a way that
- * "unsupported file type" does not.
- */
-const NOT_YET_SUPPORTED: Record<string, string> = {
-  ".pbix": "Power BI",
-  ".pbip": "Power BI",
-  ".pbit": "Power BI",
-  ".twbr": "Tableau",
+export const ACCEPTED_BY_SOURCE: Record<Platform, readonly string[]> = {
+  tableau: [".twb", ".twbx"],
+  powerbi: [".zip"],
 };
+
+/** Kept for callers that predate the second direction. */
+export const ACCEPTED_EXTENSIONS = ACCEPTED_BY_SOURCE.tableau;
+
+/**
+ * Mirrors the gateway's `NOT_YET_SUPPORTED` and `MANIFEST_ONLY`. These get a
+ * remedy rather than a shrug: "not that, and here is what to do" respects the
+ * user's time in a way that "unsupported file type" does not.
+ */
+const REMEDIES: Record<string, string> = {
+  ".pbix":
+    "A .pbix file cannot be read here. In Power BI Desktop, save the report as a Power BI project (PBIP), then zip the project folder and open that.",
+  ".pbit":
+    "A .pbit template cannot be read here. Save it as a Power BI project (PBIP) in Power BI Desktop, then zip the project folder and open that.",
+  ".pbip":
+    "A .pbip file is only the project manifest — it points at the folders beside it and carries none of their contents. Zip the whole project folder and open that instead.",
+  ".twbr": "Tableau .twbr files cannot be read here. Save the workbook as .twb or .twbx and open that.",
+};
+
+const NAMES: Record<Platform, string> = { tableau: "Tableau", powerbi: "Power BI" };
+
+function other(source: Platform): Platform {
+  return source === "tableau" ? "powerbi" : "tableau";
+}
 
 /** Mirrors `MAX_UPLOAD_SIZE_MB` on the gateway (default 500). */
 export const MAX_UPLOAD_MB: number = Number(
@@ -89,21 +104,36 @@ function refuse(message: string, detail: string): PrecheckResult {
  * nothing and refusing on a size costs nothing *if it happens before the
  * upload starts*.
  */
-export function precheck(file: File): PrecheckResult {
+export function precheck(file: File, source: Platform = "tableau"): PrecheckResult {
   const extension = extensionOf(file.name);
+  const accepted = ACCEPTED_BY_SOURCE[source];
+  const thing = source === "tableau" ? "a Tableau workbook" : "a zipped Power BI project";
 
-  const notYet = NOT_YET_SUPPORTED[extension];
-  if (notYet !== undefined) {
+  const remedy = REMEDIES[extension];
+  if (remedy !== undefined) {
     return refuse(
-      `Reading ${notYet} files is not something this version can do yet. ` +
-        `Open a Tableau workbook — ${ACCEPTED_EXTENSIONS.join(" or ")} — to begin.`,
-      `client pre-check: extension ${extension} is on the not-yet-supported list`,
+      remedy,
+      `client pre-check: extension ${extension} has a stated remedy`,
     );
   }
 
-  if (!(ACCEPTED_EXTENSIONS as readonly string[]).includes(extension)) {
+  // The other direction's file. Named as such, with the way out, because the
+  // likeliest cause is a wrong card rather than a wrong file.
+  const theirs = other(source);
+  if (
+    !accepted.includes(extension) &&
+    ACCEPTED_BY_SOURCE[theirs].includes(extension)
+  ) {
     return refuse(
-      `That is not a Tableau workbook. Choose a ${ACCEPTED_EXTENSIONS.join(" or ")} file.`,
+      `That is ${theirs === "tableau" ? "a Tableau workbook" : "a Power BI project"}, and this migration reads ${NAMES[source]}. ` +
+        `Go back and choose ${NAMES[theirs]} → ${NAMES[source]} to convert it.`,
+      `client pre-check: extension ${extension} belongs to ${theirs}, source is ${source}`,
+    );
+  }
+
+  if (!accepted.includes(extension)) {
+    return refuse(
+      `That is not ${thing}. Choose a ${accepted.join(" or ")} file.`,
       `client pre-check: extension ${extension === "" ? "(none)" : extension} is not in the allow-list`,
     );
   }
@@ -131,7 +161,10 @@ export function precheck(file: File): PrecheckResult {
  * Refuse a multi-file drop explicitly. One artifact per project: a silent
  * "we took the first one" is a guess about which file the user meant.
  */
-export function precheckDrop(files: readonly File[]): PrecheckResult {
+export function precheckDrop(
+  files: readonly File[],
+  source: Platform = "tableau",
+): PrecheckResult {
   const first = files[0];
   if (first === undefined) {
     return refuse(
@@ -146,5 +179,5 @@ export function precheckDrop(files: readonly File[]): PrecheckResult {
       `client pre-check: drop contained ${files.length} files`,
     );
   }
-  return precheck(first);
+  return precheck(first, source);
 }

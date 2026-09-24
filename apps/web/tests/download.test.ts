@@ -32,3 +32,11 @@ describe("producedName", () => {
     expect(producedName(".twbx")).toBe("dashboardbridge-project.pbip.zip");
   });
 });
+
+describe("producedName for a Tableau target", () => {
+  it("names a single workbook, not an archive", () => {
+    expect(producedName("Retail.zip", "tableau")).toBe("Retail.twb");
+    expect(producedName("Retail.ZIP", "tableau")).toBe("Retail.twb");
+    expect(producedName("", "tableau")).toBe("dashboardbridge-workbook.twb");
+  });
+});

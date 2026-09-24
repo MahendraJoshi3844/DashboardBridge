@@ -1,0 +1,95 @@
+/**
+ * Every word in the interface that depends on which way a migration runs.
+ *
+ * SPEC-powerbi-to-tableau-web.md FR2: no screen may name the wrong platform.
+ * Kept in one table rather than scattered through components, so a test can
+ * read all of it and a new screen cannot hard-code "Power BI project" by habit —
+ * which is exactly how every screen came to say it while only one direction
+ * existed.
+ */
+
+import type { Platform } from "@/types/contracts";
+
+export interface DirectionLike {
+  readonly source: Platform;
+  readonly target: Platform;
+}
+
+export interface DirectionCopy {
+  readonly sourceName: string;
+  readonly targetName: string;
+  /** What a person opens: "a Tableau workbook", "a Power BI project". */
+  readonly sourceThing: string;
+  /** What they get back, without an article: "Power BI project". */
+  readonly targetThing: string;
+  readonly dropPrompt: string;
+  readonly browseLabel: string;
+  readonly inputLabel: string;
+  /** The `accept` attribute of the file input. A hint to the picker only. */
+  readonly accept: string;
+  /** What the source's calculations become in the target. */
+  readonly targetLanguage: string;
+  readonly sourceLanguage: string;
+  readonly convertExplainer: string;
+  readonly download: string;
+  readonly deliverable: string;
+  readonly desktopCaveat: string;
+  readonly noEquivalent: string;
+  readonly visualsMeaning: string;
+  readonly calculationsMeaning: string;
+}
+
+const TABLEAU_TO_POWER_BI: DirectionCopy = {
+  sourceName: "Tableau",
+  targetName: "Power BI",
+  sourceThing: "a Tableau workbook",
+  targetThing: "Power BI project",
+  dropPrompt: "Drop a Tableau workbook to begin",
+  browseLabel: "Browse for a workbook",
+  inputLabel: "Choose a Tableau workbook",
+  accept: ".twb,.twbx",
+  targetLanguage: "DAX",
+  sourceLanguage: "Tableau calculation",
+  convertExplainer:
+    "Converting produces a Power BI project you can download. It changes nothing about the file you opened.",
+  download: "Download the Power BI project",
+  deliverable:
+    "A Power BI project — TMDL semantic model and PBIR report — delivered as an archive, because a PBIP is a folder rather than a single file.",
+  desktopCaveat:
+    "No generated project has yet been opened in Power BI Desktop. The output satisfies what we know of the TMDL and PBIR formats by reasoning, not by observation, and until it has been opened that is all this can claim.",
+  noEquivalent: "Power BI has no equivalent. Rebuilding it is a design decision.",
+  visualsMeaning: "Worksheets to rebuild as Power BI visuals",
+  calculationsMeaning: "Expressions needing DAX, or a person",
+};
+
+const POWER_BI_TO_TABLEAU: DirectionCopy = {
+  sourceName: "Power BI",
+  targetName: "Tableau",
+  sourceThing: "a Power BI project",
+  targetThing: "Tableau workbook",
+  dropPrompt: "Drop a zipped Power BI project to begin",
+  browseLabel: "Browse for a project",
+  inputLabel: "Choose a zipped Power BI project folder",
+  accept: ".zip",
+  targetLanguage: "Tableau calculations",
+  sourceLanguage: "DAX",
+  convertExplainer:
+    "Converting produces a Tableau workbook you can download. It changes nothing about the project you opened.",
+  download: "Download the Tableau workbook",
+  deliverable:
+    "A Tableau workbook (.twb) — data sources, calculated fields, worksheets and dashboards. It holds the schema and no data, so point each data source at your copy.",
+  desktopCaveat:
+    "No generated workbook has yet been opened in Tableau Desktop. The output follows the structure of workbooks Tableau itself writes, by reasoning rather than observation, and until one has been opened that is all this can claim.",
+  noEquivalent: "Tableau has no equivalent. Rebuilding it is a design decision.",
+  visualsMeaning: "Visuals to rebuild as Tableau worksheets",
+  calculationsMeaning: "Measures and calculated columns needing a Tableau formula, or a person",
+};
+
+/**
+ * The words for a direction. `null` means none has been chosen yet, which only
+ * happens on screens that existed before there was a second direction — they
+ * get the words they have always had.
+ */
+export function copyFor(direction: DirectionLike | null | undefined): DirectionCopy {
+  return direction?.source === "powerbi" ? POWER_BI_TO_TABLEAU : TABLEAU_TO_POWER_BI;
+}

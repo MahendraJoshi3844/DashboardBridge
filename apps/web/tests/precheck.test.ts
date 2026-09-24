@@ -65,3 +65,38 @@ describe("formatBytes", () => {
     expect(formatBytes(1_150_000)).toBe("1.1 MB");
   });
 });
+
+describe("precheck for a Power BI source", () => {
+  it("accepts a zipped project folder", () => {
+    expect(precheck(fileOf("Retail.zip", 5000), "powerbi").ok).toBe(true);
+  });
+
+  it("gives the remedy for a .pbix rather than a shrug", () => {
+    const result = precheck(fileOf("Sales.pbix", 1000), "powerbi");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("PBIP");
+    expect(result.error.message).toContain("zip");
+  });
+
+  it("explains that a .pbip on its own is only the manifest", () => {
+    const result = precheck(fileOf("Retail.pbip", 200), "powerbi");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("manifest");
+  });
+
+  it("names the mismatch when a Tableau file is opened in this direction", () => {
+    const result = precheck(fileOf("Superstore.twbx", 1000), "powerbi");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("Tableau → Power BI");
+  });
+
+  it("names the mismatch when a Power BI project is opened for Tableau", () => {
+    const result = precheck(fileOf("Retail.zip", 1000), "tableau");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("Power BI → Tableau");
+  });
+});
