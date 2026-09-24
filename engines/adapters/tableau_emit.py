@@ -132,8 +132,19 @@ class _Notes:
         self.flags: list[ConversionFlag] = []
 
     def add(
-        self, item: str, stage: Stage, status: ConversionStatus, reason: str
+        self,
+        kind: str,
+        item: str,
+        stage: Stage,
+        status: ConversionStatus,
+        reason: str,
     ) -> str:
+        """Record one note. `kind` makes `ref` unique per object.
+
+        A Power BI page and the visual on it are often named the same, so the
+        item alone does not say which object a flag is about. A column keeps
+        `Table.Column` as its ref, which is what the comparison view matches on.
+        """
         text = _comment_text(reason)
         self.flags.append(
             ConversionFlag(
@@ -147,7 +158,7 @@ class _Notes:
                 status=status,
                 severity=self._SEVERITY[status],
                 reason=text,
-                ref=item,
+                ref=item if kind == "column" else f"{kind}:{item}",
             )
         )
         return text
@@ -195,6 +206,7 @@ def emit_twb(model: CanonicalModel, out_dir: str | Path) -> TwbEmission:
 
     for parameter in sorted(model.parameters or [], key=lambda item: item.name):
         notes.add(
+            "parameter",
             parameter.caption or parameter.name,
             Stage.GENERATE,
             ConversionStatus.UNSUPPORTED,
@@ -238,6 +250,7 @@ def _dashboard(
     lines.extend(["      </zones>", "    </dashboard>"])
 
     notes.add(
+        "dashboard",
         dashboard.name,
         Stage.GENERATE,
         ConversionStatus.PARTIAL,
@@ -246,6 +259,7 @@ def _dashboard(
     )
     if missing:
         notes.add(
+            "dashboard",
             dashboard.name,
             Stage.GENERATE,
             ConversionStatus.PARTIAL,
@@ -364,6 +378,7 @@ def _sources(model: CanonicalModel, notes: _Notes) -> list[_Source]:
         for (table_name, column_name), flat in sorted(keys.items()):
             if flat != column_name:
                 notes.add(
+                    "column",
                     f"{table_name}.{column_name}",
                     Stage.GENERATE,
                     ConversionStatus.CONVERTED,
@@ -470,6 +485,7 @@ def _object_graph(source: _Source, notes: _Notes) -> list[str]:
             # source made about how these tables meet.
             missing = relationship.from_column if left is None else relationship.to_column
             reason = notes.add(
+                "relationship",
                 f"{relationship.from_table}.{relationship.from_column} -> "
                 f"{relationship.to_table}.{relationship.to_column}",
                 Stage.GENERATE,
@@ -508,6 +524,7 @@ def _column(
     datatype, role = _role(column)
     if column.grain is Grain.AGGREGATE and column.datatype is DataType.UNKNOWN:
         notes.add(
+            "column",
             f"{table.name}.{name}",
             Stage.GENERATE,
             ConversionStatus.CONVERTED,
@@ -528,6 +545,7 @@ def _column(
         if refusal is None:
             return [f"      <column {attributes} />"]
         reason = notes.add(
+            "column",
             f"{table.name}.{name}",
             Stage.TRANSLATE,
             ConversionStatus.UNSUPPORTED,
@@ -683,6 +701,7 @@ def _worksheet(visual: Visual, sources: list[_Source], notes: _Notes) -> list[st
             "the worksheet by hand"
         )
         refusal = notes.add(
+            "visual",
             visual.name, Stage.GENERATE, ConversionStatus.UNSUPPORTED, refusal
         )
         placed = []
@@ -691,6 +710,7 @@ def _worksheet(visual: Visual, sources: list[_Source], notes: _Notes) -> list[st
 
     if visual.filters:
         notes.add(
+            "visual",
             visual.name,
             Stage.GENERATE,
             ConversionStatus.PARTIAL,
@@ -699,6 +719,7 @@ def _worksheet(visual: Visual, sources: list[_Source], notes: _Notes) -> list[st
         )
     if visual.visual_type not in _MARKS:
         notes.add(
+            "visual",
             visual.name,
             Stage.GENERATE,
             ConversionStatus.PARTIAL,
@@ -748,6 +769,7 @@ def _report_unplaced(visual: Visual, sources: list[_Source], notes: _Notes) -> N
             unplaced.append(f"{label} (its table is not in this workbook)")
     if unplaced:
         notes.add(
+            "visual",
             visual.name,
             Stage.GENERATE,
             ConversionStatus.PARTIAL,

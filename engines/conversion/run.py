@@ -191,6 +191,31 @@ def _compatibility(stats: dict[str, int], flags: list[ConversionFlag]) -> Compat
     )
 
 
+def compatibility_by_object(
+    refs: list[str], worst: dict[str, ConversionStatus]
+) -> Compatibility:
+    """Counts over objects, each counted once as its worst flag says.
+
+    The parts sum to the whole by construction: every object lands in exactly
+    one bucket, and one with no flag converted. A flag naming no object in
+    `refs` is not silently lost either - it is counted as an object of its own,
+    because "every flagged object is in the total" is the promise the headline
+    makes.
+    """
+    everything = sorted(set(refs) | set(worst))
+    tally = {status: 0 for status in ConversionStatus}
+    for ref in everything:
+        tally[worst.get(ref, ConversionStatus.CONVERTED)] += 1
+    return Compatibility(
+        converted=tally[ConversionStatus.CONVERTED],
+        partial=tally[ConversionStatus.PARTIAL],
+        ai_required=tally[ConversionStatus.AI_REQUIRED],
+        unsupported=tally[ConversionStatus.UNSUPPORTED],
+        failed=tally[ConversionStatus.FAILED],
+        total=len(everything),
+    )
+
+
 def zip_project(project_dir: Path, destination: Path) -> Path:
     """A PBIP is a folder, so it is delivered as an archive.
 
