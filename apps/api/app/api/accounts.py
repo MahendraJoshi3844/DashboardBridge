@@ -122,6 +122,11 @@ def login(
         max_age=int(accounts.SESSION_LIFETIME.total_seconds()),
         path="/",
     )
+    # Commit before answering. The request's session scope only closes after
+    # the response is sent (FastAPI runs yield-dependency teardown late), so a
+    # client that follows up at once - /auth/me right after signing in, an
+    # upload right after creating the project - could otherwise not see this.
+    session.commit()
     return _to_contract(user)
 
 
@@ -130,6 +135,7 @@ def logout(
     request: Request, response: Response, session: DbSession = Depends(get_session)
 ) -> None:
     accounts.sign_out(session, request.cookies.get(accounts.COOKIE_NAME))
+    session.commit()  # the session is revoked before the client is told it is
     response.delete_cookie(accounts.COOKIE_NAME, path="/")
 
 
@@ -189,6 +195,7 @@ def add_user(
             refusal.message,
             status_code=refusal.status_code,
         ) from refusal
+    session.commit()  # visible to the next request at once
     return _to_contract(user)
 
 
@@ -227,4 +234,5 @@ def update_user(
             status_code=refusal.status_code,
         ) from refusal
 
+    session.commit()  # visible to the next request at once
     return _to_contract(user)

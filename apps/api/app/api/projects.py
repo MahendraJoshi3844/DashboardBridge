@@ -117,6 +117,11 @@ def create_project(
     )
     session.add(row)
     session.flush()
+    # Commit before answering. The request's session scope only closes after
+    # the response is sent (FastAPI runs yield-dependency teardown late), so a
+    # client that follows up at once - /auth/me right after signing in, an
+    # upload right after creating the project - could otherwise not see this.
+    session.commit()
     return to_contract(row)
 
 
