@@ -21,7 +21,14 @@ def licence_features() -> list[str] | None:
     return list(licence.features) if licence is not None else None
 
 
-def require_direction(source: Platform, target: Platform) -> DirectionStatus:
+def grants_of(user) -> set[str] | None:
+    """What limits this person: nothing for an administrator, else their products."""
+    if user is None or getattr(user, "is_admin", False):
+        return None
+    return set(user.products)
+
+
+def require_direction(source: Platform, target: Platform, user=None) -> DirectionStatus:
     direction = registry.find(source, target)
     if direction is None:
         raise ApiException(
@@ -30,7 +37,7 @@ def require_direction(source: Platform, target: Platform) -> DirectionStatus:
             detail=f"no engine is registered for {source.value} -> {target.value}",
             status_code=400,
         )
-    result = registry.status(direction, licence_features())
+    result = registry.status(direction, licence_features(), grants_of(user))
     if result.state is DirectionState.NOT_INSTALLED:
         raise ApiException(
             ErrorCategory.UNSUPPORTED_ARTIFACT,
@@ -46,5 +53,12 @@ def require_direction(source: Platform, target: Platform) -> DirectionStatus:
             result.reason,
             detail=f"licence lacks feature {direction.feature!r}",
             status_code=402,
+        )
+    if result.state is DirectionState.NOT_GRANTED:
+        raise ApiException(
+            ErrorCategory.AUTH_ERROR,
+            result.reason,
+            detail=f"user lacks product {direction.feature!r}",
+            status_code=403,
         )
     return result

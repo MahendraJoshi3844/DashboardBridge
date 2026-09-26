@@ -39,7 +39,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session as DbSession
 
 from app.core.licensing import status
-from app.db.models import Session, User
+from app.db.models import Session, User, UserProduct
+from engines.conversion.directions import ENGINE_FEATURES
 from engines.identity import (
     hash_password,
     needs_rehash,
@@ -121,6 +122,30 @@ def seats_available(session: DbSession) -> int | None:
     return current.license.seats - active_user_count(session)
 
 
+class UnknownProduct(AccountError):
+    status_code = 422
+
+
+def licensed_products() -> set[str]:
+    """The products the licence includes (all of them when it names none)."""
+    licence = status().license
+    named = set(licence.features) & ENGINE_FEATURES if licence is not None else set()
+    return named or set(ENGINE_FEATURES)
+
+
+def set_products(user: User, products: list[str] | set[str]) -> None:
+    """Replace what this person may use. Unknown names are refused, not dropped."""
+    wanted = {p.strip().lower() for p in products if p.strip()}
+    unknown = sorted(wanted - ENGINE_FEATURES)
+    if unknown:
+        raise UnknownProduct(
+            f"Unknown product {', '.join(unknown)}. The products are: {', '.join(sorted(ENGINE_FEATURES))}."
+        )
+    keep = [g for g in user.product_grants if g.product in wanted]
+    have = {g.product for g in keep}
+    user.product_grants = keep + [UserProduct(product=p) for p in sorted(wanted - have)]
+
+
 def create_user(
     session: DbSession,
     *,
@@ -129,6 +154,7 @@ def create_user(
     password: str,
     is_admin: bool = False,
     enforce_seats: bool = True,
+    products: list[str] | None = None,
 ) -> User:
     """Add a person. Raises `AccountError` for anything it will not do.
 
@@ -159,6 +185,7 @@ def create_user(
         password_hash=hash_password(password),
         is_admin=is_admin,
     )
+    set_products(user, licensed_products() if products is None else products)
     session.add(user)
     session.flush()
     return user

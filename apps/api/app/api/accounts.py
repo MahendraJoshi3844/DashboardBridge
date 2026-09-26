@@ -58,6 +58,7 @@ def _to_contract(user: User) -> UserAccount:
         is_active=user.is_active,
         created_at=user.created_at,
         last_login_at=user.last_login_at,
+        products=sorted(user.products),
     )
 
 
@@ -180,6 +181,7 @@ def add_user(
             email=body.email,
             display_name=body.display_name,
             password=body.password,
+            products=body.products,
         )
     except PasswordTooWeak as weak:
         # 422 with the rule in it. "Too weak" without the rule sends someone
@@ -227,6 +229,8 @@ def update_user(
             user.is_active = True
         if body.is_admin is not None:
             user.is_admin = body.is_admin
+        if body.products is not None:
+            accounts.set_products(user, body.products)
     except accounts.AccountError as refusal:
         raise ApiException(
             ErrorCategory.AUTH_ERROR,

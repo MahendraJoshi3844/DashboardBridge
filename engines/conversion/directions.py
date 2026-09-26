@@ -91,7 +91,10 @@ def licensed(direction: Direction, features: Iterable[str] | None) -> bool:
     return not named or direction.feature in named
 
 
-def status(direction: Direction, features: Iterable[str] | None) -> DirectionStatus:
+def status(
+    direction: Direction, features: Iterable[str] | None, granted: Iterable[str] | None = None
+) -> DirectionStatus:
+    """`granted` is the person's products; `None` means not limited (an administrator)."""
     feats = list(features or ())
     if not installed(direction):
         state = DirectionState.NOT_INSTALLED
@@ -102,6 +105,10 @@ def status(direction: Direction, features: Iterable[str] | None) -> DirectionSta
         state = DirectionState.NOT_LICENSED
         reason = (f"{direction.label} is not included in this licence. "
                   f"Add the '{direction.feature}' engine to the licence to enable it.")
+    elif granted is not None and direction.feature not in set(granted):
+        state = DirectionState.NOT_GRANTED
+        reason = (f"{direction.label} is not enabled for your account. "
+                  "Ask an administrator to give you access.")
     else:
         state, reason = DirectionState.AVAILABLE, ""
     return DirectionStatus(
@@ -115,6 +122,7 @@ def status(direction: Direction, features: Iterable[str] | None) -> DirectionSta
     )
 
 
-def statuses(features: Iterable[str] | None) -> list[DirectionStatus]:
+def statuses(features: Iterable[str] | None, granted: Iterable[str] | None = None) -> list[DirectionStatus]:
     feats = list(features or ())
-    return [status(d, feats) for d in DIRECTIONS]
+    grants = None if granted is None else set(granted)
+    return [status(d, feats, grants) for d in DIRECTIONS]

@@ -416,6 +416,9 @@ class UserAccount(ApiModel):
     is_active: bool = True
     created_at: datetime | None = None
     last_login_at: datetime | None = None
+    #: The migration products this person may use: `tableau`, `microstrategy`,
+    #: `qlik`. An administrator has every licensed product whatever is listed.
+    products: list[str] = Field(default_factory=list)
 
 
 class LoginRequest(ApiModel):
@@ -427,6 +430,9 @@ class CreateUserRequest(ApiModel):
     email: str
     display_name: str = ""
     password: str
+    #: Products to give the new person. `None` gives every product the licence
+    #: includes - what adding someone meant before products were separate.
+    products: list[str] | None = None
 
 
 class UpdateUserRequest(ApiModel):
@@ -438,6 +444,8 @@ class UpdateUserRequest(ApiModel):
 
     is_active: bool | None = None
     is_admin: bool | None = None
+    #: Replaces the person's product access when present.
+    products: list[str] | None = None
 
 
 class UserList(ApiModel):

@@ -333,10 +333,33 @@ class User(Base):
     sessions: Mapped[list[Session]] = relationship(
         back_populates="user", cascade="all, delete-orphan", passive_deletes=True
     )
+    #: Migration products an administrator has given this person (`UserProduct`).
+    product_grants: Mapped[list[UserProduct]] = relationship(
+        cascade="all, delete-orphan", passive_deletes=True, lazy="selectin"
+    )
 
     __table_args__ = (
         Index("uq_users_email_lower", func.lower(email), unique=True),
     )
+
+    @property
+    def products(self) -> set[str]:
+        return {grant.product for grant in self.product_grants}
+
+
+class UserProduct(Base):
+    """One migration product (`tableau`, `microstrategy`, `qlik`) a person may use.
+
+    Products are licence features: the licence says which the deployment may
+    run, and this says who may run them. Administrators are not limited by it.
+    """
+
+    __tablename__ = "user_products"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), primary_key=True
+    )
+    product: Mapped[str] = mapped_column(String(32), primary_key=True)
 
 
 class Session(Base):

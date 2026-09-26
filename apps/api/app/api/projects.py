@@ -29,7 +29,9 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_session
+from app.api.accounts import current_user
 from app.core.directions import require_direction
+from app.db.models import User
 from app.core.errors import ApiException
 from app.db.models import Project as ProjectRow
 
@@ -102,6 +104,7 @@ def _decode_cursor(cursor: str) -> tuple[datetime, UUID]:
 def create_project(
     body: CreateProjectRequest,
     session: Session = Depends(get_session),
+    user: User = Depends(current_user),
 ) -> ProjectContract:
     """`201` → `Project`.
 
@@ -113,7 +116,7 @@ def create_project(
     """
     # Refused here, before anything is stored: a project in a direction this
     # deployment cannot run would only fail later, after an upload.
-    require_direction(body.source_platform, body.target_platform)
+    require_direction(body.source_platform, body.target_platform, user)
     row = ProjectRow(
         name=body.name,
         source_platform=body.source_platform,

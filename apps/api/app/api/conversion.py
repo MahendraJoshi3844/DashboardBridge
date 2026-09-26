@@ -30,7 +30,9 @@ from app.api.projects import load_project
 from app.core.licensing import status as license_status
 from app.api.proposals import accepted_proposals
 from app.core.db import get_session
+from app.api.accounts import current_user
 from app.core.directions import require_direction
+from app.db.models import User
 from app.core.errors import ApiException
 from app.core.headers import header_safe_filename
 from app.db.models import Artifact as ArtifactRow
@@ -138,6 +140,7 @@ def start_conversion(
     request: ConversionRequest,
     session: Session = Depends(get_session),
     store: ArtifactStore = Depends(get_artifact_store),
+    user: User = Depends(current_user),
 ) -> Job:
     """Convert deterministically. No AI is reachable from this path today.
 
@@ -167,7 +170,7 @@ def start_conversion(
     project = load_project(session, project_id)
     direction = (Platform(project.source_platform), Platform(project.target_platform))
     # Installed and licensed now - not only when the project began.
-    require_direction(*direction)
+    require_direction(*direction, user)
     if _latest(session, project_id, DbJobKind.ANALYSIS) is None:
         raise ApiException(
             ErrorCategory.CONVERSION_ERROR,

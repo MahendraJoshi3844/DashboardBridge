@@ -216,3 +216,5 @@ class DirectionState(str, Enum):
     AVAILABLE = "available"
     NOT_INSTALLED = "not_installed"
     NOT_LICENSED = "not_licensed"
+    #: Installed and licensed, but an administrator has not given this person access.
+    NOT_GRANTED = "not_granted"

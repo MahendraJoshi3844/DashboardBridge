@@ -23,6 +23,9 @@ import type {
   Job,
   LicenseStatusResponse,
   DirectionList,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserList,
   LoginRequest,
   Project,
   ProposalReview,
@@ -119,7 +122,7 @@ function fallbackError(message: string, detail: string): ApiError {
 interface RequestOptions {
   readonly signal?: AbortSignal;
   /** Defaults to GET. Every verb goes through the one error path below. */
-  readonly method?: "GET" | "POST" | "PUT";
+  readonly method?: "GET" | "POST" | "PUT" | "PATCH";
   /** A JSON body, or a FormData body for multipart. Never both. */
   readonly body?: unknown;
 }
@@ -268,6 +271,21 @@ export function logout(options: RequestOptions = {}): Promise<unknown> {
  */
 export function me(options: RequestOptions = {}): Promise<UserAccount> {
   return request<UserAccount>("/auth/me", options);
+}
+
+/** Everyone on this deployment, with seats. Administrators only. */
+export function listUsers(options: RequestOptions = {}): Promise<UserList> {
+  return request<UserList>("/users", options);
+}
+
+/** Add a person, with the products they may use. Administrators only. */
+export function addUser(body: CreateUserRequest, options: RequestOptions = {}): Promise<UserAccount> {
+  return request<UserAccount>("/users", { ...options, method: "POST", body });
+}
+
+/** Change someone's active/admin state or product access. Administrators only. */
+export function updateUser(userId: string, body: UpdateUserRequest, options: RequestOptions = {}): Promise<UserAccount> {
+  return request<UserAccount>(`/users/${userId}`, { ...options, method: "PATCH", body });
 }
 
 /**

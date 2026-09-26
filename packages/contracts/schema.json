@@ -966,6 +966,21 @@
         "password": {
           "title": "Password",
           "type": "string"
+        },
+        "products": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Products"
         }
       },
       "required": [
@@ -1089,7 +1104,8 @@
       "enum": [
         "available",
         "not_installed",
-        "not_licensed"
+        "not_licensed",
+        "not_granted"
       ],
       "title": "DirectionState",
       "type": "string"
@@ -2121,6 +2137,21 @@
           ],
           "default": null,
           "title": "Is Admin"
+        },
+        "products": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Products"
         }
       },
       "title": "UpdateUserRequest",
@@ -2179,6 +2210,13 @@
           ],
           "default": null,
           "title": "Last Login At"
+        },
+        "products": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Products",
+          "type": "array"
         }
       },
       "required": [

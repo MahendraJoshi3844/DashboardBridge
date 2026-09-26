@@ -24,6 +24,7 @@ import {
   IconGrid,
   IconHome,
   IconJobs,
+  IconLock,
   IconMoon,
   IconPulse,
   IconSearch,
@@ -142,6 +143,15 @@ export function AppShell({ crumbs, children }: AppShellProps) {
         <Link href="/jobs" className="mg-side__link" aria-current={at("/jobs")}>
           <IconJobs /> Migration Jobs
         </Link>
+
+        {user?.is_admin && (
+          <>
+            <div className="mg-side__label">Administration</div>
+            <Link href="/admin/users" className="mg-side__link" aria-current={at("/admin/users")}>
+              <IconLock /> Users &amp; access
+            </Link>
+          </>
+        )}
 
         <div className="mg-side__label">Platforms</div>
         {PLATFORMS.map((platform) => {

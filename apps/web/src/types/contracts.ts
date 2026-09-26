@@ -360,6 +360,7 @@ export type Name10 = string;
 export type Email = string;
 export type DisplayName = string;
 export type Password = string;
+export type Products = string[] | null;
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "DataType".
@@ -375,7 +376,7 @@ export type DataType2 = "string" | "integer" | "decimal" | "boolean" | "date" | 
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "DirectionState".
  */
-export type DirectionState = "available" | "not_installed" | "not_licensed";
+export type DirectionState = "available" | "not_installed" | "not_licensed" | "not_granted";
 export type Engine = string;
 export type EngineVersion = string;
 export type LicenceFeature = string;
@@ -488,6 +489,7 @@ export type Pages = ReportPage[];
 export type Severity2 = "info" | "warning" | "manual";
 export type IsActive = boolean | null;
 export type IsAdmin = boolean | null;
+export type Products1 = string[] | null;
 export type UserId = string;
 export type Email2 = string;
 export type DisplayName1 = string;
@@ -495,6 +497,7 @@ export type IsAdmin1 = boolean;
 export type IsActive1 = boolean;
 export type CreatedAt1 = string | null;
 export type LastLoginAt = string | null;
+export type Products2 = string[];
 export type Users = UserAccount[];
 export type SeatsTotal = number | null;
 export type SeatsUsed = number;
@@ -1020,6 +1023,7 @@ export interface CreateUserRequest {
   email: Email;
   display_name?: DisplayName;
   password: Password;
+  products?: Products;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
@@ -1244,6 +1248,7 @@ export interface ReportVisual {
 export interface UpdateUserRequest {
   is_active?: IsActive;
   is_admin?: IsAdmin;
+  products?: Products1;
 }
 /**
  * A person with an account on this deployment (`P7.1`).
@@ -1263,6 +1268,7 @@ export interface UserAccount {
   is_active?: IsActive1;
   created_at?: CreatedAt1;
   last_login_at?: LastLoginAt;
+  products?: Products2;
 }
 /**
  * The people on this deployment, and what the licence allows.

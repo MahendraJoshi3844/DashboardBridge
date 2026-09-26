@@ -19,7 +19,9 @@ from sqlalchemy.orm import Session
 
 from app.api.projects import load_project
 from app.core.db import get_session
+from app.api.accounts import current_user
 from app.core.directions import require_direction
+from app.db.models import User
 from app.core.errors import ApiException
 from app.db.models import Artifact as ArtifactRow
 from app.db.models import Job as JobRow
@@ -84,6 +86,7 @@ def start_analysis(
     project_id: UUID,
     session: Session = Depends(get_session),
     store: ArtifactStore = Depends(get_artifact_store),
+    user: User = Depends(current_user),
 ) -> Job:
     """Parse the uploaded artifact into the canonical model.
 
@@ -93,7 +96,7 @@ def start_analysis(
     artifact makes a worker worthwhile.
     """
     project = load_project(session, project_id)
-    require_direction(Platform(project.source_platform), Platform(project.target_platform))
+    require_direction(Platform(project.source_platform), Platform(project.target_platform), user)
     artifact = _source_artifact(session, project_id)
 
     job = JobRow(job_id=uuid4(), project_id=project_id, kind=DbJobKind.ANALYSIS)
