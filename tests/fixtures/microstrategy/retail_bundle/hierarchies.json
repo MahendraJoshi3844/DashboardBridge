@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Time",
+    "levels": [
+      "Year",
+      "Month",
+      "Day"
+    ]
+  },
+  {
+    "name": "Geography",
+    "levels": [
+      "Region",
+      "Store"
+    ]
+  }
+]

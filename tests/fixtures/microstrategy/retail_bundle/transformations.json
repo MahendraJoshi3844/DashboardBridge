@@ -1,0 +1,13 @@
+[
+  {
+    "name": "Last Year",
+    "attribute": "Day",
+    "unit": "year",
+    "offset": -1
+  },
+  {
+    "name": "Fiscal Last Year",
+    "attribute": "Day",
+    "mappingTable": "LU_FISCAL_LY"
+  }
+]

@@ -21,6 +21,7 @@ import {
   toApiError,
 } from "@/lib/api/client";
 import { saveBlob } from "@/lib/download";
+import { directionLabel } from "@/lib/platforms";
 import { STEPS, emptySnapshot, formatLine, readJob, runJob, type JobSnapshot } from "@/lib/migrator/job";
 import type { ApiError, Project, WorkspaceModel } from "@/types/contracts";
 
@@ -33,6 +34,7 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
   const params = useSearchParams();
   const start = params.get("start") === "1";
   const [project, setProject] = useState<Project | null>(null);
+  const direction = project ? directionLabel(project.source_platform, project.target_platform) : "…";
   const [snapshot, setSnapshot] = useState<JobSnapshot>(emptySnapshot);
   const [failure, setFailure] = useState<ApiError | null>(null);
   const [tab, setTab] = useState<Tab>("logs");
@@ -121,13 +123,13 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
       <div className="mg-grid-3">
         <div className="mg-card mg-stat">
           <div className="mg-stat__label">Migration Type</div>
-          <div className="mg-stat__value">Migrate Single Workbook</div>
-          <div className="mg-note">Tableau → Power BI · {project?.name ?? "…"}</div>
+          <div className="mg-stat__value">{project?.source_platform === "microstrategy" ? "Migrate MicroStrategy Project" : "Migrate Single Workbook"}</div>
+          <div className="mg-note">{direction} · {project?.name ?? "…"}</div>
         </div>
         <div className="mg-card mg-stat">
           <div className="mg-stat__label">Load Mode</div>
           <div className="mg-stat__value">Import</div>
-          <div className="mg-note">Schema only — no data is read from the workbook</div>
+          <div className="mg-note">Schema only — no data is read from the {project?.source_platform === "microstrategy" ? "export" : "workbook"}</div>
         </div>
         <div className="mg-card mg-stat" aria-live="polite">
           <div className="mg-stat__label">Status</div>
@@ -152,7 +154,7 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
         <summary>Migration Settings</summary>
         <dl className="mg-kv">
           <dt>Direction</dt>
-          <dd>Tableau → Power BI (PBIP: TMDL semantic model + PBIR report)</dd>
+          <dd>{direction} (PBIP: TMDL semantic model + PBIR report)</dd>
           <dt>Conversion</dt>
           <dd>Deterministic rules only. Anything without a safe DAX equivalent is held for a person, never guessed.</dd>
           <dt>AI assistance</dt>
@@ -278,7 +280,7 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
       {tab === "model" && (
         <section className="mg-card" style={{ marginTop: 12 }}>
           {workspace === null ? (
-            <p className="mg-empty">The Power BI model appears here once the workbook has been converted.</p>
+            <p className="mg-empty">The Power BI model appears here once the source has been converted.</p>
           ) : (
             <>
               <div className="mg-panelhead">

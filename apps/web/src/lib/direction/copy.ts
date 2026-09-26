@@ -85,11 +85,36 @@ const POWER_BI_TO_TABLEAU: DirectionCopy = {
   calculationsMeaning: "Measures and calculated columns needing a Tableau formula, or a person",
 };
 
+const MICROSTRATEGY_TO_POWER_BI: DirectionCopy = {
+  sourceName: "MicroStrategy",
+  targetName: "Power BI",
+  sourceThing: "a MicroStrategy package",
+  targetThing: "Power BI project",
+  dropPrompt: "Drop a MicroStrategy .mstr package or zipped metadata export to begin",
+  browseLabel: "Browse for a package",
+  inputLabel: "Choose a MicroStrategy .mstr package or zipped metadata export",
+  accept: ".mstr,.zip",
+  targetLanguage: "DAX",
+  sourceLanguage: "MicroStrategy metric",
+  convertExplainer:
+    "Converting produces a Power BI project you can download: one shared semantic model for the MicroStrategy project, with a page per dossier page and report. It changes nothing about the file you opened.",
+  download: "Download the Power BI project",
+  deliverable:
+    "A Power BI project — TMDL semantic model and PBIR report — delivered as an archive, with the migration report and data-parity DAX queries beside it.",
+  desktopCaveat:
+    "No project generated from MicroStrategy has yet been opened in Power BI Desktop, and the .mstr reader has only seen synthetic packages. Until a real package has been converted and opened, that is all this can claim.",
+  noEquivalent: "Power BI has no equivalent. Rebuilding it is a design decision.",
+  visualsMeaning: "Dossier visualizations and report grids to rebuild as Power BI visuals",
+  calculationsMeaning: "Metrics needing DAX, or a person",
+};
+
 /**
  * The words for a direction. `null` means none has been chosen yet, which only
  * happens on screens that existed before there was a second direction — they
  * get the words they have always had.
  */
 export function copyFor(direction: DirectionLike | null | undefined): DirectionCopy {
-  return direction?.source === "powerbi" ? POWER_BI_TO_TABLEAU : TABLEAU_TO_POWER_BI;
+  if (direction?.source === "powerbi") return POWER_BI_TO_TABLEAU;
+  if (direction?.source === "microstrategy") return MICROSTRATEGY_TO_POWER_BI;
+  return TABLEAU_TO_POWER_BI;
 }

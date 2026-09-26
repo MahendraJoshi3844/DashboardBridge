@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Retail DW",
+    "dbType": "sql_server",
+    "server": "sqlprod01.contoso.local",
+    "database": "RetailDW",
+    "schema": "dbo"
+  }
+]

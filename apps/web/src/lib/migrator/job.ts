@@ -63,8 +63,19 @@ function plural(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
-function analysisLines(analysis: Analysis, live: boolean): LogLine[] {
+function analysisLines(analysis: Analysis, live: boolean, project?: Project): LogLine[] {
   const inventory = analysis.inventory ?? {};
+  if (project?.source_platform === "microstrategy") {
+    return [
+      line(
+        "INFO",
+        `MicroStrategy project read: ${plural(inventory.tables ?? 0, "table")}, ${plural(inventory.columns ?? 0, "column")}, ` +
+          `${plural(inventory.calculations ?? 0, "metric or calculated column")} translated, ` +
+          `${plural(inventory.visuals ?? 0, "visual")} on ${plural(inventory.dashboards ?? 0, "page")}`,
+        live,
+      ),
+    ];
+  }
   return [
     line(
       "INFO",
@@ -132,7 +143,9 @@ function isMissing(cause: unknown): boolean {
  */
 export async function readJob(project: Project): Promise<JobSnapshot> {
   const done = new Set<Step>(["Uploaded"]);
-  const lines: LogLine[] = [line("INFO", `Migration for workbook: ${project.name}`, false)];
+  const lines: LogLine[] = [
+    line("INFO", `Migration for ${project.source_platform === "microstrategy" ? "MicroStrategy project" : "workbook"}: ${project.name}`, false),
+  ];
   let analysis: Analysis | null = null;
   let conversion: Conversion | null = null;
   let validation: Validation | null = null;
@@ -140,7 +153,7 @@ export async function readJob(project: Project): Promise<JobSnapshot> {
   try {
     analysis = await getAnalysis(project.project_id);
     done.add("Analysed");
-    lines.push(...analysisLines(analysis, false));
+    lines.push(...analysisLines(analysis, false, project));
   } catch (cause) {
     if (!isMissing(cause)) throw cause;
   }
@@ -187,13 +200,22 @@ export async function runJob(
 
   try {
     if (!snapshot.done.has("Analysed")) {
-      push({}, line("INFO", "Step 1: Reading the workbook — tables, fields, calculations, worksheets", true));
+      push(
+        {},
+        line(
+          "INFO",
+          project.source_platform === "microstrategy"
+            ? "Step 1: Reading the MicroStrategy export — attributes, facts, metrics, dossiers, reports"
+            : "Step 1: Reading the workbook — tables, fields, calculations, worksheets",
+          true,
+        ),
+      );
       const started = performance.now();
       await startAnalysis(project.project_id, { signal });
       const analysis = await getAnalysis(project.project_id, { signal });
       push(
         { analysis, done: mark("Analysed") },
-        ...analysisLines(analysis, true),
+        ...analysisLines(analysis, true, project),
         line("INFO", `Analysis took ${Math.round(performance.now() - started)} ms`, true),
       );
     }

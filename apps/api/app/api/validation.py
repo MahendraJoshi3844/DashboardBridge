@@ -189,7 +189,17 @@ def _reconvert(
     would make the check pass by construction.
     """
     project = load_project(session, project_id)
-    if Platform(project.source_platform) is not Platform.TABLEAU:
+    source = Platform(project.source_platform)
+    if source is Platform.MICROSTRATEGY:
+        from engines.conversion.from_microstrategy import (  # noqa: PLC0415
+            convert_microstrategy_to_powerbi,
+        )
+
+        data = store.read(_source(session, project_id).storage_key)
+        with tempfile.TemporaryDirectory(prefix="dbb-replica-") as tmp:
+            outcome = convert_microstrategy_to_powerbi(data, Path(tmp) / "replica", name)
+            return TargetProject.from_dir(outcome.project_dir)
+    if source is not Platform.TABLEAU:
         return None
     data = store.read(_source(session, project_id).storage_key)
     with tempfile.TemporaryDirectory(prefix="dbb-replica-") as tmp:

@@ -15,7 +15,7 @@
  */
 
 /** Source extensions, longest first so `.twbx` is not left as `x`. */
-const SOURCE_EXTENSIONS: readonly string[] = [".twbx", ".twb", ".zip"];
+const SOURCE_EXTENSIONS: readonly string[] = [".twbx", ".twb", ".mstr", ".zip"];
 
 /**
  * The name to save the produced file under.

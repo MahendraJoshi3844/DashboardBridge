@@ -20,6 +20,7 @@
  * second, weaker error path in the UI.
  */
 
+import { PLATFORM_NAMES, TARGET_OF } from "@/lib/platforms";
 import type { ApiError, Platform } from "@/types/contracts";
 
 /**
@@ -30,6 +31,23 @@ import type { ApiError, Platform } from "@/types/contracts";
 export const ACCEPTED_BY_SOURCE: Record<Platform, readonly string[]> = {
   tableau: [".twb", ".twbx"],
   powerbi: [".zip"],
+  // A dossier package, or the metadata export zipped. `.zip` is shared with
+  // Power BI: the gateway tells them apart by the members inside.
+  microstrategy: [".mstr", ".zip"],
+};
+
+/** What a person opens, per source - for the sentence that refuses the wrong one. */
+const THINGS: Record<Platform, string> = {
+  tableau: "a Tableau workbook",
+  powerbi: "a zipped Power BI project",
+  microstrategy: "a MicroStrategy package (.mstr) or zipped metadata export",
+};
+
+/** The same, as a noun for someone else's file. */
+const SHORT_THINGS: Record<Platform, string> = {
+  tableau: "a Tableau workbook",
+  powerbi: "a Power BI project",
+  microstrategy: "a MicroStrategy package",
 };
 
 /** Kept for callers that predate the second direction. */
@@ -50,10 +68,14 @@ const REMEDIES: Record<string, string> = {
   ".twbr": "Tableau .twbr files cannot be read here. Save the workbook as .twb or .twbx and open that.",
 };
 
-const NAMES: Record<Platform, string> = { tableau: "Tableau", powerbi: "Power BI" };
+const NAMES: Record<Platform, string> = PLATFORM_NAMES;
 
-function other(source: Platform): Platform {
-  return source === "tableau" ? "powerbi" : "tableau";
+/** Whose file this is, when it is not this migration's. The first match wins. */
+function owner(source: Platform, extension: string): Platform | undefined {
+  if (ACCEPTED_BY_SOURCE[source].includes(extension)) return undefined;
+  return (Object.keys(ACCEPTED_BY_SOURCE) as Platform[]).find(
+    (platform) => platform !== source && ACCEPTED_BY_SOURCE[platform].includes(extension),
+  );
 }
 
 /** Mirrors `MAX_UPLOAD_SIZE_MB` on the gateway (default 500). */
@@ -107,7 +129,7 @@ function refuse(message: string, detail: string): PrecheckResult {
 export function precheck(file: File, source: Platform = "tableau"): PrecheckResult {
   const extension = extensionOf(file.name);
   const accepted = ACCEPTED_BY_SOURCE[source];
-  const thing = source === "tableau" ? "a Tableau workbook" : "a zipped Power BI project";
+  const thing = THINGS[source];
 
   const remedy = REMEDIES[extension];
   if (remedy !== undefined) {
@@ -125,14 +147,11 @@ export function precheck(file: File, source: Platform = "tableau"): PrecheckResu
 
   // The other direction's file. Named as such, with the way out, because the
   // likeliest cause is a wrong card rather than a wrong file.
-  const theirs = other(source);
-  if (
-    !accepted.includes(extension) &&
-    ACCEPTED_BY_SOURCE[theirs].includes(extension)
-  ) {
+  const theirs = owner(source, extension);
+  if (theirs !== undefined) {
     return refuse(
-      `That is ${theirs === "tableau" ? "a Tableau workbook" : "a Power BI project"}, and this migration reads ${NAMES[source]}. ` +
-        `Go back and choose ${NAMES[theirs]} → ${NAMES[source]} to convert it.`,
+      `That is ${SHORT_THINGS[theirs]}, and this migration reads ${NAMES[source]}. ` +
+        `Go back and choose ${NAMES[theirs]} → ${NAMES[TARGET_OF[theirs]]} to convert it.`,
       `client pre-check: extension ${extension} belongs to ${theirs}, source is ${source}`,
     );
   }

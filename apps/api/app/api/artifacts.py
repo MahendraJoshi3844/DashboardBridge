@@ -31,7 +31,7 @@ from typing import Any, Callable, Iterator
 from uuid import UUID
 
 from dashboardbridge_contracts import Artifact as ArtifactContract
-from dashboardbridge_contracts.enums import ArtifactKind
+from dashboardbridge_contracts.enums import ArtifactKind, Platform
 from fastapi import APIRouter, Depends, File, Request, Response, UploadFile
 from fastapi.routing import APIRoute
 from sqlalchemy.orm import Session
@@ -102,7 +102,10 @@ def upload_artifact(
     project_id: UUID,
     file: UploadFile = File(
         ...,
-        description="A Tableau .twb/.twbx workbook, or a zipped Power BI project.",
+        description=(
+            "A Tableau .twb/.twbx workbook, a zipped Power BI project, or a "
+            "MicroStrategy .mstr package / zipped metadata export."
+        ),
     ),
     session: Session = Depends(get_session),
     store: ArtifactStore = Depends(get_artifact_store),
@@ -125,7 +128,7 @@ def upload_artifact(
             # and detection cannot tell a project from a holiday album
             # without one.
             uv.inspect_zip_archive(staged.path)
-            if extension in {".twbx", ".zip"}
+            if extension in uv.ARCHIVE_EXTENSIONS
             else None
         )
 
@@ -133,7 +136,7 @@ def upload_artifact(
             extension, head=result.head, zip_report=report
         )
         if detected is None:
-            raise uv.refuse_undetectable(display_name)
+            raise uv.refuse_undetectable(display_name, Platform(project.source_platform))
         if detected is not project.source_platform:
             raise uv.refuse_platform_mismatch(detected, project.source_platform)
 

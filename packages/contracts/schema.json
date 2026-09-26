@@ -1537,7 +1537,8 @@
     "Platform": {
       "enum": [
         "tableau",
-        "powerbi"
+        "powerbi",
+        "microstrategy"
       ],
       "title": "Platform",
       "type": "string"

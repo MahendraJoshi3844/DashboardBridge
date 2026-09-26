@@ -53,7 +53,24 @@ ALLOWED_EXTENSIONS: dict[str, Platform] = {
     # any extension can make - `.twbx` is a zip too - which is why the member
     # list decides, not the name.
     ".zip": Platform.POWERBI,
+    # A MicroStrategy dossier package. A zip under another name, so it gets the
+    # same archive limits; its layout is not published, so detection only
+    # confirms it is an archive and the reader says what it recognised.
+    ".mstr": Platform.MICROSTRATEGY,
 }
+
+#: A zipped MicroStrategy metadata export (`mstr2pbi`'s bundle): one JSON file
+#: per object type. Any of these names in a `.zip` makes it one.
+MICROSTRATEGY_BUNDLE_MEMBERS = frozenset(
+    f"{name}.json"
+    for name in (
+        "attributes", "facts", "metrics", "tables", "reports", "dossiers",
+        "documents", "filters", "prompts", "security_filters", "hierarchies",
+    )
+)
+
+#: The extensions that arrive as archives and so need `inspect_zip_archive`.
+ARCHIVE_EXTENSIONS = frozenset({".twbx", ".zip", ".mstr"})
 
 #: Refused with a reason rather than a shrug. Telling a user "unsupported file
 #: type" when the answer is "not yet, and here is what is" wastes their time and
@@ -161,8 +178,8 @@ def validated_extension(filename: str) -> str:
         )
 
     raise _refuse(
-        f"That file type cannot be migrated. Upload a Tableau workbook or a "
-        f"zipped Power BI project — a {allowed} file.",
+        f"That file type cannot be migrated. Upload a Tableau workbook, a "
+        f"zipped Power BI project or a MicroStrategy package — a {allowed} file.",
         detail=f"extension {suffix!r} is not in the allow-list {sorted(ALLOWED_EXTENSIONS)}",
     )
 
@@ -379,7 +396,11 @@ def inspect_zip_archive(path: Path, limits: ZipLimits | None = None) -> ZipRepor
 _ZIP_SIGNATURES = (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
 
 #: `Platform.POWERBI.value.title()` is "Powerbi", which is nobody's product.
-_DISPLAY = {Platform.TABLEAU: "Tableau", Platform.POWERBI: "Power BI"}
+_DISPLAY = {
+    Platform.TABLEAU: "Tableau",
+    Platform.POWERBI: "Power BI",
+    Platform.MICROSTRATEGY: "MicroStrategy",
+}
 _TABLEAU_MARKER = b"<workbook"
 
 
@@ -415,6 +436,19 @@ def detect_platform(
             for name in zip_report.names
         ):
             return Platform.POWERBI
+        if any(
+            name.replace("\\", "/").rsplit("/", 1)[-1].lower() in MICROSTRATEGY_BUNDLE_MEMBERS
+            for name in zip_report.names
+        ):
+            return Platform.MICROSTRATEGY
+        return None
+
+    if extension == ".mstr":
+        # Nothing more is claimed than "a non-empty archive": the package layout
+        # is unpublished, and the reader - sandboxed in analysis - reports what
+        # it recognised and refuses a package with nothing it knows.
+        if head.startswith(_ZIP_SIGNATURES) and zip_report and zip_report.entry_count:
+            return Platform.MICROSTRATEGY
         return None
 
     if extension == ".twbx":
@@ -431,7 +465,14 @@ def detect_platform(
     return None
 
 
-def refuse_undetectable(filename: str) -> ApiException:
+def refuse_undetectable(filename: str, expected: Platform | None = None) -> ApiException:
+    if expected is Platform.MICROSTRATEGY:
+        return _refuse(
+            "We could not confirm that this file is a MicroStrategy export. Upload a "
+            ".mstr dossier package from MicroStrategy Workstation, or a .zip of the "
+            "metadata export (attributes.json, metrics.json, dossiers.json, ...).",
+            detail=f"detection inconclusive for {filename!r}; refusing rather than guessing",
+        )
     return _refuse(
         "We could not confirm that this file is a Tableau workbook. Open it in "
         "Tableau, re-save it, and upload it again.",

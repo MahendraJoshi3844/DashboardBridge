@@ -39,13 +39,13 @@ interface AppShellProps {
   readonly children: ReactNode;
 }
 
-/** The platforms the sidebar lists. Only Tableau has an engine behind it. */
-const PLATFORMS = [
-  { name: "Tableau", available: true },
-  { name: "Cognos", available: false },
-  { name: "MicroStrategy", available: false },
-  { name: "Looker", available: false },
-] as const;
+/** The platforms the sidebar lists, and the migration card each one opens. */
+const PLATFORMS: readonly { readonly name: string; readonly opens: string | null }[] = [
+  { name: "Tableau", opens: "tableau-powerbi" },
+  { name: "Cognos", opens: null },
+  { name: "MicroStrategy", opens: "microstrategy-powerbi" },
+  { name: "Looker", opens: null },
+];
 
 function ThemeButton() {
   const [dark, setDark] = useState(false);
@@ -133,8 +133,8 @@ export function AppShell({ crumbs, children }: AppShellProps) {
 
         <div className="mg-side__label">Platforms</div>
         {PLATFORMS.map((platform) =>
-          platform.available ? (
-            <Link key={platform.name} href="/migrate?open=tableau-powerbi" className="mg-side__link">
+          platform.opens !== null ? (
+            <Link key={platform.name} href={`/migrate?open=${platform.opens}`} className="mg-side__link">
               <IconSwap /> {platform.name}
             </Link>
           ) : (

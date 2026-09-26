@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Region Tier",
+    "elements": [
+      {
+        "name": "Core Regions",
+        "qualification": "Region@DESC In (\"North\", \"South\")"
+      },
+      {
+        "name": "Growth Regions",
+        "qualification": "Region@DESC In (\"East\", \"West\")"
+      }
+    ]
+  },
+  {
+    "name": "Revenue Bands",
+    "elements": [
+      {
+        "name": "High",
+        "qualification": "Revenue > 100000"
+      }
+    ]
+  }
+]

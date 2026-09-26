@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Seasons",
+    "elements": [
+      {
+        "name": "Winter",
+        "expression": "{Dec} + {Jan} + {Feb}"
+      }
+    ]
+  }
+]

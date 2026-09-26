@@ -1,16 +1,14 @@
 "use client";
 
 import { motion } from "motion/react";
+import { PLATFORM_NAMES } from "@/lib/platforms";
 import type { ReactNode } from "react";
 
 import type { Platform } from "@/types/contracts";
 
 import { ArrowRightIcon, BlockedIcon, CheckIcon } from "./Icons";
 
-const PLATFORM_LABEL: Record<Platform, string> = {
-  tableau: "Tableau",
-  powerbi: "Power BI",
-};
+const PLATFORM_LABEL: Record<Platform, string> = PLATFORM_NAMES;
 
 export type Availability = "available" | "not_yet";
 

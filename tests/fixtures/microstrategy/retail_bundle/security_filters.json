@@ -1,0 +1,24 @@
+[
+  {
+    "name": "North Sales Team",
+    "qualification": "Region@DESC In (\"North\")",
+    "members": [
+      "Sales_North",
+      "j.smith"
+    ]
+  },
+  {
+    "name": "Recent Non-Discontinued",
+    "qualification": "Year@ID >= 2023 And Category@DESC <> \"Discontinued\"",
+    "members": [
+      "Analysts"
+    ]
+  },
+  {
+    "name": "Big Spenders Only",
+    "qualification": "Revenue > 10000",
+    "members": [
+      "Key Accounts"
+    ]
+  }
+]

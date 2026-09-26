@@ -1,0 +1,25 @@
+{
+  "Regional Sales": {
+    "executions": 420,
+    "lastRun": "2026-09-20",
+    "distinctUsers": 35
+  },
+  "Regional Sales Copy": {
+    "executions": 0,
+    "lastRun": "2023-02-01"
+  },
+  "Category by Month": {
+    "executions": 58,
+    "lastRun": "2026-09-18"
+  },
+  "Revenue Trend": {
+    "executions": 77
+  },
+  "Executive Sales": {
+    "executions": 1310,
+    "distinctUsers": 120
+  },
+  "Store Scorecard": {
+    "executions": 12
+  }
+}

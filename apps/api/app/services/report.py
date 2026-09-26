@@ -208,7 +208,11 @@ def _ai_note(count: int) -> str:
 
 
 #: A platform as a reader of the report names it.
-_PLATFORM = {Platform.TABLEAU: "Tableau", Platform.POWERBI: "Power BI"}
+_PLATFORM = {
+    Platform.TABLEAU: "Tableau",
+    Platform.POWERBI: "Power BI",
+    Platform.MICROSTRATEGY: "MicroStrategy",
+}
 
 
 def render_html(report: ConversionReport) -> str:

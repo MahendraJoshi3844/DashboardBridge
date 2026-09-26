@@ -1,0 +1,283 @@
+[
+  {
+    "name": "Executive Sales",
+    "prompts": [
+      "Category Prompt",
+      "Metric Chooser"
+    ],
+    "datasets": [
+      "Sales Cube"
+    ],
+    "derivedMetrics": [
+      {
+        "name": "Profit per Unit",
+        "expression": "Profit / [Units Sold]",
+        "formatString": "#,##0.00"
+      }
+    ],
+    "chapters": [
+      {
+        "name": "Overview",
+        "filters": [
+          {
+            "type": "element_list",
+            "target": "Region"
+          }
+        ],
+        "pages": [
+          {
+            "name": "Summary",
+            "visualizations": [
+              {
+                "key": "K1",
+                "name": "Revenue KPI",
+                "visualizationType": "kpi",
+                "metrics": [
+                  "Revenue"
+                ]
+              },
+              {
+                "key": "V1",
+                "name": "Revenue by Region",
+                "visualizationType": "vertical_bar",
+                "attributes": [
+                  "Region"
+                ],
+                "metrics": [
+                  "Revenue"
+                ]
+              },
+              {
+                "key": "V2",
+                "name": "Revenue Trend",
+                "visualizationType": "line",
+                "attributes": [
+                  "Month"
+                ],
+                "metrics": [
+                  "Revenue",
+                  "Revenue Last Year"
+                ]
+              },
+              {
+                "key": "V3",
+                "name": "Category Mix",
+                "visualizationType": "pie",
+                "attributes": [
+                  "Category"
+                ],
+                "metrics": [
+                  "Revenue"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Detail",
+            "selectors": [
+              {
+                "type": "dropdown",
+                "target": "Category"
+              }
+            ],
+            "visualizations": [
+              {
+                "key": "G1",
+                "name": "Store Detail",
+                "visualizationType": "grid",
+                "rows": [
+                  "Region",
+                  "Store"
+                ],
+                "metrics": [
+                  "Revenue",
+                  "Profit",
+                  "Profit Margin",
+                  "Revenue Rank",
+                  "Profit per Unit"
+                ],
+                "thresholds": [
+                  {
+                    "metric": "Profit Margin",
+                    "condition": "< 0",
+                    "format": "red fill"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Customers",
+        "pages": [
+          {
+            "name": "Customer View",
+            "visualizations": [
+              {
+                "key": "M1",
+                "name": "Customers by Region",
+                "visualizationType": "map",
+                "attributes": [
+                  "Region"
+                ],
+                "metrics": [
+                  "Customer Count"
+                ]
+              },
+              {
+                "key": "N1",
+                "name": "Customer Network",
+                "visualizationType": "network",
+                "attributes": [
+                  "Customer",
+                  "Product"
+                ],
+                "metrics": [
+                  "Revenue"
+                ]
+              },
+              {
+                "key": "S1",
+                "name": "Product Scatter",
+                "visualizationType": "bubble",
+                "attributes": [
+                  "Product"
+                ],
+                "metrics": [
+                  "Revenue",
+                  "Units Sold",
+                  "Profit"
+                ]
+              },
+              {
+                "key": "C1",
+                "name": "Revenue and Margin",
+                "visualizationType": "dual_axis",
+                "attributes": [
+                  "Month"
+                ],
+                "metrics": [
+                  "Revenue",
+                  "Profit Margin"
+                ]
+              },
+              {
+                "key": "T1",
+                "name": "Note",
+                "visualizationType": "text",
+                "text": "Figures exclude returns."
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Store Operations",
+    "chapters": [
+      {
+        "name": "Main",
+        "pages": [
+          {
+            "name": "Stores",
+            "visualizations": [
+              {
+                "key": "A",
+                "name": "Store Grid",
+                "visualizationType": "grid",
+                "rows": [
+                  "Store"
+                ],
+                "columns": [
+                  "Year"
+                ],
+                "metrics": [
+                  "Revenue",
+                  "Units Sold"
+                ],
+                "layout": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 600,
+                  "height": 400
+                }
+              },
+              {
+                "key": "B",
+                "name": "Top Stores",
+                "visualizationType": "horizontal_bar",
+                "attributes": [
+                  "Store"
+                ],
+                "metrics": [
+                  "Revenue"
+                ],
+                "layout": {
+                  "x": 600,
+                  "y": 0,
+                  "width": 400,
+                  "height": 400
+                }
+              },
+              {
+                "key": "C",
+                "name": "Revenue vs Total",
+                "visualizationType": "gauge",
+                "metrics": [
+                  "Revenue",
+                  "Total Revenue"
+                ],
+                "layout": {
+                  "x": 0,
+                  "y": 400,
+                  "width": 500,
+                  "height": 300
+                }
+              },
+              {
+                "key": "D",
+                "name": "Mix",
+                "visualizationType": "treemap",
+                "attributes": [
+                  "Category",
+                  "Product"
+                ],
+                "metrics": [
+                  "Gross Sales"
+                ],
+                "layout": {
+                  "x": 500,
+                  "y": 400,
+                  "width": 500,
+                  "height": 300
+                }
+              },
+              {
+                "key": "E",
+                "name": "Share of Region",
+                "visualizationType": "grid",
+                "rows": [
+                  "Region Tier",
+                  "Store"
+                ],
+                "metrics": [
+                  "Revenue Share of Region",
+                  "North Revenue",
+                  "Revenue Growth %"
+                ],
+                "layout": {
+                  "x": 1000,
+                  "y": 0,
+                  "width": 400,
+                  "height": 700
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

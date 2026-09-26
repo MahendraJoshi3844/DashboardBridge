@@ -7,13 +7,14 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { getConversion, listProjects, toApiError } from "@/lib/api/client";
+import { PLATFORM_NAMES } from "@/lib/platforms";
 import type { ApiError, Compatibility, Project } from "@/types/contracts";
 
 import { AppShell } from "./AppShell";
 
 type Status = { readonly phase: "loading" } | { readonly phase: "converted"; readonly counts: Compatibility | undefined } | { readonly phase: "not-converted" };
 
-const NAMES = { tableau: "Tableau", powerbi: "Power BI" } as const;
+const NAMES = PLATFORM_NAMES;
 
 export function JobsList() {
   const query = (useSearchParams().get("q") ?? "").toLowerCase();

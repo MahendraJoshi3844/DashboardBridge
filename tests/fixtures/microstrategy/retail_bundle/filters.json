@@ -1,0 +1,14 @@
+[
+  {
+    "name": "North Region",
+    "qualification": "Region@DESC In (\"North\")"
+  },
+  {
+    "name": "Recent Years",
+    "qualification": "Year@ID >= 2023"
+  },
+  {
+    "name": "Top Customers",
+    "qualification": "Revenue > 10000"
+  }
+]

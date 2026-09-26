@@ -20,6 +20,7 @@ from enum import Enum
 from typing import Iterable, Sequence
 
 from dashboardbridge_contracts import CanonicalModel, ConversionFlag, Visual, VisualBinding
+from dashboardbridge_contracts.enums import Platform
 
 from engines.validation.equivalence import decide_equivalence
 from engines.dax import references_in
@@ -322,11 +323,15 @@ def structural_checks(
 
     # -- visuals -------------------------------------------------------------
     page_titles = {page.display_name.casefold() for page in report.pages}
-    missing_visuals = [
-        visual.name
-        for visual in model.visuals
-        if visual.name.casefold() not in page_titles
-    ]
+    if pages_are_dashboards(model):
+        placed = place_visuals(model, report)
+        missing_visuals = [visual.name for visual in model.visuals if placed[visual.id][1] is None]
+    else:
+        missing_visuals = [
+            visual.name
+            for visual in model.visuals
+            if visual.name.casefold() not in page_titles
+        ]
     missing += missing_visuals
     checks.append(
         _count_check(
@@ -340,25 +345,46 @@ def structural_checks(
     )
 
     # -- dashboards ----------------------------------------------------------
-    # A PBIR report definition has no dashboard object at all, so this can only
-    # ever be a shortfall. It is measured anyway: a gap that is never counted
-    # is a gap nobody sees.
-    missing_dashboards = [dashboard.name for dashboard in model.dashboards]
-    missing += missing_dashboards
-    checks.append(
-        _count_check(
-            "DASHBOARD_COUNT_MATCH",
-            "dashboards",
-            len(model.dashboards),
-            0,
-            missing_dashboards,
-            subjects,
-            extra_note=(
-                "A PBIR report definition has no dashboard object; each "
-                "dashboard's sheets are generated as separate pages."
-            ),
+    if pages_are_dashboards(model):
+        # A MicroStrategy dossier page is a page with several visuals, and it is
+        # emitted as exactly that - so here a dashboard can be looked for.
+        missing_dashboards = [
+            dashboard.name
+            for dashboard in model.dashboards
+            if dashboard.name.casefold() not in page_titles
+        ]
+        missing += missing_dashboards
+        checks.append(
+            _count_check(
+                "DASHBOARD_COUNT_MATCH",
+                "dashboards",
+                len(model.dashboards),
+                len(model.dashboards) - len(missing_dashboards),
+                missing_dashboards,
+                subjects,
+                extra_note="Each dossier page or report is one Power BI page, matched by title.",
+            )
         )
-    )
+    else:
+        # A PBIR report definition has no dashboard object at all, so this can
+        # only ever be a shortfall. It is measured anyway: a gap that is never
+        # counted is a gap nobody sees.
+        missing_dashboards = [dashboard.name for dashboard in model.dashboards]
+        missing += missing_dashboards
+        checks.append(
+            _count_check(
+                "DASHBOARD_COUNT_MATCH",
+                "dashboards",
+                len(model.dashboards),
+                0,
+                missing_dashboards,
+                subjects,
+                extra_note=(
+                    "A PBIR report definition has no dashboard object; each "
+                    "dashboard's sheets are generated as separate pages."
+                ),
+            )
+        )
 
     # -- bindings and filters that did not cross ------------------------------
     # A shelf may name a column by its internal Tableau name while the model
@@ -788,11 +814,70 @@ def visual_checks(model: CanonicalModel, target: TargetProject) -> list[Check]:
     """
     report = target.report()
     checks: list[Check] = []
+    if pages_are_dashboards(model):
+        return _dashboard_visual_checks(model, report)
     for visual in model.visuals:
         page = report.page_titled(visual.name)
         checks.append(_visual_type(visual, page))
         checks.append(_visual_bindings(visual, page))
         checks.append(_visual_title(visual, page))
+    return checks
+
+
+def pages_are_dashboards(model: CanonicalModel) -> bool:
+    """Whether the source's dashboards become pages holding several visuals.
+
+    True for MicroStrategy, whose dossier pages map one-to-one onto Power BI
+    pages. Tableau is the other shape: a page per worksheet, matched by title.
+    Decided by the source platform, never by whether names happen to coincide.
+    """
+    return model.source_platform is Platform.MICROSTRATEGY
+
+
+def place_visuals(model: CanonicalModel, report) -> dict[str, tuple[object, object]]:
+    """Each source visual's (page, target visual), either may be None.
+
+    The page is the one titled like the dashboard that holds the visual. Within
+    it a visual is matched to an unclaimed target visual of the same type: PBIR
+    visual ids are hashes the emitter chose, and matching on them would be
+    validating the emitter against itself.
+    """
+    placed: dict[str, tuple[object, object]] = {visual.id: (None, None) for visual in model.visuals}
+    by_id = {visual.id: visual for visual in model.visuals}
+    for dashboard in model.dashboards:
+        page = report.page_titled(dashboard.name)
+        unclaimed = list(page.visuals) if page is not None else []
+        for visual_id in dashboard.visual_ids:
+            visual = by_id.get(visual_id)
+            if visual is None:
+                continue
+            match = next((t for t in unclaimed if t.visual_type == visual.visual_type), None)
+            if match is not None:
+                unclaimed.remove(match)
+            placed[visual_id] = (page, match)
+    return placed
+
+
+def _dashboard_visual_checks(model: CanonicalModel, report) -> list[Check]:
+    checks: list[Check] = []
+    placed = place_visuals(model, report)
+    for visual in model.visuals:
+        page, match = placed[visual.id]
+        if page is None or match is None:
+            where = "its page is absent" if page is None else f"page '{page.display_name}' has no unclaimed '{visual.visual_type}' visual"
+            for rule in ("VISUAL_TYPE_PRESENT", "VISUAL_BINDINGS_BOUND", "VISUAL_TITLE_CARRIED"):
+                checks.append(Check(VISUAL, rule, RuleStatus.FAIL, f"{visual.name}: {where}, so the visual is absent from the target."))
+            continue
+        checks.append(Check(
+            VISUAL, "VISUAL_TYPE_PRESENT", RuleStatus.PASS,
+            f"{visual.name}: emitted as '{match.visual_type}' on page '{page.display_name}'.",
+        ))
+        checks.append(_visual_bindings(visual, page))
+        checks.append(Check(
+            VISUAL, "VISUAL_TITLE_CARRIED", RuleStatus.WARNING,
+            f"{visual.name}: the page carries the dossier page's name, but the visual's own "
+            f"title is not written yet (PBIR title objects are not enabled until verified in Desktop).",
+        ))
     return checks
 
 

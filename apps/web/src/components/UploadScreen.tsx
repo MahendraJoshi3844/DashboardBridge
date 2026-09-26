@@ -2,15 +2,13 @@
 
 import { motion } from "motion/react";
 
+import { PLATFORM_NAMES } from "@/lib/platforms";
 import type { ApiError, Platform } from "@/types/contracts";
 
 import { ChosenFile, Dropzone } from "./Dropzone";
 import { AlertIcon, ArrowRightIcon, CloseIcon } from "./Icons";
 
-const PLATFORM_LABEL: Record<Platform, string> = {
-  tableau: "Tableau",
-  powerbi: "Power BI",
-};
+const PLATFORM_LABEL: Record<Platform, string> = PLATFORM_NAMES;
 
 /**
  * Upload (P1.2) — "Accept an artifact" (01-product-spec.md, Screens).

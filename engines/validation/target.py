@@ -190,6 +190,10 @@ class TargetProject:
             body = self.text(model_paths[0]) or ""
             refs = tuple(_REF_TABLE.match(line).group(1) for line in body.splitlines() if _REF_TABLE.match(line))
             relationships = _parse_relationships(body)
+        # Power BI Desktop keeps relationships in their own file beside model.tmdl;
+        # an emitter may put them in either place, so both are read.
+        for path in self.paths(suffix="definition/relationships.tmdl"):
+            relationships += _parse_relationships(self.text(path) or "")
         return SemanticModel(
             tables=tuple(sorted(tables, key=lambda t: t.name)),
             referenced_tables=refs,
@@ -320,7 +324,11 @@ def _parse_visual(raw: str | None) -> TargetVisual | None:
     state = visual.get("query", {}).get("queryState", {})
     for well in sorted(state) if isinstance(state, dict) else []:
         for projection in state[well].get("projections", []):
-            column = projection.get("field", {}).get("Column", {})
+            field_ = projection.get("field", {})
+            # A measure projection names its measure the way a column
+            # projection names its column; reading only `Column` left every
+            # measure binding looking like an empty reference.
+            column = field_.get("Column") or field_.get("Measure") or {}
             entity = (
                 column.get("Expression", {}).get("SourceRef", {}).get("Entity", "")
             )

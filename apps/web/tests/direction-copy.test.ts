@@ -58,4 +58,15 @@ describe("copyFor", () => {
   it("falls back to the direction that has always existed", () => {
     expect(copyFor(null)).toEqual(toPowerBi);
   });
+
+  it("names MicroStrategy and Power BI, and nothing about Tableau, for MicroStrategy → Power BI", () => {
+    const fromMstr = copyFor({ source: "microstrategy", target: "powerbi" });
+    expect(fromMstr.sourceName).toBe("MicroStrategy");
+    expect(fromMstr.targetName).toBe("Power BI");
+    expect(fromMstr.accept).toBe(".mstr,.zip");
+    expect(fromMstr.sourceLanguage).toBe("MicroStrategy metric");
+    for (const text of everyString(fromMstr)) {
+      expect(text).not.toMatch(/tableau|workbook/i);
+    }
+  });
 });

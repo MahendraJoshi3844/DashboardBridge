@@ -33,6 +33,17 @@ A **6-stage linear pipeline** around a single **Intermediate Representation (IR)
 
 See `docs/design/TECHNICAL-DESIGN.md` §2–§3 for the stage table and folder layout.
 
+## MicroStrategy → Power BI
+
+The third direction runs a separate engine, `mstr2pbi` (repository
+MicroStrategy-to-Power-BI), pinned by commit in `pyproject.toml` and
+`apps/api/requirements.txt`. `engines/conversion/from_microstrategy.py` is the
+only seam: it calls the engine with `placeholders=False` (rule 1) and reports
+in contract terms. Uploads are `.mstr` packages or zipped metadata exports,
+told apart from Power BI zips by their members. For local development:
+`pip install -e ../../Mstr2PBI/MicroStrategy-to-Power-BI`. To bump the engine,
+change the commit in both files.
+
 ## Commands
 
 ```bash

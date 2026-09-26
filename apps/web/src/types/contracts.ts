@@ -35,7 +35,7 @@ export type JobStatus = "queued" | "running" | "completed" | "failed" | "cancell
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "Platform".
  */
-export type Platform = "tableau" | "powerbi";
+export type Platform = "tableau" | "powerbi" | "microstrategy";
 export type SourceVersion = string;
 export type Name = string;
 export type Id = string;

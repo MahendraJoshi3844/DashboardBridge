@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Revenue",
+    "dataType": "decimal",
+    "expressions": [
+      {
+        "text": "REVENUE",
+        "tables": [
+          "FACT_SALES",
+          "AGG_SALES_MONTH"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Cost",
+    "dataType": "decimal",
+    "expressions": [
+      {
+        "text": "COST",
+        "tables": [
+          "FACT_SALES",
+          "AGG_SALES_MONTH"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Units",
+    "dataType": "integer",
+    "expressions": [
+      {
+        "text": "QTY",
+        "tables": [
+          "FACT_SALES"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Gross Sales",
+    "dataType": "decimal",
+    "expressions": [
+      {
+        "text": "QTY * UNIT_PRICE",
+        "tables": [
+          "FACT_SALES"
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,135 @@
+[
+  {
+    "name": "Revenue",
+    "expression": "Sum(Revenue) {~+}",
+    "formatString": "#,##0",
+    "folder": "Sales"
+  },
+  {
+    "name": "Cost",
+    "expression": "Sum(Cost) {~+}",
+    "formatString": "#,##0",
+    "folder": "Sales"
+  },
+  {
+    "name": "Profit",
+    "expression": "[Revenue] - [Cost]",
+    "formatString": "#,##0",
+    "folder": "Sales"
+  },
+  {
+    "name": "Profit Margin",
+    "expression": "Profit / Revenue",
+    "formatString": "0.00%",
+    "folder": "Sales"
+  },
+  {
+    "name": "Units Sold",
+    "expression": "Sum(Units)",
+    "formatString": "#,##0",
+    "folder": "Volume"
+  },
+  {
+    "name": "Gross Sales",
+    "expression": "Sum([Gross Sales])",
+    "formatString": "$#,##0.00",
+    "folder": "Sales"
+  },
+  {
+    "name": "Avg Unit Price",
+    "expression": "Sum(Revenue) / Sum(Units)",
+    "formatString": "Currency",
+    "folder": "Volume"
+  },
+  {
+    "name": "Customer Count",
+    "expression": {
+      "text": "Count<Distinct=True, UseLookupForAttributes=False>(Customer)"
+    },
+    "formatString": "#,##0",
+    "folder": "Customers"
+  },
+  {
+    "name": "Region Revenue",
+    "expression": "Sum(Revenue) {Region+}",
+    "folder": "Level"
+  },
+  {
+    "name": "Revenue Share of Region",
+    "expression": "Revenue / [Region Revenue]",
+    "formatString": "0.0%",
+    "folder": "Level"
+  },
+  {
+    "name": "Total Revenue",
+    "expression": "Sum(Revenue) {}",
+    "folder": "Level"
+  },
+  {
+    "name": "Revenue Excl Store Filter",
+    "expression": "Sum(Revenue) {~+, Store*}",
+    "folder": "Level"
+  },
+  {
+    "name": "North Revenue",
+    "expression": "Sum(Revenue) <[North Region]>",
+    "folder": "Conditional"
+  },
+  {
+    "name": "Big Customer Revenue",
+    "expression": "Sum(Revenue) <[Top Customers]>",
+    "folder": "Conditional"
+  },
+  {
+    "name": "Revenue Last Year",
+    "expression": "Sum(Revenue) |Last Year|",
+    "formatString": "#,##0",
+    "folder": "Time"
+  },
+  {
+    "name": "Revenue Growth %",
+    "expression": "([Revenue] - [Revenue Last Year]) / [Revenue Last Year]",
+    "formatString": "0.0%",
+    "folder": "Time"
+  },
+  {
+    "name": "Revenue Fiscal LY",
+    "expression": "Sum(Revenue) |Fiscal Last Year|",
+    "folder": "Time"
+  },
+  {
+    "name": "Revenue Rank",
+    "expression": "Rank([Revenue])",
+    "folder": "OLAP"
+  },
+  {
+    "name": "Running Revenue",
+    "expression": "RunningSum([Revenue])",
+    "folder": "OLAP"
+  },
+  {
+    "name": "Revenue With Tax",
+    "expression": "ApplySimple(\"#0 * 1.2\", Revenue)",
+    "folder": "Pass-through"
+  },
+  {
+    "name": "Sales Amount",
+    "expression": "Sum(Revenue){~+}",
+    "folder": "Sales"
+  },
+  {
+    "name": "Big Store Flag",
+    "expression": "If([Revenue] > 100000, 1, 0)",
+    "folder": "Flags"
+  },
+  {
+    "name": "Legacy Margin",
+    "expression": "NullToZero(Profit) / ZeroToNull(Revenue)",
+    "folder": "Legacy"
+  },
+  {
+    "name": "Rank Growth",
+    "expression": "[Revenue Rank] * 2",
+    "folder": "OLAP"
+  }
+]

@@ -1,0 +1,308 @@
+[
+  {
+    "name": "Region",
+    "lookupTable": "LU_REGION",
+    "displayForms": [
+      "DESC"
+    ],
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "integer",
+        "expressions": [
+          {
+            "text": "REGION_ID",
+            "tables": [
+              "LU_REGION",
+              "LU_STORE",
+              "FACT_SALES",
+              "AGG_SALES_MONTH"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DESC",
+        "category": "DESC",
+        "dataType": "varchar",
+        "expressions": [
+          {
+            "text": "REGION_DESC",
+            "tables": [
+              "LU_REGION"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Store",
+    "lookupTable": "LU_STORE",
+    "parents": [
+      "Region"
+    ],
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "integer",
+        "expressions": [
+          {
+            "text": "STORE_ID",
+            "tables": [
+              "LU_STORE",
+              "FACT_SALES"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DESC",
+        "category": "DESC",
+        "dataType": "varchar",
+        "expressions": [
+          {
+            "text": "STORE_DESC",
+            "tables": [
+              "LU_STORE"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Category",
+    "lookupTable": "LU_CATEGORY",
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "integer",
+        "expressions": [
+          {
+            "text": "CATEGORY_ID",
+            "tables": [
+              "LU_CATEGORY",
+              "LU_PRODUCT"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DESC",
+        "category": "DESC",
+        "dataType": "varchar",
+        "expressions": [
+          {
+            "text": "CATEGORY_DESC",
+            "tables": [
+              "LU_CATEGORY"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Product",
+    "lookupTable": "LU_PRODUCT",
+    "parents": [
+      "Category"
+    ],
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "integer",
+        "expressions": [
+          {
+            "text": "PRODUCT_ID",
+            "tables": [
+              "LU_PRODUCT",
+              "FACT_SALES"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DESC",
+        "category": "DESC",
+        "dataType": "varchar",
+        "expressions": [
+          {
+            "text": "PRODUCT_DESC",
+            "tables": [
+              "LU_PRODUCT"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Year",
+    "lookupTable": "LU_YEAR",
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "integer",
+        "expressions": [
+          {
+            "text": "YEAR_ID",
+            "tables": [
+              "LU_YEAR",
+              "LU_MONTH",
+              "LU_DAY"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Month",
+    "lookupTable": "LU_MONTH",
+    "parents": [
+      "Year"
+    ],
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "integer",
+        "expressions": [
+          {
+            "text": "MONTH_ID",
+            "tables": [
+              "LU_MONTH",
+              "LU_DAY",
+              "AGG_SALES_MONTH"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DESC",
+        "category": "DESC",
+        "dataType": "varchar",
+        "expressions": [
+          {
+            "text": "MONTH_DESC",
+            "tables": [
+              "LU_MONTH"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Day",
+    "lookupTable": "LU_DAY",
+    "parents": [
+      "Month"
+    ],
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": "date",
+        "expressions": [
+          {
+            "text": "DAY_DATE",
+            "tables": [
+              "LU_DAY",
+              "FACT_SALES"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "information": {
+      "name": "Customer",
+      "objectId": "8D679D3711D3E4981000E787EC6DE8A4"
+    },
+    "attributeLookupTable": {
+      "name": "LU_CUSTOMER"
+    },
+    "keyForm": {
+      "name": "ID"
+    },
+    "forms": [
+      {
+        "name": "ID",
+        "category": "ID",
+        "dataType": {
+          "type": "integer"
+        },
+        "expressions": [
+          {
+            "expression": {
+              "text": "CUST_ID"
+            },
+            "tables": [
+              {
+                "name": "LU_CUSTOMER"
+              }
+            ]
+          },
+          {
+            "expression": {
+              "text": "CUSTOMER_KEY"
+            },
+            "tables": [
+              {
+                "name": "FACT_SALES"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "DESC",
+        "category": "DESC",
+        "expressions": [
+          {
+            "expression": {
+              "text": "CUST_NAME"
+            },
+            "tables": [
+              {
+                "name": "LU_CUSTOMER"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Email",
+        "category": "NONE",
+        "expressions": [
+          {
+            "expression": {
+              "text": "CUST_EMAIL"
+            },
+            "tables": [
+              {
+                "name": "LU_CUSTOMER"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "displays": {
+      "reportDisplays": [
+        {
+          "name": "DESC"
+        }
+      ]
+    }
+  }
+]

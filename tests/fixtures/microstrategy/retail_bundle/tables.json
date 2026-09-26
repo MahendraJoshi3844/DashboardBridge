@@ -1,0 +1,205 @@
+[
+  {
+    "name": "LU_REGION",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "REGION_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "REGION_DESC",
+        "dataType": "varchar"
+      }
+    ]
+  },
+  {
+    "name": "LU_STORE",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "STORE_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "STORE_DESC",
+        "dataType": "varchar"
+      },
+      {
+        "name": "REGION_ID",
+        "dataType": "integer"
+      }
+    ]
+  },
+  {
+    "name": "LU_CATEGORY",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "CATEGORY_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "CATEGORY_DESC",
+        "dataType": "varchar"
+      }
+    ]
+  },
+  {
+    "name": "LU_PRODUCT",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "PRODUCT_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "PRODUCT_DESC",
+        "dataType": "varchar"
+      },
+      {
+        "name": "CATEGORY_ID",
+        "dataType": "integer"
+      }
+    ]
+  },
+  {
+    "name": "LU_YEAR",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "YEAR_ID",
+        "dataType": "integer"
+      }
+    ]
+  },
+  {
+    "name": "LU_MONTH",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "MONTH_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "MONTH_DESC",
+        "dataType": "varchar"
+      },
+      {
+        "name": "YEAR_ID",
+        "dataType": "integer"
+      }
+    ]
+  },
+  {
+    "name": "LU_DAY",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "DAY_DATE",
+        "dataType": "date"
+      },
+      {
+        "name": "MONTH_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "YEAR_ID",
+        "dataType": "integer"
+      }
+    ]
+  },
+  {
+    "name": "LU_CUSTOMER",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "CUST_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "CUST_NAME",
+        "dataType": "varchar"
+      },
+      {
+        "name": "CUST_EMAIL",
+        "dataType": "varchar"
+      }
+    ]
+  },
+  {
+    "name": "FACT_SALES",
+    "datasource": "Retail DW",
+    "rowCount": 48000000,
+    "columns": [
+      {
+        "name": "DAY_DATE",
+        "dataType": "date"
+      },
+      {
+        "name": "STORE_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "REGION_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "PRODUCT_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "CUSTOMER_KEY",
+        "dataType": "integer"
+      },
+      {
+        "name": "QTY",
+        "dataType": "integer"
+      },
+      {
+        "name": "UNIT_PRICE",
+        "dataType": "decimal"
+      },
+      {
+        "name": "REVENUE",
+        "dataType": "decimal"
+      },
+      {
+        "name": "COST",
+        "dataType": "decimal"
+      }
+    ]
+  },
+  {
+    "name": "AGG_SALES_MONTH",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "MONTH_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "REGION_ID",
+        "dataType": "integer"
+      },
+      {
+        "name": "REVENUE",
+        "dataType": "decimal"
+      },
+      {
+        "name": "COST",
+        "dataType": "decimal"
+      }
+    ]
+  },
+  {
+    "name": "UNUSED_AUDIT",
+    "datasource": "Retail DW",
+    "columns": [
+      {
+        "name": "AUDIT_ID",
+        "dataType": "integer"
+      }
+    ]
+  }
+]

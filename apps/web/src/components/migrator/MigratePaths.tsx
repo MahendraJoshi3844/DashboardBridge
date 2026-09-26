@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Choose a migration path. One path has an engine behind it today; the rest are
- * shown locked with the reason, so the roadmap is visible without any card
- * opening a screen that would claim otherwise.
+ * Choose a migration path. Tableau → Power BI and MicroStrategy → Power BI have
+ * an engine behind them; the rest are shown locked with the reason, so the
+ * roadmap is visible without any card opening a screen that would claim otherwise.
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -56,8 +56,8 @@ const PATHS: readonly Path[] = [
     from: <IconServer style={{ color: "#0891b2" }} />,
     to: powerBi,
     title: "MicroStrategy → Power BI",
-    description: "Reports, dossiers, cubes, metrics",
-    locked: "No MicroStrategy reader exists yet.",
+    description: "Dossiers, reports, metrics, security filters — upload a .mstr package",
+    locked: null,
   },
   {
     id: "looker-powerbi",
@@ -117,7 +117,10 @@ export function MigratePaths() {
         ))}
       </div>
 
-      {open === "tableau-powerbi" && <MigrateModal onClose={() => router.push("/migrate")} />}
+      {open === "tableau-powerbi" && <MigrateModal source="tableau" onClose={() => router.push("/migrate")} />}
+      {open === "microstrategy-powerbi" && (
+        <MigrateModal key="microstrategy" source="microstrategy" onClose={() => router.push("/migrate")} />
+      )}
     </AppShell>
   );
 }

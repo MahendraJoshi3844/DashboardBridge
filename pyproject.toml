@@ -24,6 +24,10 @@ dependencies = [
     # undeclared, which is the kind of dependency that works until a clean
     # install on a customer's machine.
     "cryptography>=42.0",
+    # The MicroStrategy -> Power BI engine lives in its own repository and is
+    # pinned by commit so a checkout converts the same way every time. For
+    # development against a local clone: pip install -e ../MicroStrategy-to-Power-BI
+    "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595",
 ]
 
 [project.optional-dependencies]

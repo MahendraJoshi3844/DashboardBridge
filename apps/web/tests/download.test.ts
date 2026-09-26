@@ -40,3 +40,9 @@ describe("producedName for a Tableau target", () => {
     expect(producedName("", "tableau")).toBe("dashboardbridge-workbook.twb");
   });
 });
+
+describe("producedName for a MicroStrategy source", () => {
+  it("drops the .mstr extension", () => {
+    expect(producedName("Executive Sales.mstr")).toBe("Executive Sales.pbip.zip");
+  });
+});

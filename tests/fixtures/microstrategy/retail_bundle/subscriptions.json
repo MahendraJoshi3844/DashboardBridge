@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Daily Regional Sales",
+    "target": "Regional Sales",
+    "delivery": "email",
+    "schedule": "Daily 07:00",
+    "recipients": [
+      "sales-leads@contoso.com"
+    ]
+  },
+  {
+    "name": "Scorecard PDF",
+    "target": "Store Scorecard",
+    "delivery": "file",
+    "schedule": "Monday 06:00"
+  }
+]

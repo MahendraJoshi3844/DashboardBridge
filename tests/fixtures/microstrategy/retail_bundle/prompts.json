@@ -1,0 +1,29 @@
+[
+  {
+    "name": "Region Prompt",
+    "type": "element",
+    "attribute": "Region"
+  },
+  {
+    "name": "Category Prompt",
+    "type": "element",
+    "attribute": "Category",
+    "required": true
+  },
+  {
+    "name": "Metric Chooser",
+    "type": "object",
+    "choices": [
+      "Revenue",
+      "Profit",
+      "Units Sold"
+    ]
+  },
+  {
+    "name": "Min Revenue",
+    "type": "value",
+    "dataType": "decimal",
+    "min": 0,
+    "max": 1000000
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "name": "Regional Sales",
+    "type": "grid",
+    "rows": [
+      "Region",
+      "Store"
+    ],
+    "metrics": [
+      "Revenue",
+      "Profit",
+      "Profit Margin"
+    ],
+    "filter": "Recent Years",
+    "prompts": [
+      "Region Prompt"
+    ],
+    "folder": "Public Objects/Reports/Sales"
+  },
+  {
+    "name": "Regional Sales Copy",
+    "type": "grid",
+    "rows": [
+      "Store",
+      "Region"
+    ],
+    "metrics": [
+      "Profit",
+      "Revenue",
+      "Profit Margin"
+    ],
+    "filter": "Recent Years"
+  },
+  {
+    "name": "Category by Month",
+    "type": "grid",
+    "rows": [
+      "Category"
+    ],
+    "columns": [
+      "Month"
+    ],
+    "metrics": [
+      "Revenue"
+    ]
+  },
+  {
+    "name": "Revenue Trend",
+    "type": "graph",
+    "graphType": "line",
+    "rows": [
+      "Month"
+    ],
+    "metrics": [
+      "Revenue",
+      "Revenue Last Year"
+    ]
+  },
+  {
+    "name": "Threshold Picker",
+    "type": "grid",
+    "rows": [
+      "Product"
+    ],
+    "metrics": [
+      "Revenue"
+    ],
+    "prompts": [
+      "Min Revenue"
+    ]
+  },
+  {
+    "name": "Top Products SQL",
+    "type": "freeform_sql",
+    "datasource": "Retail DW",
+    "sql": "SELECT p.PRODUCT_DESC, SUM(f.REVENUE) AS REVENUE FROM FACT_SALES f JOIN LU_PRODUCT p ON p.PRODUCT_ID = f.PRODUCT_ID GROUP BY p.PRODUCT_DESC",
+    "sqlColumns": [
+      {
+        "name": "PRODUCT_DESC",
+        "dataType": "varchar"
+      },
+      {
+        "name": "REVENUE",
+        "dataType": "decimal"
+      }
+    ]
+  }
+]

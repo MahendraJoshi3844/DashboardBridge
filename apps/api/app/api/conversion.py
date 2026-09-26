@@ -54,6 +54,7 @@ _latest = latest_job
 _DIRECTIONS = {
     (Platform.TABLEAU, Platform.POWERBI),
     (Platform.POWERBI, Platform.TABLEAU),
+    (Platform.MICROSTRATEGY, Platform.POWERBI),
 }
 
 #: What the stored target is served as, by its file name.
@@ -80,6 +81,18 @@ def _produce(
         outcome = convert_powerbi_to_tableau(data, out / "project", name)
         workbook = next(outcome.project_dir.glob("*.twb"))
         return outcome, workbook.read_bytes(), f"{name}.twb"
+
+    if direction == (Platform.MICROSTRATEGY, Platform.POWERBI):
+        from engines.conversion.from_microstrategy import (  # noqa: PLC0415
+            convert_microstrategy_to_powerbi,
+        )
+
+        # The archive also carries the engine's migration report and the
+        # data-parity DAX queries beside the project: they are how a person
+        # checks what the conversion claims.
+        outcome = convert_microstrategy_to_powerbi(data, out / "project", name)
+        archive = zip_project(outcome.project_dir, out / "produced")
+        return outcome, archive.read_bytes(), f"{name}.pbip.zip"
 
     outcome = convert_tableau_to_powerbi(
         data,

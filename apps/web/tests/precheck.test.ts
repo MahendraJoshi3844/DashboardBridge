@@ -100,3 +100,33 @@ describe("precheck for a Power BI source", () => {
     expect(result.error.message).toContain("Power BI → Tableau");
   });
 });
+
+describe("precheck for MicroStrategy", () => {
+  it("accepts a .mstr package and a zipped metadata export", () => {
+    expect(precheck(fileOf("Executive Sales.mstr", 5000), "microstrategy").ok).toBe(true);
+    expect(precheck(fileOf("retail_bundle.zip", 5000), "microstrategy").ok).toBe(true);
+  });
+
+  it("sends a Tableau workbook back to the Tableau migration", () => {
+    const result = precheck(fileOf("Superstore.twbx", 1000), "microstrategy");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("Tableau → Power BI");
+  });
+
+  it("sends a .mstr package opened elsewhere to MicroStrategy → Power BI", () => {
+    for (const source of ["tableau", "powerbi"] as const) {
+      const result = precheck(fileOf("Executive Sales.mstr", 1000), source);
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.message).toContain("MicroStrategy → Power BI");
+    }
+  });
+
+  it("names what it reads when the file is something else", () => {
+    const result = precheck(fileOf("notes.txt", 10), "microstrategy");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("MicroStrategy package");
+  });
+});

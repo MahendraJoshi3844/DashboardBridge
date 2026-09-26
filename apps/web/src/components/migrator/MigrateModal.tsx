@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * Tableau → Power BI: choose a workbook, then start the migration.
+ * Choose a source file, then start the migration: Tableau → Power BI, or
+ * MicroStrategy → Power BI. Which one is the `source` prop; every word and
+ * check that depends on it comes from `copyFor`, `precheck` and `platforms`.
  *
  * Starting creates the project and uploads the file, then hands over to the job
  * screen, which runs analysis and conversion and shows the log as each step
@@ -12,8 +14,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { createProject, listProjects, toApiError, uploadArtifact } from "@/lib/api/client";
-import { formatBytes, precheck, precheckDrop } from "@/lib/upload/precheck";
-import type { ApiError, Project } from "@/types/contracts";
+import { copyFor } from "@/lib/direction/copy";
+import { TARGET_OF, directionLabel } from "@/lib/platforms";
+import { ACCEPTED_BY_SOURCE, formatBytes, precheck, precheckDrop } from "@/lib/upload/precheck";
+import type { ApiError, Platform, Project } from "@/types/contracts";
 
 import {
   IconArrow,
@@ -27,11 +31,39 @@ import {
 
 type Tab = "upload" | "analyzed" | "server";
 
-function stem(filename: string): string {
-  return filename.replace(/\.(twbx|twb)$/i, "") || "Workbook";
+function stem(filename: string, source: Platform): string {
+  const lower = filename.toLowerCase();
+  const extension = ACCEPTED_BY_SOURCE[source].find((candidate) => lower.endsWith(candidate));
+  const trimmed = extension ? filename.slice(0, -extension.length) : filename;
+  return trimmed || (source === "microstrategy" ? "MicroStrategy project" : "Workbook");
 }
 
-export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
+/** Where a server-hosted source would come from, and what to do instead today. */
+const SERVER_NOTE: Record<Platform, readonly [string, string]> = {
+  tableau: [
+    "Reading from Tableau Server or Cloud is not connected yet.",
+    "Download the workbook from the server and upload the .twb or .twbx instead.",
+  ],
+  powerbi: [
+    "Reading from the Power BI service is not connected yet.",
+    "Save the report as a Power BI project, zip the folder and upload that instead.",
+  ],
+  microstrategy: [
+    "Reading from a MicroStrategy Library server is not connected here yet.",
+    "Download the dossier as a .mstr file, or run `mstr2pbi extract` inside your network and upload the zipped bundle.",
+  ],
+};
+
+export function MigrateModal({
+  onClose,
+  source = "tableau",
+}: {
+  readonly onClose: () => void;
+  readonly source?: Platform;
+}) {
+  const target = TARGET_OF[source];
+  const copy = copyFor({ source, target });
+  const accepted = ACCEPTED_BY_SOURCE[source];
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("upload");
   const [file, setFile] = useState<File | null>(null);
@@ -58,12 +90,12 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
       .then((projects) =>
         setPrevious(
           projects.filter(
-            (project) => project.source_platform === "tableau" && project.target_platform === "powerbi",
+            (project) => project.source_platform === source && project.target_platform === target,
           ),
         ),
       )
       .catch((cause) => setError(toApiError(cause)));
-  }, [tab, previous]);
+  }, [tab, previous, source, target]);
 
   function accept(result: ReturnType<typeof precheck>) {
     if (result.ok) {
@@ -85,9 +117,9 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
       if (!file) return;
       setBusy("Creating the migration…");
       const project = await createProject({
-        source_platform: "tableau",
-        target_platform: "powerbi",
-        name: stem(file.name),
+        source_platform: source,
+        target_platform: target,
+        name: stem(file.name, source),
       });
       setBusy(`Sending ${file.name}…`);
       await uploadArtifact(project.project_id, file);
@@ -117,15 +149,15 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
       >
         <div className="mg-modal__head">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span className="mg-chip" style={{ color: "var(--mg-tableau)" }}>
-              <IconLayers />
+            <span className="mg-chip" style={{ color: source === "microstrategy" ? "#0891b2" : "var(--mg-tableau)" }}>
+              {source === "microstrategy" ? <IconServer /> : <IconLayers />}
             </span>
             <span style={{ color: "var(--mg-ink-3)" }}>→</span>
             <span className="mg-chip" style={{ color: "var(--mg-powerbi)" }}>
               <IconChart />
             </span>
             <h2 id="migrate-title" style={{ margin: 0, fontSize: 17 }}>
-              Tableau → Power BI
+              {directionLabel(source, target)}
             </h2>
           </div>
           <button type="button" className="mg-iconbtn" onClick={onClose} aria-label="Close" disabled={busy !== null}>
@@ -133,7 +165,7 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
           </button>
         </div>
 
-        <div className="mg-tabs" role="tablist" aria-label="Where the workbook comes from">
+        <div className="mg-tabs" role="tablist" aria-label="Where the source file comes from">
           <button type="button" role="tab" className="mg-tab" aria-selected={tab === "upload"} onClick={() => setTab("upload")}>
             <IconUpload size={14} /> Upload File
           </button>
@@ -166,7 +198,7 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
               onDrop={(event) => {
                 event.preventDefault();
                 setDragging(false);
-                accept(precheckDrop(Array.from(event.dataTransfer.files), "tableau"));
+                accept(precheckDrop(Array.from(event.dataTransfer.files), source));
               }}
             >
               <IconUpload size={26} />
@@ -177,7 +209,7 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
                 </>
               ) : (
                 <>
-                  <div style={{ marginTop: 10 }}>Drop .twb or .twbx file here</div>
+                  <div style={{ marginTop: 10 }}>Drop {accepted.join(" or ")} file here</div>
                   <div className="mg-drop__hint">or click to browse</div>
                 </>
               )}
@@ -185,12 +217,12 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
             <input
               ref={input}
               type="file"
-              accept=".twb,.twbx"
+              accept={copy.accept}
               hidden
-              aria-label="Choose a Tableau workbook"
+              aria-label={copy.inputLabel}
               onChange={(event) => {
                 const chosen = event.target.files?.[0];
-                if (chosen) accept(precheck(chosen, "tableau"));
+                if (chosen) accept(precheck(chosen, source));
                 event.target.value = "";
               }}
             />
@@ -202,7 +234,7 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
             {previous === null ? (
               <p className="mg-note">Loading previous migrations…</p>
             ) : previous.length === 0 ? (
-              <p className="mg-note">No Tableau workbook has been opened here yet. Upload one to begin.</p>
+              <p className="mg-note">No {copy.sourceName} file has been opened here yet. Upload one to begin.</p>
             ) : (
               previous.map((project) => (
                 <button
@@ -227,8 +259,8 @@ export function MigrateModal({ onClose }: { readonly onClose: () => void }) {
         {tab === "server" && (
           <div className="mg-empty" style={{ padding: "28px 8px" }}>
             <IconServer size={24} />
-            <p style={{ margin: "8px 0 0" }}>Reading from Tableau Server or Cloud is not connected yet.</p>
-            <p className="mg-note">Download the workbook from the server and upload the .twb or .twbx instead.</p>
+            <p style={{ margin: "8px 0 0" }}>{SERVER_NOTE[source][0]}</p>
+            <p className="mg-note">{SERVER_NOTE[source][1]}</p>
           </div>
         )}
 
