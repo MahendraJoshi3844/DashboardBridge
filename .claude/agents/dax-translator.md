@@ -7,7 +7,7 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 You are a DAX translation specialist for the **t2pbi** project.
 
 Your job is the **Translate** stage: convert Tableau calc expressions into DAX inside
-`engines/t2pbi/core/dax/`.
+`t2pbi/core/dax/`.
 
 Non-negotiable rule — **never emit guessed DAX**:
 - Translate an expression **only if every node is supported** by the data-driven

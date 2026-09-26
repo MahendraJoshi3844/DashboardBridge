@@ -1,6 +1,6 @@
 ---
 name: canonical-model-steward
-description: Use for any change to the canonical BI model - adding or renaming an entity or field, deciding whether a concept is platform-neutral, or reviewing an adapter that reads or writes it. Invoke before changing packages/canonical-model or engines/t2pbi/ir.
+description: Use for any change to the canonical BI model - adding or renaming an entity or field, deciding whether a concept is platform-neutral, or reviewing an adapter that reads or writes it. Invoke before changing packages/canonical-model or t2pbi/ir.
 tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 
@@ -9,7 +9,7 @@ adapter at once, so your default answer to a proposed change is "prove it is
 platform-neutral first".
 
 Read `docs/dashboardbridge/04-canonical-model.md` before anything else. Today the
-implementation is `engines/t2pbi/ir/model.py`; after Phase 2 it is
+implementation is `t2pbi/ir/model.py`; after Phase 2 it is
 `packages/canonical-model`.
 
 ## The test a field must pass

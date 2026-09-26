@@ -6,7 +6,7 @@
 
 ## Milestone 0 — Project scaffolding
 - [x] T0.1 Create `pyproject.toml` (package `t2pbi`, deps: lxml, pyside6; dev: pytest, pyinstaller).
-- [x] T0.2 Create `engines/t2pbi/` skeleton + empty modules per Technical Design §3.
+- [x] T0.2 Create `t2pbi/` skeleton + empty modules per Technical Design §3.
 - [ ] T0.3 Add `.claudeignore` (`.venv/`, `dist/`, `build/`, `*.twbx` fixtures if large).
 - [x] T0.4 Set up `pytest` + a trivial smoke test that imports the package.
 

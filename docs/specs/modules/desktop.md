@@ -1,6 +1,6 @@
 # Module Spec — Desktop App
 
-**Code:** `engines/t2pbi/desktop/` (`worker.py`, `app.py`)
+**Code:** `t2pbi/desktop/` (`worker.py`, `app.py`)
 
 ## Purpose
 Milestone 6. A thin, offline PySide6 GUI over `pipeline.run()`. The UI never does

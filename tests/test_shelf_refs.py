@@ -5,7 +5,7 @@ plain field names. Decoding these wrong silently binds every visual to a
 non-existent column, so these tests pin the encoding rules directly.
 """
 
-from engines.t2pbi.core.parse.worksheets import decode_shelf_ref, parse_shelf_expression
+from t2pbi.core.parse.worksheets import decode_shelf_ref, parse_shelf_expression
 
 
 def test_decodes_aggregated_measure_ref():

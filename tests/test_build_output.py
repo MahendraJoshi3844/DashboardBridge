@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 #: Directories whose contents are produced by a build and never committed.
 GENERATED = (
-    "engines/t2pbi/desktop/web",
+    "t2pbi/desktop/web",
     "apps/web/.next",
     "apps/web/node_modules",
 )

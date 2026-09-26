@@ -7,7 +7,7 @@ the recording is complete, ordered, and serializable.
 
 import json
 
-from engines.t2pbi.events import NULL_SINK, ConversionEvent, EventSink, Timeline
+from t2pbi.events import NULL_SINK, ConversionEvent, EventSink, Timeline
 
 
 def test_sink_numbers_events_in_emission_order():

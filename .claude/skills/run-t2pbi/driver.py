@@ -26,7 +26,7 @@ import time
 from pathlib import Path
 
 # The repo root, so no PYTHONPATH is needed to run this. Since `P2.1` there is
-# one import root instead of two - the engine lives at `engines/t2pbi` - and a
+# one import root instead of two - the engine lives at `t2pbi` - and a
 # driver that has to be invoked a particular way is a driver that gets invoked
 # the wrong way.
 _ROOT = Path(__file__).resolve().parents[3]
@@ -63,8 +63,8 @@ def _report(timeline) -> None:
 
 
 def cmd_smoke(args: argparse.Namespace) -> int:
-    from engines.t2pbi.events import EventSink
-    from engines.t2pbi.pipeline import run
+    from t2pbi.events import EventSink
+    from t2pbi.pipeline import run
 
     source = _workbook(args.workbook)
     out = Path(args.out) if args.out else Path(tempfile.mkdtemp(prefix="t2pbi-"))
@@ -99,8 +99,8 @@ def cmd_smoke(args: argparse.Namespace) -> int:
 
 
 def cmd_api(args: argparse.Namespace) -> int:
-    from engines.t2pbi.assist import runtime_available
-    from engines.t2pbi.desktop.shell import Api, web_root
+    from t2pbi.assist import runtime_available
+    from t2pbi.desktop.shell import Api, web_root
 
     source = _workbook(args.workbook)
     out = Path(args.out) if args.out else Path(tempfile.mkdtemp(prefix="t2pbi-api-"))
@@ -146,7 +146,7 @@ def _screenshot(path: Path) -> bool:
 def cmd_window(args: argparse.Namespace) -> int:
     import webview
 
-    from engines.t2pbi.desktop.shell import Api, create_app_window, web_root
+    from t2pbi.desktop.shell import Api, create_app_window, web_root
 
     source = _workbook(args.workbook)
     index = web_root() / "index.html"

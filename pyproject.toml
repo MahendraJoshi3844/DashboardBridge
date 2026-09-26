@@ -42,8 +42,8 @@ engines = [
 ]
 
 [project.scripts]
-t2pbi = "engines.t2pbi.cli:main"
-t2pbi-app = "engines.t2pbi.desktop.shell:main"
+t2pbi = "t2pbi.cli:main"
+t2pbi-app = "t2pbi.desktop.shell:main"
 t2pbi-license = "engines.licensing.cli:main"
 
 # The engine moved under `engines/` (`P2.1`), so there is no `src/` layout
@@ -52,13 +52,13 @@ t2pbi-license = "engines.licensing.cli:main"
 # of it. One import root instead of two.
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["engines*"]
+include = ["engines*", "t2pbi*"]
 
 # The translation rule pack is data, and data is not shipped by default. Without
 # this an installed t2pbi has no rules: the loader refuses the pack and the
 # engine converts nothing, in a build that looked fine locally.
 [tool.setuptools.package-data]
-"engines.t2pbi" = ["core/dax/rules/*.yaml"]
+"t2pbi" = ["core/dax/rules/*.yaml"]
 "engines.tableau_calc" = ["rules/*.yaml"]
 
 [tool.pytest.ini_options]

@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from engines.t2pbi.desktop.shell import Api, web_root
+from t2pbi.desktop.shell import Api, web_root
 
 MINIMAL_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>

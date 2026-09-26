@@ -39,7 +39,7 @@ from pathlib import Path
 
 import pytest
 
-from engines.t2pbi.core.extract import (
+from t2pbi.core.extract import (
     MAX_TWB_BYTES,
     InvalidWorkbookError,
     extract,
@@ -198,7 +198,7 @@ def test_the_engine_refuses_without_the_api_having_checked(tmp_path):
     """
     import inspect
 
-    from engines.t2pbi.core import extract as module
+    from t2pbi.core import extract as module
 
     source = inspect.getsource(module)
     assert "inspect_zip_archive" not in source

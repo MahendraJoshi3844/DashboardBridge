@@ -141,7 +141,7 @@ def test_a_shelf_reference_survives_being_read_back(written):
     above is the one that would fail; this one only rules out a token so
     malformed that even a lenient reader gives up.
     """
-    from engines.t2pbi.core.parse.worksheets import decode_shelf_ref
+    from t2pbi.core.parse.worksheets import decode_shelf_ref
 
     path, _ = written
     root = etree.fromstring(path.read_bytes())

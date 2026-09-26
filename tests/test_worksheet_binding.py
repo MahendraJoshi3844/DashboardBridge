@@ -4,9 +4,9 @@ Guessing a table for an unresolved shelf field produces a visual that silently
 points at the wrong data, which is worse than an empty well plus a flag.
 """
 
-from engines.t2pbi.core.mapping import map_visuals
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.ir import CATEGORY, Severity, VALUE
+from t2pbi.core.mapping import map_visuals
+from t2pbi.core.parse import parse_workbook
+from t2pbi.ir import CATEGORY, Severity, VALUE
 
 ENCODED_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>

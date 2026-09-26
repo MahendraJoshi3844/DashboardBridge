@@ -7,9 +7,9 @@ so none of the rest of the conversion is worth anything without these.
 
 import pytest
 
-from engines.t2pbi.core.emit.params import param_table_tmdl
-from engines.t2pbi.core.emit.tmdl import table_tmdl
-from engines.t2pbi.ir import Column, Parameter, Severity, Table, Workbook
+from t2pbi.core.emit.params import param_table_tmdl
+from t2pbi.core.emit.tmdl import table_tmdl
+from t2pbi.ir import Column, Parameter, Severity, Table, Workbook
 
 
 def _orders() -> Table:

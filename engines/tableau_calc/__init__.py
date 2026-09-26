@@ -8,7 +8,7 @@ produces a workbook that opens and then fails on every row.
 ## Not the forward translator with the arrows reversed
 
 Three differences decide most of what this refuses, and none of them has a
-counterpart in `engines/t2pbi/core/dax/translator.py`:
+counterpart in `t2pbi/core/dax/translator.py`:
 
 * **A Tableau calculation has no table qualifier.** The writer gives each
   canonical table its own `<datasource>`, so `Orders[Sales]` becomes `[Sales]`

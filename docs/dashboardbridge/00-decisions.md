@@ -14,7 +14,7 @@ Status values: **ratified** (act on it) · **proposed** (needs the product owner
 
 The spec (§80) says *"Do not start by implementing Tableau parsing."* That is
 right for a greenfield project and wrong here: a working Tableau→Power BI engine
-already exists in `engines/t2pbi` with 115 passing tests.
+already exists in `t2pbi` with 115 passing tests.
 
 What exists, mapped to the spec:
 
@@ -188,13 +188,13 @@ and inherits its hard-won shape.
 
 ### The physical move (P2.1) is deferred
 
-55 files reference `engines/t2pbi`: the PyInstaller spec, the run skill and its
+55 files reference `t2pbi`: the PyInstaller spec, the run skill and its
 driver, 21 test modules, the desktop shell, and the docs. Moving them is
 mechanical churn with real breakage risk and no functional gain, because the
 adapter already provides the architectural separation the layout was meant to
 express.
 
-`engines/` is created now for the **new** adapter layer. `engines/t2pbi` remains the
+`engines/` is created now for the **new** adapter layer. `t2pbi` remains the
 conversion engine it wraps. The move happens when something actually needs it —
 most likely when a second platform adapter lands and the packaging is revisited
 anyway.

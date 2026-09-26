@@ -7,7 +7,7 @@ lighter and more distinctive than a utility framework.
 ```bash
 npm install
 npm run dev     # http://localhost:5173, driven by a fixture from a real run
-npm run build   # -> ../engines/t2pbi/desktop/web, bundled into the exe
+npm run build   # -> ../t2pbi/desktop/web, bundled into the exe
 ```
 
 `src/fixture.json` is recorded from a real Superstore conversion, so the UI is

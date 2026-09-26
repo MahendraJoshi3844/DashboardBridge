@@ -1,9 +1,9 @@
 """End-to-end: calcs must be emitted at the grain they actually evaluate at."""
 
-from engines.t2pbi.core.emit.tmdl import table_tmdl
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.ir import Severity
-from engines.t2pbi.pipeline import _translate_calculations
+from t2pbi.core.emit.tmdl import table_tmdl
+from t2pbi.core.parse import parse_workbook
+from t2pbi.ir import Severity
+from t2pbi.pipeline import _translate_calculations
 
 GRAIN_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>

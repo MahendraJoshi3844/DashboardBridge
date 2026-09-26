@@ -1,6 +1,6 @@
 ---
 name: ai-router
-description: Use for anything touching the LLM layer - provider abstraction, prompt authoring, structured output schemas, confidence handling, prompt-injection defence, or deciding whether a conversion task should reach a model at all. Invoke before changing engines/ai or engines/t2pbi/assist.py.
+description: Use for anything touching the LLM layer - provider abstraction, prompt authoring, structured output schemas, confidence handling, prompt-injection defence, or deciding whether a conversion task should reach a model at all. Invoke before changing engines/ai or t2pbi/assist.py.
 tools: Read, Grep, Glob, Bash, Edit, Write
 ---
 
@@ -9,7 +9,7 @@ product's claim is deterministic engineering with AI only where it adds value; a
 model call that a rule could have handled is a defect, not a feature.
 
 Read `docs/dashboardbridge/00-decisions.md` (ADR-007) and `AGENTS.md` first. The
-existing implementation is `engines/t2pbi/assist.py`.
+existing implementation is `t2pbi/assist.py`.
 
 ## The order, always
 

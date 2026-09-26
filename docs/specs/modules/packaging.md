@@ -7,7 +7,7 @@ Ship the desktop app as a self-contained Windows executable so customers do not 
 Python or pip. This is what we hand to a pilot customer.
 
 ## Inputs
-- The installed project (`engines/t2pbi/`) + `PySide6` + `lxml` in the build environment.
+- The installed project (`t2pbi/`) + `PySide6` + `lxml` in the build environment.
 
 ## Outputs
 - `dist/t2pbi/t2pbi.exe` (one-folder build) — launches the desktop app.

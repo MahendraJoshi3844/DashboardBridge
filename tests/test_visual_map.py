@@ -1,7 +1,7 @@
 from dataclasses import replace
 
-from engines.t2pbi.core.mapping import map_visuals
-from engines.t2pbi.core.parse import parse_workbook
+from t2pbi.core.mapping import map_visuals
+from t2pbi.core.parse import parse_workbook
 
 
 def test_maps_worksheet_to_powerbi_visual(sample_twb_bytes):
@@ -21,7 +21,7 @@ def test_maps_worksheet_to_powerbi_visual(sample_twb_bytes):
 def test_unresolved_field_is_flagged(sample_twb_bytes):
     wb = parse_workbook(sample_twb_bytes)
     # Inject a worksheet referencing an unknown field.
-    from engines.t2pbi.ir import VALUE, VisualBinding, Worksheet
+    from t2pbi.ir import VALUE, VisualBinding, Worksheet
 
     unknown = VisualBinding(raw="[DoesNotExist]", field="DoesNotExist")
     wb.worksheets.append(

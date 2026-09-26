@@ -1,6 +1,6 @@
-from engines.t2pbi.core.parse import _disambiguate_table_names
-from engines.t2pbi.ir.model import DataSource, Relationship, Table, Workbook
-from engines.t2pbi.core.parse import parse_workbook
+from t2pbi.core.parse import _disambiguate_table_names
+from t2pbi.ir.model import DataSource, Relationship, Table, Workbook
+from t2pbi.core.parse import parse_workbook
 
 
 def test_parse_datasources(sample_twb_bytes):

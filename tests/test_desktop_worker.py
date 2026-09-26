@@ -2,8 +2,8 @@
 
 import pytest
 
-from engines.t2pbi.core.extract import InvalidWorkbookError
-from engines.t2pbi.desktop.worker import JobSummary, run_job
+from t2pbi.core.extract import InvalidWorkbookError
+from t2pbi.desktop.worker import JobSummary, run_job
 
 
 def test_run_job_converts_sample(sample_twb_path, tmp_path):

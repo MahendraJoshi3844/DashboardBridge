@@ -6,8 +6,8 @@ dropped object-id columns, what-if parameters, and relationships.
 
 import json
 
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.pipeline import run
+from t2pbi.core.parse import parse_workbook
+from t2pbi.pipeline import run
 
 
 def test_objects_become_readable_tables(federated_twb_bytes):
@@ -74,7 +74,7 @@ def test_end_to_end_emits_params_and_relationships(federated_twb_path, tmp_path)
 
 def test_row_level_calc_mixing_a_parameter_is_refused_not_guessed(federated_twb_path, tmp_path):
     """[Sales]*(1+[Param]) has no stated aggregation; emitting one would be a guess."""
-    from engines.t2pbi.ir import Severity
+    from t2pbi.ir import Severity
 
     result = run(federated_twb_path, tmp_path, "FED")
     orders = (

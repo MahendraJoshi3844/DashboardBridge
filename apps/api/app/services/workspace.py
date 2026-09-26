@@ -9,7 +9,7 @@ discard what they wrote.
 
 ## What this reads
 
-TMDL as `engines/t2pbi/core/emit/tmdl.py` writes it, plus the multi-line form
+TMDL as `t2pbi/core/emit/tmdl.py` writes it, plus the multi-line form
 Power BI Desktop uses (a triple-backtick block for a measure, an indented block
 for a partition source), because a saved edit may introduce one. It is a reader
 for this project's output, not a general TMDL parser, and says so by refusing

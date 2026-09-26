@@ -57,8 +57,8 @@ class Direction:
 
 
 DIRECTIONS: tuple[Direction, ...] = (
-    Direction(Platform.TABLEAU, Platform.POWERBI, "t2pbi", "engines.t2pbi", "tableau"),
-    Direction(Platform.POWERBI, Platform.TABLEAU, "t2pbi", "engines.t2pbi", "tableau"),
+    Direction(Platform.TABLEAU, Platform.POWERBI, "t2pbi", "t2pbi", "tableau"),
+    Direction(Platform.POWERBI, Platform.TABLEAU, "t2pbi", "t2pbi", "tableau"),
     Direction(Platform.MICROSTRATEGY, Platform.POWERBI, "mstr2pbi", "mstr2pbi", "microstrategy", "microstrategy"),
     Direction(Platform.QLIK, Platform.POWERBI, "qlik2pbi", "qlik2pbi", "qlik", "qlik"),
 )

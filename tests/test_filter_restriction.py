@@ -32,8 +32,8 @@ from __future__ import annotations
 
 import pytest
 
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.ir import Severity
+from t2pbi.core.parse import parse_workbook
+from t2pbi.ir import Severity
 
 WORKBOOK = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>
@@ -85,7 +85,7 @@ def workbook():
     version of this fixture only parsed, and every flag assertion failed
     against an empty list, which looked like the feature was missing.
     """
-    from engines.t2pbi.core.mapping.visual_map import map_visuals
+    from t2pbi.core.mapping.visual_map import map_visuals
 
     wb = parse_workbook(WORKBOOK)
     map_visuals(wb)
@@ -186,7 +186,7 @@ def test_superstore_stops_over_reporting_filter_work():
     if not real.is_file():
         pytest.skip("Superstore.twb is not in this checkout")
 
-    from engines.t2pbi.core.mapping.visual_map import map_visuals
+    from t2pbi.core.mapping.visual_map import map_visuals
 
     wb = parse_workbook(real.read_bytes())
     map_visuals(wb)
@@ -210,7 +210,7 @@ def test_a_member_that_is_a_shelf_reference_is_shown_as_the_field_it_names():
     Found by breaking the decoding and watching no test fail: the fixture above
     uses plain values, so nothing covered the shape the real workbook has.
     """
-    from engines.t2pbi.core.mapping.visual_map import map_visuals
+    from t2pbi.core.mapping.visual_map import map_visuals
 
     xml = WORKBOOK.replace(
         b"""<groupfilter function='member' level='[none:Region:nk]' member='&quot;West&quot;' />""",

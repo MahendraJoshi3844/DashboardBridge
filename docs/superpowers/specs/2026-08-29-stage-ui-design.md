@@ -47,7 +47,7 @@ position.
 
 ## Architecture
 
-### Event spine (`engines/t2pbi/events.py`)
+### Event spine (`t2pbi/events.py`)
 
 - **`ConversionEvent`** — frozen record: `seq`, `elapsed_ms`, `stage`, `kind`
   (table|column|calc|visual|parameter|relationship), `name`, `outcome`

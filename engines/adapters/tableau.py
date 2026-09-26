@@ -37,16 +37,16 @@ from dashboardbridge_contracts.enums import (
     Severity,
     Stage,
 )
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.ir import Severity as IRSeverity
+from t2pbi.core.parse import parse_workbook
+from t2pbi.ir import Severity as IRSeverity
 # Aliased: the IR and the contract now use the same name for the same
 # concept, which is the point of `P2.2` - and is exactly why one of them
 # has to be spelled differently here. The unaliased name is the contract's,
 # because this module's job is to produce those.
-from engines.t2pbi.ir import VisualBinding as IRBinding
-from engines.t2pbi.ir import Workbook
-from engines.t2pbi.core.dax.grain import classify_calc
-from engines.t2pbi.pipeline import _classify_calculations, _param_aliases
+from t2pbi.ir import VisualBinding as IRBinding
+from t2pbi.ir import Workbook
+from t2pbi.core.dax.grain import classify_calc
+from t2pbi.pipeline import _classify_calculations, _param_aliases
 
 # Tableau spellings -> canonical datatypes.
 _DATATYPES = {
@@ -128,7 +128,7 @@ def _twb_from_package(data: bytes) -> bytes:
     import tempfile  # noqa: PLC0415
     from pathlib import Path  # noqa: PLC0415
 
-    from engines.t2pbi.core.extract import InvalidWorkbookError, extract  # noqa: PLC0415
+    from t2pbi.core.extract import InvalidWorkbookError, extract  # noqa: PLC0415
 
     with tempfile.TemporaryDirectory(prefix="dbb-twbx-") as scratch:
         package = Path(scratch) / "source.twbx"

@@ -1,6 +1,6 @@
 import json
 
-from engines.t2pbi.pipeline import run
+from t2pbi.pipeline import run
 
 
 def test_pbir_pages_and_visuals_generated(sample_twb_path, tmp_path):

@@ -87,7 +87,7 @@ Every stage reads/writes only the IR — never another stage's internals.
 ## 3. Module / Folder Layout
 
 ```
-engines/t2pbi/
+t2pbi/
   __init__.py
   cli.py                 # headless entry point (also used by desktop + tests)
   pipeline.py            # orchestrates stages 1–6; the only place order lives

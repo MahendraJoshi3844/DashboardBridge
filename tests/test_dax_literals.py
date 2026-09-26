@@ -5,7 +5,7 @@ survives unconverted produces DAX that silently fails to validate. Keyword and
 marker scans must likewise ignore text inside literals and field names.
 """
 
-from engines.t2pbi.core.dax import translate_formula
+from t2pbi.core.dax import translate_formula
 
 
 def test_single_quoted_literal_becomes_a_dax_string():

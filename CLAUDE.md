@@ -23,9 +23,9 @@ A **6-stage linear pipeline** around a single **Intermediate Representation (IR)
 
 `Extract → Parse → [IR] → Map → Translate(DAX) → Generate(PBIP) → Report`
 
-- The **IR** (`engines/t2pbi/ir/model.py`) is the seam: "read Tableau" never touches
+- The **IR** (`t2pbi/ir/model.py`) is the seam: "read Tableau" never touches
   "write Power BI". Each stage only reads/writes the IR.
-- `engines/t2pbi/pipeline.py` is the **only** module that knows the stage order. Both the
+- `t2pbi/pipeline.py` is the **only** module that knows the stage order. Both the
   CLI (`cli.py`) and the desktop app call `pipeline.run(input, output, options)`; the
   UI is a thin shell.
 - Every non-perfect conversion produces a **ConversionFlag**, which feeds the
@@ -40,7 +40,7 @@ combination, so no engine may be required by another or by the shell:
 
 | Direction | Engine | Repository | Install | Licence feature |
 |---|---|---|---|---|
-| Tableau ↔ Power BI | `t2pbi` | this repo (`engines/t2pbi`) | always | `tableau` |
+| Tableau ↔ Power BI | `t2pbi` | this repo (`t2pbi`) | always | `tableau` |
 | MicroStrategy → Power BI | `mstr2pbi` | MicroStrategy-to-Power-BI | `pip install ".[microstrategy]"` / `requirements-engine-microstrategy.txt` | `microstrategy` |
 | Qlik → Power BI | `qlik2pbi` | Qlik-To-PowerBI | `pip install ".[qlik]"` / `requirements-engine-qlik.txt` | `qlik` |
 
@@ -63,7 +63,7 @@ combination, so no engine may be required by another or by the shell:
 python -m venv .venv && .venv\Scripts\activate
 pip install -e ".[dev]"
 t2pbi convert path/to/workbook.twbx --out ./output   # headless convert
-python -m engines.t2pbi.desktop.shell                 # desktop app
+python -m t2pbi.desktop.shell                 # desktop app
 pytest                                                # all tests
 pytest -k <name>                                      # single test
 pytest --snapshot-update                              # refresh golden TMDL/PBIR

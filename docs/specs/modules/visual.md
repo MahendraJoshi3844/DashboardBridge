@@ -1,6 +1,6 @@
 # Module Spec — Visual mapping + PBIR emit (v1.1)
 
-**Code:** `engines/t2pbi/core/mapping/visual_map.py`, `engines/t2pbi/core/emit/pbir.py`
+**Code:** `t2pbi/core/mapping/visual_map.py`, `t2pbi/core/emit/pbir.py`
 
 ## Purpose
 Recreate the v1 basic visuals: map each Tableau worksheet to a Power BI visual

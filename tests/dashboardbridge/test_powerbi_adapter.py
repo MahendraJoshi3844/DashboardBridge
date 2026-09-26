@@ -206,7 +206,7 @@ def test_it_also_reads_a_project_this_converter_produced(tmp_path):
     can still be unable to open a single file Power BI Desktop wrote - which is
     why the fixture is hand-authored and this is the secondary check.
     """
-    from engines.t2pbi.pipeline import run
+    from t2pbi.pipeline import run
 
     produced = tmp_path / "out"
     run(
@@ -233,7 +233,7 @@ def test_reading_back_what_we_wrote_never_claims_a_translation(tmp_path):
     adapter did not, and recording one would let a model claim provenance it
     has not got.
     """
-    from engines.t2pbi.pipeline import run
+    from t2pbi.pipeline import run
 
     produced = tmp_path / "out"
     run(

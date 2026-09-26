@@ -129,12 +129,12 @@ def test_the_guard_catches_an_attempt_made_from_inside_the_product(monkeypatch):
     socket import create_connection` at import time would hold the original
     function, and the guard would watch a name nobody calls.
 
-    `engines/t2pbi/assist.py` is the one module in the repository that opens a
+    `t2pbi/assist.py` is the one module in the repository that opens a
     socket - it probes a local model runtime, and it is the named exception in
     `test_ai_boundaries.py`. So it is the honest subject: if the guard sees this
     call, it can see one made from anywhere else in the engine too.
     """
-    from engines.t2pbi import assist
+    from t2pbi import assist
 
     with watched(monkeypatch) as seen:
         # Returns False rather than raising: the probe treats any OSError as
@@ -154,7 +154,7 @@ def test_a_full_conversion_opens_no_connection(monkeypatch):
     workbook with cross-table name clashes is the one whose translation does the
     most resolution work, and resolution is where a lookup would be tempting.
     """
-    from engines.t2pbi import pipeline
+    from t2pbi import pipeline
 
     with watched(monkeypatch) as seen, tempfile.TemporaryDirectory() as out:
         pipeline.run(FIXTURES / "clashes.twb", out)
@@ -175,7 +175,7 @@ def test_writing_a_tableau_workbook_opens_no_connection(monkeypatch):
 
 def test_translating_dax_opens_no_connection(monkeypatch):
     """Both rule packs are files beside the code, and neither is fetched."""
-    from engines.t2pbi.core.dax.translator import translate_formula
+    from t2pbi.core.dax.translator import translate_formula
     from engines.tableau_calc import translate_dax
 
     with watched(monkeypatch) as seen:
@@ -323,7 +323,7 @@ def test_the_assist_module_refuses_a_host_that_is_not_this_machine(monkeypatch):
     Simulated by moving the constant, which is the only way the invariant can
     actually break: nothing else here is configurable.
     """
-    from engines.t2pbi import assist
+    from t2pbi import assist
 
     monkeypatch.setattr(assist, "_HOST", "api.example.com")
 
@@ -337,7 +337,7 @@ def test_the_assist_module_refuses_a_host_that_is_not_this_machine(monkeypatch):
 def test_the_assist_module_still_talks_to_loopback(monkeypatch):
     """The check must not cost the feature. `127.0.0.1` is still allowed, and
     the absence of a runtime is still reported as absence rather than error."""
-    from engines.t2pbi import assist
+    from t2pbi import assist
 
     with watched(monkeypatch) as seen:
         assert assist.runtime_available(timeout_s=0.01) is False
@@ -348,7 +348,7 @@ def test_the_assist_module_still_talks_to_loopback(monkeypatch):
 def test_sending_a_prompt_is_refused_for_a_host_that_is_not_this_machine(monkeypatch):
     """The probe and the request are two different calls, and only one of them
     carries the workbook's content. Guarding the cheap one would be theatre."""
-    from engines.t2pbi import assist
+    from t2pbi import assist
 
     monkeypatch.setattr(assist, "_HOST", "api.example.com")
 

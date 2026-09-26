@@ -1,6 +1,6 @@
 # Module Spec — DAX translator
 
-**Code:** `engines/t2pbi/core/dax/` (`functions.py`, `translator.py`)
+**Code:** `t2pbi/core/dax/` (`functions.py`, `translator.py`)
 
 ## Purpose
 Stage 4. Translate a Tableau calculated-field formula into DAX — **only if every

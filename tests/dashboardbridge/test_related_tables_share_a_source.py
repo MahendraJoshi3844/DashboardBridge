@@ -386,7 +386,7 @@ def test_every_shelf_reference_still_decodes(related):
     """The writer and the reader must keep agreeing; a merged source changes
     the token, and a token the reader cannot decode is a visual bound to
     nothing."""
-    from engines.t2pbi.core.parse.worksheets import decode_shelf_ref
+    from t2pbi.core.parse.worksheets import decode_shelf_ref
 
     for token in _shelves(related):
         decoded = decode_shelf_ref(token)

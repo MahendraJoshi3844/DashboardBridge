@@ -89,7 +89,7 @@ def _referenced_fields(
                 local.setdefault(alias, (table.name, datatype))
 
     seen: dict[str, FieldSchema] = {}
-    from engines.t2pbi.core.dax.refs import REF_RE  # noqa: PLC0415 - Tableau engine, optional
+    from t2pbi.core.dax.refs import REF_RE  # noqa: PLC0415 - Tableau engine, optional
 
     for match in REF_RE.finditer(expression or ""):
         raw = match.group(1)
@@ -110,7 +110,7 @@ def policy_for(model: CanonicalModel, **thresholds: float) -> Policy:
     knows to be equivalent - plus the tokens the translator legitimately emits
     on its own.
     """
-    from engines.t2pbi.core.dax.functions import (  # noqa: PLC0415 - Tableau engine, optional
+    from t2pbi.core.dax.functions import (  # noqa: PLC0415 - Tableau engine, optional
         ALLOWED_DAX_FUNCS,
         SUPPORTED_FUNCS,
     )

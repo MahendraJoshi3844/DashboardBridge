@@ -5,8 +5,8 @@ description: Reference for the structure of Tableau .twb/.twbx files and how to 
 
 # Tableau .twb / .twbx Anatomy → t2pbi IR
 
-Implementation lives in `engines/t2pbi/core/extract.py` and `engines/t2pbi/core/parse/`.
-The IR is `engines/t2pbi/ir/model.py`.
+Implementation lives in `t2pbi/core/extract.py` and `t2pbi/core/parse/`.
+The IR is `t2pbi/ir/model.py`.
 
 ## File shapes
 

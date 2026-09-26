@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import pytest
 
-from engines.t2pbi.core.dax.rules import (
+from t2pbi.core.dax.rules import (
     RulePackError,
     function_rules,
     load_pack,
@@ -90,7 +90,7 @@ def test_a_missing_pack_is_refused_rather_than_treated_as_no_rules(tmp_path):
 
 def test_the_function_rules_cover_what_the_translator_advertises():
     """The pack is the source of truth for the supported set."""
-    from engines.t2pbi.core.dax.functions import SUPPORTED_FUNCS
+    from t2pbi.core.dax.functions import SUPPORTED_FUNCS
 
     assert SUPPORTED_FUNCS == {
         rule.source_function: rule.target_function for rule in function_rules()
@@ -127,7 +127,7 @@ def test_the_pack_is_shipped_with_the_package():
 
     package_data = config["tool"]["setuptools"].get("package-data", {})
     # Keyed by the *import* path, which moved with `P2.1`.
-    patterns = package_data.get("engines.t2pbi", [])
+    patterns = package_data.get("t2pbi", [])
     assert any("dax/rules" in pattern for pattern in patterns), (
         "the rule pack is not declared as package data, so an installed "
         "t2pbi would have no rules"
@@ -146,7 +146,7 @@ def test_a_translation_names_every_rule_that_produced_it():
     A formula can fire several mappings, so the citation is plural. Recording
     only one of two would name an arbitrary half of the reason.
     """
-    from engines.t2pbi.core.dax import translate_formula
+    from t2pbi.core.dax import translate_formula
 
     result = translate_formula("Sum([Profit])/countD([Order ID])", "Orders")
     assert result.dax is not None
@@ -163,7 +163,7 @@ def test_a_translation_the_rules_did_not_touch_cites_none():
     fired. Citing a rule anyway would credit the pack for something it did not
     do, and 10 of Superstore's 21 calculations are in this case.
     """
-    from engines.t2pbi.core.dax import translate_formula
+    from t2pbi.core.dax import translate_formula
 
     result = translate_formula('IF [x] THEN "a" ELSE "b" END', "Orders")
     assert result.dax is not None
@@ -171,7 +171,7 @@ def test_a_translation_the_rules_did_not_touch_cites_none():
 
 
 def test_the_cited_rules_are_ordered_so_two_runs_agree():
-    from engines.t2pbi.core.dax import translate_formula
+    from t2pbi.core.dax import translate_formula
 
     first = translate_formula("Sum([Profit])/countD([Order ID])", "Orders")
     second = translate_formula("Sum([Profit])/countD([Order ID])", "Orders")

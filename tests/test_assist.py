@@ -4,7 +4,7 @@ These cover the pure, reviewable parts. The network call itself is exercised onl
 when a local runtime is actually running, which CI cannot assume.
 """
 
-from engines.t2pbi import assist
+from t2pbi import assist
 
 
 def test_assist_only_ever_targets_loopback():

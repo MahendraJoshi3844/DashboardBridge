@@ -1,4 +1,4 @@
-from engines.t2pbi.core.dax import translate_formula
+from t2pbi.core.dax import translate_formula
 
 
 def test_simple_aggregation_divide():

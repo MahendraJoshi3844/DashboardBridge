@@ -60,7 +60,7 @@ from pathlib import Path
 import pytest
 from lxml import etree
 
-from engines.t2pbi.core.parse import ParseLimitExceeded, _parser, parse_workbook
+from t2pbi.core.parse import ParseLimitExceeded, _parser, parse_workbook
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -262,7 +262,7 @@ def test_the_security_settings_are_stated_not_inherited():
     import inspect
     import textwrap
 
-    from engines.t2pbi.core import parse as module
+    from t2pbi.core import parse as module
 
     tree = ast.parse(textwrap.dedent(inspect.getsource(module._parser)))
     calls = [
@@ -293,6 +293,6 @@ def test_the_parser_is_built_in_one_place():
     """Two parsers is two configurations, and only one of them gets hardened."""
     import inspect
 
-    from engines.t2pbi.core import parse as module
+    from t2pbi.core import parse as module
 
     assert inspect.getsource(module).count("XMLParser(") == 1

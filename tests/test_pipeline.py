@@ -1,6 +1,6 @@
 import json
 
-from engines.t2pbi.pipeline import run
+from t2pbi.pipeline import run
 
 
 def test_end_to_end_creates_pbip_and_report(sample_twb_path, tmp_path):
@@ -36,7 +36,7 @@ def test_determinism(sample_twb_path, tmp_path):
 
 
 def test_invalid_input_raises(tmp_path):
-    from engines.t2pbi.core.extract import InvalidWorkbookError
+    from t2pbi.core.extract import InvalidWorkbookError
 
     bad = tmp_path / "bad.twb"
     bad.write_text("not a workbook")

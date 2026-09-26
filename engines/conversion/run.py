@@ -19,15 +19,15 @@ from dashboardbridge_contracts.enums import (
     Severity,
     Stage,
 )
-from engines.t2pbi.events import EventSink
-from engines.t2pbi.ir import Severity as IRSeverity
+from t2pbi.events import EventSink
+from t2pbi.ir import Severity as IRSeverity
 # Shared result types, re-exported so existing imports keep working.
 from engines.conversion.outcome import (  # noqa: F401
     ConversionOutcome,
     compatibility_by_object,
     zip_project,
 )
-from engines.t2pbi.pipeline import run as run_pipeline
+from t2pbi.pipeline import run as run_pipeline
 
 # The engine reports how loudly to speak; the contracts also need what became of
 # each object and how (ADR-004). Shared with the read adapter so both directions

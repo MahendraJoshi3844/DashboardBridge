@@ -1,7 +1,7 @@
 """The pipeline records what it did, item by item, for the UI to stream."""
 
-from engines.t2pbi.events import EventSink
-from engines.t2pbi.pipeline import run
+from t2pbi.events import EventSink
+from t2pbi.pipeline import run
 
 STREAM_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>

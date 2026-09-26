@@ -13,9 +13,9 @@ their workbook, which is the parser's vocabulary standing in for the source's.
 
 from __future__ import annotations
 
-from engines.t2pbi.core.emit.pbip import _bind_to_emitted
-from engines.t2pbi.core.mapping import FieldRef, PBIVisual
-from engines.t2pbi.ir import Column, DataSource, Table, Workbook
+from t2pbi.core.emit.pbip import _bind_to_emitted
+from t2pbi.core.mapping import FieldRef, PBIVisual
+from t2pbi.ir import Column, DataSource, Table, Workbook
 
 
 def _workbook_with_a_refused_calc() -> Workbook:

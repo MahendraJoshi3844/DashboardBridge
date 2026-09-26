@@ -102,7 +102,7 @@ docs/dashboardbridge/
 ```
 
 **Where the code actually lives today** (ADR-008): the conversion engine is
-`engines/t2pbi` and stays there. `engines/adapters/` holds the platform adapters that
+`t2pbi` and stays there. `engines/adapters/` holds the platform adapters that
 map between an engine's parse-time IR and the canonical contracts. The wholesale
 move into `engines/` is deferred until something needs it — a documented layout
 that is not true is worse than an honest one.

@@ -1,6 +1,6 @@
 # Module Spec — Report + Pipeline + CLI
 
-**Code:** `engines/t2pbi/report.py`, `engines/t2pbi/pipeline.py`, `engines/t2pbi/cli.py`
+**Code:** `t2pbi/report.py`, `t2pbi/pipeline.py`, `t2pbi/cli.py`
 
 ## Purpose
 Orchestrate stages 1–6 and expose them headlessly. `pipeline.py` is the **only**

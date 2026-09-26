@@ -60,10 +60,10 @@ all animation and the screens stay readable.
 The riskiest phase. 115 tests are the safety net; they must stay green
 throughout.
 
-- [x] `P2.1` Move `src/t2pbi` → `engines/t2pbi`; tests green, desktop app still runs
+- [x] `P2.1` Move `src/t2pbi` → `t2pbi`; tests green, desktop app still runs
 
 > The minimal shape: the directory moved whole and kept its name, so imports
-> became `engines.t2pbi.*` and nothing was restructured. There is one import
+> became `t2pbi.*` and nothing was restructured. There is one import
 > root now instead of two, which is most of the value — `src/` is gone from
 > `pyproject`, the PyInstaller spec, `docker-compose`, `conftest` and the
 > driver, and the driver no longer needs a `PYTHONPATH` at all.
@@ -124,7 +124,7 @@ across two runs.
 > simply never been ticked, which had the roadmap misreporting itself.
 >
 > `P2.1` and `P2.2` are genuinely open, and they are one piece of work. The
-> engine is still `engines/t2pbi`, a separate package with its own IR — `ShelfRef`
+> engine is still `t2pbi`, a separate package with its own IR — `ShelfRef`
 > and `Column.kind` — while the canonical model beside it already speaks
 > `VisualBinding` and `Grain`. Two vocabularies for one concept, with the
 > adapter translating between them on every read. `P2.1` is also what moves the
@@ -135,13 +135,13 @@ across two runs.
 ## Phase 3 — Deterministic conversion, end to end
 
 - [x] `P3.1` Rules move from Python dicts to versioned YAML — in
-      `engines/t2pbi/core/dax/rules/`, not `engines/rules/`, until `P2.1` runs
+      `t2pbi/core/dax/rules/`, not `engines/rules/`, until `P2.1` runs
 
 > The documented path cannot be used yet. `engines/` imports `t2pbi` and never
 > the reverse; reading the pack from `engines/rules/` would invert that and stop
 > the engine being installable on its own. The files sit inside the engine
 > package instead and move to the documented path for free when `P2.1` relocates
-> `engines/t2pbi` into `engines/` — same files, no second migration.
+> `t2pbi` into `engines/` — same files, no second migration.
 >
 > **The loader refuses a partial pack rather than returning what parsed.** This
 > is the whole risk of the move: a Python dict cannot lose an entry between two
@@ -339,7 +339,7 @@ errors.
 > Two more source-reading guards, both made to fail before being kept. One
 > watches for any call to a provider outside the router. The other exists
 > because that one is not enough: a module can skip providers entirely and
-> speak HTTP to the runtime, which is exactly what `engines/t2pbi/assist.py` does.
+> speak HTTP to the runtime, which is exactly what `t2pbi/assist.py` does.
 > It is the pywebview shell's local assist, it predates the router, and it is
 > now named in `LEGACY_MODEL_CALLERS` — an exception on the record rather than
 > a gap nobody noticed. It retires into the router once ADR-006 settles whether
@@ -1017,7 +1017,7 @@ out of scope — it is a compressed SSAS model, not text (ADR-005).
 > appears while the refusal is still there.
 >
 > Two real hardening fixes came out of writing the acceptance test.
-> `engines/t2pbi/assist.py` had its loopback-only promise in a **comment** -
+> `t2pbi/assist.py` had its loopback-only promise in a **comment** -
 > "a hostname that is not the local machine must never appear here" - and
 > comments do not run. It now calls the same `require_loopback` the rest of the
 > AI layer uses, on both the probe and the request that actually carries

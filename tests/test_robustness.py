@@ -4,8 +4,8 @@ import zipfile
 
 import pytest
 
-from engines.t2pbi.core.extract import InvalidWorkbookError, extract
-from engines.t2pbi.pipeline import run
+from t2pbi.core.extract import InvalidWorkbookError, extract
+from t2pbi.pipeline import run
 
 MINIMAL_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>

@@ -4,9 +4,9 @@ The migration report is the product's trust contract: if an item did not make it
 across intact, a human has to be able to see that from the report alone.
 """
 
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.ir import Severity
-from engines.t2pbi.pipeline import _translate_calculations, run
+from t2pbi.core.parse import parse_workbook
+from t2pbi.ir import Severity
+from t2pbi.pipeline import _translate_calculations, run
 
 DROPS_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>
 <workbook version='2021.4'>
@@ -91,7 +91,7 @@ def test_calc_referencing_a_failed_calc_is_refused_not_left_dangling():
 
 
 def test_same_named_tables_in_two_datasources_do_not_collide(tmp_path):
-    from engines.t2pbi.core.emit import write_pbip
+    from t2pbi.core.emit import write_pbip
 
     wb = parse_workbook(DUPLICATE_TABLES_TWB)
     write_pbip(wb, tmp_path, "DUP")
@@ -121,9 +121,9 @@ def test_every_field_placed_on_a_visual_is_bound_or_reported():
     from pathlib import Path
     import tempfile
 
-    from engines.t2pbi.core.mapping import map_visuals
-    from engines.t2pbi.core.parse import parse_workbook
-    from engines.t2pbi.ir import CATEGORY, VALUE
+    from t2pbi.core.mapping import map_visuals
+    from t2pbi.core.parse import parse_workbook
+    from t2pbi.ir import CATEGORY, VALUE
 
     workbook = parse_workbook(
         (Path(__file__).parent / "fixtures" / "shelves.twb").read_bytes()
@@ -150,8 +150,8 @@ def test_every_field_placed_on_a_visual_is_bound_or_reported():
 def test_a_colour_shelf_is_read_rather_than_ignored():
     from pathlib import Path
 
-    from engines.t2pbi.core.parse import parse_workbook
-    from engines.t2pbi.ir import SERIES
+    from t2pbi.core.parse import parse_workbook
+    from t2pbi.ir import SERIES
 
     workbook = parse_workbook(
         (Path(__file__).parent / "fixtures" / "shelves.twb").read_bytes()

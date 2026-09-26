@@ -16,7 +16,7 @@ AI = ROOT / "engines" / "ai"
 
 #: Everywhere a conversion happens. None of it may name a provider.
 CONSUMERS = (
-    ROOT / "engines" / "t2pbi",
+    ROOT / "t2pbi",
     ROOT / "engines" / "conversion",
     ROOT / "engines" / "adapters",
     ROOT / "engines" / "validation",
@@ -81,7 +81,7 @@ def test_the_ai_layer_cannot_be_handed_a_workbook():
         for path in _python_files(AI)
         for module, name in _imports(path)
         if name in WORKBOOK_TYPES
-        or module.startswith("engines.t2pbi.ir")
+        or module.startswith("t2pbi.ir")
         or module.endswith("canonical")
     ]
     assert offenders == [], offenders
@@ -130,7 +130,7 @@ def test_only_the_router_asks_a_provider_for_anything():
 #: cannot see it. Named here so the exception is a decision on the record rather
 #: than a gap nobody noticed. It retires into the router once ADR-006 settles
 #: whether the desktop shell survives at all.
-LEGACY_MODEL_CALLERS = {Path("engines") / "t2pbi" / "assist.py"}
+LEGACY_MODEL_CALLERS = {Path("t2pbi") / "assist.py"}
 
 #: How a model runtime is reached without going near a provider class.
 _RUNTIME_MARKERS = ("11434", "/api/generate", "/chat/completions")

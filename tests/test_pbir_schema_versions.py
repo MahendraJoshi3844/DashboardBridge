@@ -64,7 +64,7 @@ from pathlib import Path
 
 import pytest
 
-from engines.t2pbi import pipeline
+from t2pbi import pipeline
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 

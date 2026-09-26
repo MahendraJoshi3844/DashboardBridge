@@ -11,7 +11,7 @@ Qlik    ──▶ Canonical ──▶ …
 
 Adding a platform means one adapter, not N² converters.
 
-Derived from `engines/t2pbi/ir/model.py`, which is proven against a real 1.1 MB
+Derived from `t2pbi/ir/model.py`, which is proven against a real 1.1 MB
 Superstore workbook — see ADR-002. Where this document and the code disagree, the
 code is the source of truth until the migration in Phase 2 lands.
 

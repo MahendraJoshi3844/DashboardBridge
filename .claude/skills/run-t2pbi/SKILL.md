@@ -34,7 +34,7 @@ ls -d "/c/Program Files (x86)/Microsoft/EdgeWebView/Application"
 
 ## Build the interface
 
-The built assets land in `engines/t2pbi/desktop/web/`, which is **gitignored** — a
+The built assets land in `t2pbi/desktop/web/`, which is **gitignored** — a
 fresh clone has none, and the shell refuses to start without them.
 
 ```bash
@@ -99,7 +99,7 @@ and an optional second selector.
 ## Run (human path)
 
 ```bash
-python -m engines.t2pbi.desktop.shell
+python -m t2pbi.desktop.shell
 ```
 
 Opens a window titled `t2pbi`. Close it to exit. Not scriptable — see Gotchas.
@@ -107,7 +107,7 @@ Opens a window titled `t2pbi`. Close it to exit. Not scriptable — see Gotchas.
 Headless conversion:
 
 ```bash
-python -m engines.t2pbi.cli convert testing_content/Superstore.twb --out ./out
+python -m t2pbi.cli convert testing_content/Superstore.twb --out ./out
 ```
 
 ## Test
@@ -148,7 +148,7 @@ pytest needs no `PYTHONPATH`.
   designed behaviour, not a failure — there is no cloud fallback by design.
 - **The dev fixture and the assist stub never ship.** Both are behind
   `import.meta.env.DEV`. Confirm after a build:
-  `grep -l "CommissionProjection\|llama3.1" engines/t2pbi/desktop/web/assets/*.js`
+  `grep -l "CommissionProjection\|llama3.1" t2pbi/desktop/web/assets/*.js`
   should match nothing.
 
 ## Troubleshooting
@@ -160,4 +160,4 @@ pytest needs no `PYTHONPATH`.
 | `driver.py window` prints `FAIL: the page never rendered converted rows` | The bundle is stale or missing; rebuild `ui/`, then re-run with `--keep-open` and look at the window |
 | Screenshot shows unrelated content | You used a screen grab, not `PrintWindow`. Use `shot_window.ps1` |
 | `Failed to launch the browser process: Code: 0` from `ui/shot.mjs` | Chrome needs its own profile: the script passes `--user-data-dir`; check that `$TEMP` is writable |
-| Window opens but stays empty | WebView2 loaded a missing bundle. `ls engines/t2pbi/desktop/web/assets/` |
+| Window opens but stays empty | WebView2 loaded a missing bundle. `ls t2pbi/desktop/web/assets/` |

@@ -9,7 +9,7 @@ Nothing was checking it. An invariant that lives only in a document is one that
 holds until the first person who has not read the document adds an import, and
 the code keeps working, the tests keep passing, and the property is gone.
 
-This was written because a change broke it: `P7.8` made `engines/t2pbi/
+This was written because a change broke it: `P7.8` made `t2pbi/
 assist.py` call `require_loopback` from `engines/ai/provider.py` - the right
 check in the wrong direction. It is exempted below with a reason and a companion
 test, on the same terms as `LEGACY_MODEL_CALLERS`, rather than quietly allowed.
@@ -24,24 +24,18 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ENGINE = ROOT / "engines" / "t2pbi"
+ENGINE = ROOT / "t2pbi"
 CONTRACTS = ROOT / "packages" / "contracts" / "src"
 
-#: The sibling packages the converter must not reach into. `engines.t2pbi` is
-#: itself under `engines/`, so the rule is about these specific neighbours
-#: rather than about the directory name.
-SIBLINGS = ("engines.ai", "engines.adapters", "engines.conversion", "engines.validation")
+#: The Tableau engine is a separate product (like mstr2pbi and qlik2pbi): it may
+#: import nothing from the DashboardBridge shell. The shell's `engines.*`
+#: packages and `app` reach into it only through the seams in
+#: engines/conversion and engines/adapters.
+SIBLINGS = ("engines", "app", "dashboardbridge_contracts")
 
-#: What `engines/t2pbi` may reach up into, and why.
-#:
-#: `assist.py` is the pywebview desktop shell's local model assist, already the
-#: single named exception in `test_ai_boundaries.py`. `P7.8` gave it the
-#: loopback check that the rest of the AI layer uses, because the alternative -
-#: a second implementation of the same security check - is how one of them gets
-#: fixed and the other does not. It retires with the shell once ADR-006 settles.
-ALLOWED_UPWARD = {
-    (Path("engines") / "t2pbi" / "assist.py", "engines.ai.provider"),
-}
+#: No exemptions any more: the assist's loopback guard is the engine's own copy
+#: (t2pbi/_loopback.py), because a separate product cannot import the shell.
+ALLOWED_UPWARD: set[tuple[Path, str]] = set()
 
 
 def _imports(path: Path) -> set[str]:
@@ -64,7 +58,7 @@ def _python_files(root: Path) -> list[Path]:
     ]
 
 
-def test_the_engine_never_imports_a_sibling_engine():
+def test_the_tableau_engine_never_imports_the_shell():
     """The direction that makes the IR a seam rather than a suggestion.
 
     If the converter may reach into `engines/adapters`, "read Tableau" can touch
@@ -85,9 +79,8 @@ def test_the_engine_never_imports_a_sibling_engine():
             offenders.append(f"{relative} imports {module}")
 
     assert offenders == [], (
-        f"{offenders} import upward. `engines/` imports `t2pbi`, never the "
-        "reverse. Move what is needed down, or add it to ALLOWED_UPWARD with a "
-        "reason."
+        f"{offenders} import the DashboardBridge shell. t2pbi is a separate "
+        "product: the shell imports it through its seams, never the reverse."
     )
 
 

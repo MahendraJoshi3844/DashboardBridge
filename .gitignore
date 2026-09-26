@@ -40,7 +40,7 @@ out/
 # The desktop shell's built assets. Produced by `cd ui && npm run build`,
 # never committed. The path moved with `P2.1`; the stale rule silently
 # stopped matching and three build artefacts went into a commit.
-engines/t2pbi/desktop/web/
+t2pbi/desktop/web/
 testing_content/
 Thumbs.db
 ui/node_modules/

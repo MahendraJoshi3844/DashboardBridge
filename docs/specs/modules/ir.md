@@ -1,6 +1,6 @@
 # Module Spec — IR (Intermediate Representation)
 
-**Code:** `engines/t2pbi/ir/model.py`
+**Code:** `t2pbi/ir/model.py`
 
 ## Purpose
 The single, technology-neutral data model that decouples "read Tableau" from "write

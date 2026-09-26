@@ -1,6 +1,6 @@
 # Module Spec — Parse
 
-**Code:** `engines/t2pbi/core/parse/` (`datasources.py`, `worksheets.py`, `dashboards.py`,
+**Code:** `t2pbi/core/parse/` (`datasources.py`, `worksheets.py`, `dashboards.py`,
 `__init__.py:parse_workbook`)
 
 ## Purpose

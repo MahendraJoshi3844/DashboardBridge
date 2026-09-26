@@ -40,7 +40,7 @@ from pathlib import Path
 
 import pytest
 
-from engines.t2pbi import pipeline
+from t2pbi import pipeline
 from tests.support.synthetic import LARGE, TYPICAL, workbook_xml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,7 +76,7 @@ def test_a_typical_workbook_converts_inside_the_budget(tmp_path):
 
 def test_parsing_a_typical_workbook_is_inside_the_analysis_budget(tmp_path):
     """Analysis is parse plus counting, so parse is the part with a budget."""
-    from engines.t2pbi.core.parse import parse_workbook
+    from t2pbi.core.parse import parse_workbook
 
     xml = workbook_xml(TYPICAL)
 
@@ -132,7 +132,7 @@ _PROBE = '''
 import hashlib, pathlib, sys, tempfile
 sys.path[:0] = [{paths}]
 from tests.support.synthetic import workbook_xml, TYPICAL
-from engines.t2pbi import pipeline
+from t2pbi import pipeline
 
 scratch = pathlib.Path(tempfile.mkdtemp())
 source = scratch / "w.twb"

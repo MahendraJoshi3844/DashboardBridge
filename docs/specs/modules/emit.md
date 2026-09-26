@@ -1,6 +1,6 @@
 # Module Spec — Emit (TMDL / PBIP)
 
-**Code:** `engines/t2pbi/core/emit/` (`datatypes.py`, `tmdl.py`, `pbip.py`)
+**Code:** `t2pbi/core/emit/` (`datatypes.py`, `tmdl.py`, `pbip.py`)
 
 ## Purpose
 Stage 5. Turn the `Workbook` IR into a PBIP project on disk: a text-based TMDL

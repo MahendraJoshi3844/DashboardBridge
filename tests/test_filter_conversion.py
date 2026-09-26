@@ -33,9 +33,9 @@ from pathlib import Path
 
 import pytest
 
-from engines.t2pbi.core.mapping.visual_map import map_visuals
-from engines.t2pbi.core.parse import parse_workbook
-from engines.t2pbi.ir import Severity
+from t2pbi.core.mapping.visual_map import map_visuals
+from t2pbi.core.parse import parse_workbook
+from t2pbi.ir import Severity
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -183,7 +183,7 @@ def test_an_unconverted_restriction_is_still_manual_work(mapped):
 
 
 def _page_json(tmp_path, visuals):
-    from engines.t2pbi.core.emit.pbir import write_report_definition
+    from t2pbi.core.emit.pbir import write_report_definition
 
     write_report_definition(visuals, tmp_path, emit_filters=True)
     pages = sorted((tmp_path / "definition" / "pages").glob("*/page.json"))
@@ -296,7 +296,7 @@ def test_the_filter_names_the_column_as_the_model_writes_it(tmp_path):
     rebuilds each `PBIVisual`, so the filters were rebuilt away and no page had
     a `filterConfig` at all. That seam is what this exercises.
     """
-    from engines.t2pbi.core.emit.pbip import _bind_to_emitted
+    from t2pbi.core.emit.pbip import _bind_to_emitted
 
     xml = WORKBOOK.replace(
         b"<column name='[Region]' datatype='string' role='dimension' />",
@@ -323,7 +323,7 @@ def test_filters_are_not_written_unless_they_are_asked_for(mapped, tmp_path):
     the guess this converter refuses everywhere else, so the filter is reported
     as manual work with its values named until a Desktop says otherwise.
     """
-    from engines.t2pbi.core.emit.pbir import write_report_definition
+    from t2pbi.core.emit.pbir import write_report_definition
 
     _, visuals = mapped
     assert visuals[0].filters, "the fixture still has something to write"

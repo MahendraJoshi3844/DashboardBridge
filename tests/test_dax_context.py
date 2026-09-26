@@ -3,7 +3,7 @@
 These lock in the fidelity fixes from the Superstore manual-test findings.
 """
 
-from engines.t2pbi.core.dax.translator import TranslationContext, translate_formula
+from t2pbi.core.dax.translator import TranslationContext, translate_formula
 
 
 def _ctx():

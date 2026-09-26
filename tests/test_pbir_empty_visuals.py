@@ -36,7 +36,7 @@ from pathlib import Path
 
 import pytest
 
-from engines.t2pbi import pipeline
+from t2pbi import pipeline
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -162,7 +162,7 @@ def test_a_worksheet_that_produced_no_visual_counts_as_needing_a_person(converte
     of the number the user plans around - the same under-reporting as claiming
     the visual existed, arrived at by a different route.
     """
-    from engines.t2pbi.ir import Severity
+    from t2pbi.ir import Severity
 
     definition, result = converted
     written = {

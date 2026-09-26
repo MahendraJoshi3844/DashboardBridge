@@ -15,8 +15,8 @@ is the product understating itself, in a document a client reads.
 
 from __future__ import annotations
 
-from engines.t2pbi.ir import Column, DataSource, Table, Workbook
-from engines.t2pbi.pipeline import _translate_calculations
+from t2pbi.ir import Column, DataSource, Table, Workbook
+from t2pbi.pipeline import _translate_calculations
 
 
 def _workbook(*tables: Table) -> Workbook:
@@ -149,8 +149,8 @@ def test_a_local_column_wins_over_a_same_named_measure_in_another_table():
 
 def test_a_parameter_reference_is_not_a_dependency():
     """A parameter is not a calculation and cannot be refused by one."""
-    from engines.t2pbi.core.graph import build
-    from engines.t2pbi.ir import Parameter
+    from t2pbi.core.graph import build
+    from t2pbi.ir import Parameter
 
     wb = _workbook(
         Table(name="Orders", columns=[_column("Sales"), _calc("Scaled", "sum([Sales]) * [Rate]")])
@@ -166,7 +166,7 @@ def test_a_parameter_reference_is_not_a_dependency():
 
 
 def _graph_of(*calcs: tuple[str, str]):
-    from engines.t2pbi.core.graph import build
+    from t2pbi.core.graph import build
 
     wb = _workbook(
         Table(

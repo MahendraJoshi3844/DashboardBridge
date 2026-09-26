@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from engines.t2pbi.pipeline import run
+from t2pbi.pipeline import run
 
 
 @pytest.fixture

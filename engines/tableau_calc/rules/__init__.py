@@ -1,6 +1,6 @@
 """Load the DAX -> Tableau rule pack (`P6b.2`).
 
-The mirror of `engines/t2pbi/core/dax/rules`, and it keeps that module's one
+The mirror of `t2pbi/core/dax/rules`, and it keeps that module's one
 non-negotiable property: **a malformed pack raises rather than loading the part
 of it that parsed.** A Python dict cannot lose an entry between two runs; a file
 can — a bad merge, a truncated write, a duplicate id shadowing its twin — and

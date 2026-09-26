@@ -6,7 +6,7 @@ measure, or an aggregation wrapped around a measure. When the intended grain is
 genuinely ambiguous we must refuse to convert rather than guess.
 """
 
-from engines.t2pbi.core.dax.grain import classify_calc
+from t2pbi.core.dax.grain import classify_calc
 
 # alias -> grain for calcs already classified; a parameter reads like an
 # aggregate, because it takes its value from a slicer rather than from a row.

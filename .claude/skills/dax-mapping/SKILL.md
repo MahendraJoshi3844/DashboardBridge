@@ -5,7 +5,7 @@ description: Reference table and rules for translating Tableau calculated-field 
 
 # Tableau Calc → DAX Mapping
 
-Implementation lives in `engines/t2pbi/core/dax/`: `functions.py` (the tables),
+Implementation lives in `t2pbi/core/dax/`: `functions.py` (the tables),
 `translator.py` (the rewriting), `grain.py` (measure vs calculated column).
 
 ## The one rule

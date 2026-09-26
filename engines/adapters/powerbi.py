@@ -108,7 +108,7 @@ class PBIPProject:
 
 
 class PowerBIAdapter:
-    """Reads PBIP. Writing is `engines/t2pbi/core/emit` and stays there."""
+    """Reads PBIP. Writing is `t2pbi/core/emit` and stays there."""
 
     platform = Platform.POWERBI
 

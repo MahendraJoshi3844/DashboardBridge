@@ -35,7 +35,7 @@ roadmap; they are extracted as each phase needs them.
 ## What already exists
 
 This is a **re-platforming, not a greenfield build** (ADR-001). A working
-Tableau→Power BI engine lives in `engines/t2pbi` with 115 passing tests:
+Tableau→Power BI engine lives in `t2pbi` with 115 passing tests:
 
 | Capability | Where |
 |---|---|

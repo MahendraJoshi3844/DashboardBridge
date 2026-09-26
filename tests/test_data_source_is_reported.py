@@ -29,7 +29,7 @@ from pathlib import Path
 
 import pytest
 
-from engines.t2pbi.core.parse import parse_workbook
+from t2pbi.core.parse import parse_workbook
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -213,7 +213,7 @@ def test_the_connection_kind_is_said_in_words_a_person_uses(kind, words):
     """`excel-direct` is how Tableau names it internally. Nobody calls a
     spreadsheet an excel-direct, and this text goes in a migration report a
     consultant hands to a stakeholder."""
-    from engines.t2pbi.core.parse.datasources import _kind_in_words
+    from t2pbi.core.parse.datasources import _kind_in_words
 
     assert _kind_in_words(kind) == words
 
@@ -222,7 +222,7 @@ def test_an_unmapped_kind_keeps_its_own_name_rather_than_going_vague():
     """An unmapped class is still a fact about the workbook. Replacing it with
     "a data source" would lose information to look tidy - and it reads wrong
     besides, which is how "a excel-direct source" got shipped for one run."""
-    from engines.t2pbi.core.parse.datasources import _kind_in_words
+    from t2pbi.core.parse.datasources import _kind_in_words
 
     assert _kind_in_words("teradata") == "a teradata source"
     assert _kind_in_words("odbc") == "an odbc source"

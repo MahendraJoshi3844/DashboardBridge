@@ -1,6 +1,6 @@
 # Module Spec — Extract
 
-**Code:** `engines/t2pbi/core/extract.py`
+**Code:** `t2pbi/core/extract.py`
 
 ## Purpose
 Stage 1. Turn an input path (`.twb` or `.twbx`) into the raw `.twb` XML bytes plus a
