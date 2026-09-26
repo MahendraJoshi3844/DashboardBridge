@@ -37,7 +37,7 @@ from dashboardbridge_contracts.enums import ConversionStatus
 from engines.adapters.powerbi import PowerBIAdapter
 from engines.adapters.tableau_emit import emit_twb
 from engines.conversion.outcome import ConversionOutcome, compatibility_by_object
-from t2pbi.events import CROSSED, HELD, EventSink
+from engines.conversion.events import CROSSED, HELD, EventSink
 
 
 class NoSemanticModel(ValueError):

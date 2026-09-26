@@ -124,13 +124,11 @@ def test_only_the_router_asks_a_provider_for_anything():
     assert offenders == [], offenders
 
 
-#: The one module outside `engines/ai` that talks to a model runtime directly.
-#: It predates the router: it is the pywebview desktop shell's local assist, and
-#: it opens its own socket rather than calling a provider, so the check above
-#: cannot see it. Named here so the exception is a decision on the record rather
-#: than a gap nobody noticed. It retires into the router once ADR-006 settles
-#: whether the desktop shell survives at all.
-LEGACY_MODEL_CALLERS = {Path("t2pbi") / "assist.py"}
+#: Modules outside `engines/ai` allowed to talk to a model runtime directly.
+#: Empty: the one that used to be here (the desktop assist, t2pbi/assist.py)
+#: left with the Tableau engine for its own repository. Anything added must name
+#: a reason, and the test below keeps the list honest.
+LEGACY_MODEL_CALLERS: set[Path] = set()
 
 #: How a model runtime is reached without going near a provider class.
 _RUNTIME_MARKERS = ("11434", "/api/generate", "/chat/completions")

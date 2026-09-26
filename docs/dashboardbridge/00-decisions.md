@@ -238,3 +238,28 @@ is a guess about the second one.
 The pipeline's own rules still hold. Nothing may be reported as converted that
 the engine did not convert, and the refusals the engine raises must survive the
 mapping into the contracts rather than being smoothed away into a count.
+
+---
+
+## ADR-010 — Each engine is a separate product; DashboardBridge is the shell
+
+Customers buy Tableau, MicroStrategy and Qlik migration separately and in any
+combination. An engine that shipped inside the shell could not be left out, and
+one that imported the shell could not be sold without it.
+
+**Decision:** each engine lives in its own repository and imports nothing from
+this one: `t2pbi` (Tableau ↔ Power BI, including the desktop app of ADR-006),
+`mstr2pbi`, `qlik2pbi`. This repository keeps the UI, API, contracts, licensing,
+validation and the seams, and installs engines as optional extras pinned by
+commit. Power BI → Tableau is part of the Tableau product: its writer lives here,
+on the canonical contracts, but needs `t2pbi` and the `tableau` licence feature.
+
+A migration path is available to a person only when its engine is installed,
+the licence includes it, and an administrator granted it to them
+(`engines/conversion/directions.py`; administrators need no grant).
+
+**Consequences:** the suite runs with every engine and with none; tests that
+drive a conversion say which engine they need. This supersedes ADR-008's
+"`t2pbi` stays here": the engine kept its IR (that part of ADR-008 stands) and
+moved out with it.
+

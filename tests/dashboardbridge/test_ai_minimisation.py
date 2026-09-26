@@ -23,6 +23,8 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("t2pbi", reason="optional engine not installed on this deployment")
+
 from engines.conversion.ai_requests import policy_for, request_for
 from engines.conversion.run import convert_tableau_to_powerbi
 

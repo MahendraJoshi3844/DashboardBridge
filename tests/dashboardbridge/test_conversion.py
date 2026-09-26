@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 from dashboardbridge_contracts import ConversionFlag
 from dashboardbridge_contracts.enums import ConversionStatus
+from tests.support.engines import needs_tableau
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -56,6 +57,7 @@ def converted(api):
 # --- the request contract --------------------------------------------------
 
 
+@needs_tableau
 def test_conversion_returns_a_job_naming_its_kind(api):
     client = api.client
     project_id = _ready(client)
@@ -65,6 +67,7 @@ def test_conversion_returns_a_job_naming_its_kind(api):
     assert body["kind"] == "conversion"
 
 
+@needs_tableau
 def test_converting_before_analysis_is_refused_in_the_users_terms(api):
     client = api.client
     project_id = client.post(
@@ -111,6 +114,7 @@ def test_local_only_refuses_a_remote_provider(api):
 # --- what conversion reports ----------------------------------------------
 
 
+@needs_tableau
 def test_the_parts_sum_to_the_whole(converted):
     """A reader must be able to check the arithmetic."""
     _, body = converted
@@ -121,6 +125,7 @@ def test_the_parts_sum_to_the_whole(converted):
     )
 
 
+@needs_tableau
 def test_every_refusal_survives_into_the_reported_flags(converted):
     """The engine refuses RUNNING_SUM. That refusal must reach the API rather
     than being smoothed away into a count."""
@@ -128,12 +133,14 @@ def test_every_refusal_survives_into_the_reported_flags(converted):
     assert any("Running Total" in flag["item"] for flag in body["flags"])
 
 
+@needs_tableau
 def test_flags_carry_all_three_axes(converted):
     _, body = converted
     for flag in body["flags"]:
         assert flag["method"] and flag["status"] and flag["severity"]
 
 
+@needs_tableau
 def test_conversion_names_the_artifact_it_produced(converted):
     _, body = converted
     assert body["artifact_id"]
@@ -142,6 +149,7 @@ def test_conversion_names_the_artifact_it_produced(converted):
 # --- the produced artifact -------------------------------------------------
 
 
+@needs_tableau
 def test_the_artifact_downloads_as_a_pbip_project(api, converted):
     project_id, _ = converted
     response = api.client.get(f"/api/v1/projects/{project_id}/artifact")
@@ -154,6 +162,7 @@ def test_the_artifact_downloads_as_a_pbip_project(api, converted):
     assert any("Report" in n and n.endswith("definition.pbir") for n in names), names
 
 
+@needs_tableau
 def test_every_emitted_table_carries_a_partition(api, converted):
     """Power BI rejects a semantic model whose table has no partition, so this
     is a structural precondition for the output opening at all."""
@@ -169,6 +178,7 @@ def test_every_emitted_table_carries_a_partition(api, converted):
         assert "partition" in archive.read(name).decode("utf-8"), name
 
 
+@needs_tableau
 def test_downloading_before_conversion_is_refused_not_served_partially(api):
     """A partial artifact must never be served as if it were finished."""
     client = api.client
@@ -179,6 +189,7 @@ def test_downloading_before_conversion_is_refused_not_served_partially(api):
 # --- determinism -----------------------------------------------------------
 
 
+@needs_tableau
 def test_converting_the_same_workbook_twice_produces_identical_output(api):
     client = api.client
     digests = []
@@ -203,6 +214,7 @@ def test_converting_the_same_workbook_twice_produces_identical_output(api):
 # --- the denominator ------------------------------------------------------
 
 
+@needs_tableau
 def test_the_denominator_counts_every_object_that_can_be_flagged():
     """A flag about an object outside the total makes the total a fiction.
 
@@ -258,6 +270,7 @@ def test_the_denominator_counts_every_object_that_can_be_flagged():
 # --- what "needs AI" is allowed to mean -----------------------------------
 
 
+@needs_tableau
 def test_only_calculations_are_reported_as_ai_addressable(converted):
     """AI_REQUIRED must mean "a model could draft this", not "a human must act".
 
@@ -275,6 +288,7 @@ def test_only_calculations_are_reported_as_ai_addressable(converted):
             )
 
 
+@needs_tableau
 def test_structural_refusals_are_reported_as_unsupported(converted):
     _, body = converted
     structural = [
@@ -288,6 +302,7 @@ def test_structural_refusals_are_reported_as_unsupported(converted):
 # --- the comparison explorer needs both sides -----------------------------
 
 
+@needs_tableau
 def test_conversion_returns_the_translated_model(converted):
     """The flagship screen is source expression beside target expression.
 
@@ -298,6 +313,7 @@ def test_conversion_returns_the_translated_model(converted):
     assert body.get("model"), "conversion must carry the model it produced"
 
 
+@needs_tableau
 def test_a_converted_calculation_carries_its_dax(converted):
     _, body = converted
     columns = [
@@ -315,6 +331,7 @@ def test_a_converted_calculation_carries_its_dax(converted):
         assert column["translation"]["method"] == "deterministic"
 
 
+@needs_tableau
 def test_a_refused_calculation_carries_no_translation(converted):
     """An empty target column is the honest rendering of a refusal. Inventing
     one would be the guess this product exists to refuse."""

@@ -48,6 +48,8 @@ from dashboardbridge_contracts.enums import (
     Verdict,
 )
 
+pytest.importorskip("t2pbi", reason="optional engine not installed on this deployment")
+
 from engines.conversion.run import convert_tableau_to_powerbi
 from engines.validation import RuleStatus, TargetProject, validate
 

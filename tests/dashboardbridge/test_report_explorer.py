@@ -14,6 +14,7 @@ import zipfile
 
 from app.services import workspace as ws
 from tests.dashboardbridge.test_conversion import FIXTURES
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 
@@ -48,6 +49,7 @@ def _pages(archive: zipfile.ZipFile) -> dict[str, list[str]]:
     }
 
 
+@needs_tableau
 def test_the_explorer_lists_pages_visuals_and_their_tableau_source(api):
     project_id = _converted(api.client)
     report = api.client.get(f"{PREFIX}/projects/{project_id}/workspace/report").json()
@@ -60,6 +62,7 @@ def test_the_explorer_lists_pages_visuals_and_their_tableau_source(api):
     assert visual["fields"], "a written visual has fields on it"
 
 
+@needs_tableau
 def test_publishing_nothing_selected_carries_no_visuals(api):
     project_id = _converted(api.client)
     response = api.client.post(f"{PREFIX}/projects/{project_id}/workspace/publish", json={"visual_ids": []})
@@ -71,6 +74,7 @@ def test_publishing_nothing_selected_carries_no_visuals(api):
     assert any(name.endswith(".tmdl") for name in archive.namelist()), "the model is always carried"
 
 
+@needs_tableau
 def test_publishing_a_selection_carries_exactly_those_visuals(api):
     project_id = _converted(api.client)
     report = api.client.get(f"{PREFIX}/projects/{project_id}/workspace/report").json()
@@ -84,6 +88,7 @@ def test_publishing_a_selection_carries_exactly_those_visuals(api):
     assert 'filename="Clashes.pbip.zip"' in response.headers["content-disposition"]
 
 
+@needs_tableau
 def test_an_unknown_visual_id_is_refused_rather_than_ignored(api):
     project_id = _converted(api.client)
     response = api.client.post(

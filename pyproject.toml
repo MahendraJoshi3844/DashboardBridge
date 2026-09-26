@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "t2pbi"
+name = "dashboardbridge"
 version = "0.1.0"
-description = "Convert Tableau workbooks (.twb/.twbx) into Power BI projects (PBIP)."
+description = "DashboardBridge: one UI and API over separately sold BI migration engines (Tableau, MicroStrategy, Qlik to Power BI)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
@@ -13,7 +13,6 @@ authors = [{ name = "Mahendra Joshi", email = "mahendra.joshi@atos.net" }]
 dependencies = [
     "lxml>=5.0",
     "pyyaml>=6.0",
-    "pywebview>=5.0",
     "pydantic>=2.7",
     "fastapi>=0.110",
     "uvicorn>=0.29",
@@ -27,24 +26,24 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pyinstaller>=6.0"]
+dev = ["pytest>=8.0", "httpx"]
 # Engines sold separately, each in its own repository and pinned by commit so a
 # deployment converts the same way every time. Install the ones a customer has:
-#   pip install ".[microstrategy]"   pip install ".[qlik]"   pip install ".[engines]"
+#   pip install ".[tableau]"   pip install ".[microstrategy]"   pip install ".[qlik]"   pip install ".[engines]"
 # Without them the matching migration cards show as "not installed" and the API
 # refuses those directions (engines/conversion/directions.py).
-# For development against a local clone: pip install -e ../MicroStrategy-to-Power-BI
+# For development against local clones: pip install -e ../Tableau-to-Power-BI (and the others)
+tableau = ["t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@2daaf376b7163e2a5c75ea66e3ef6b0108f95cbf"]
 microstrategy = ["mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595"]
 qlik = ["qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d"]
 engines = [
+    "t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@2daaf376b7163e2a5c75ea66e3ef6b0108f95cbf",
     "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595",
     "qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d",
 ]
 
 [project.scripts]
-t2pbi = "t2pbi.cli:main"
-t2pbi-app = "t2pbi.desktop.shell:main"
-t2pbi-license = "engines.licensing.cli:main"
+dashboardbridge-license = "engines.licensing.cli:main"
 
 # The engine moved under `engines/` (`P2.1`), so there is no `src/` layout
 # any more: `engines` is a package at the repository root and every engine -
@@ -52,13 +51,12 @@ t2pbi-license = "engines.licensing.cli:main"
 # of it. One import root instead of two.
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["engines*", "t2pbi*"]
+include = ["engines*"]
 
 # The translation rule pack is data, and data is not shipped by default. Without
 # this an installed t2pbi has no rules: the loader refuses the pack and the
 # engine converts nothing, in a build that looked fine locally.
 [tool.setuptools.package-data]
-"t2pbi" = ["core/dax/rules/*.yaml"]
 "engines.tableau_calc" = ["rules/*.yaml"]
 
 [tool.pytest.ini_options]

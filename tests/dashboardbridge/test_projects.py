@@ -24,6 +24,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.db import create_app_engine, get_session
 from app.db.models import Base
 from app.main import app
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 
@@ -81,6 +82,7 @@ def assert_error_shape(body: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
+@needs_tableau
 def test_a_project_round_trips(api):
     created = create(api)
     assert created.status_code == 201, created.text
@@ -97,6 +99,7 @@ def test_a_project_round_trips(api):
     assert fetched.json() == body
 
 
+@needs_tableau
 def test_listing_returns_what_was_created(api):
     ids = {create(api, name=f"Migration {n}").json()["project_id"] for n in range(3)}
     listed = api.client.get(f"{PREFIX}/projects")
@@ -104,6 +107,7 @@ def test_listing_returns_what_was_created(api):
     assert {p["project_id"] for p in listed.json()} == ids
 
 
+@needs_tableau
 def test_listing_is_paginated_deterministically(api):
     for n in range(5):
         create(api, name=f"Migration {n}")

@@ -26,6 +26,7 @@ from datetime import date, timedelta
 import pytest
 
 from engines.licensing import generate_keypair, issue
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 
@@ -109,12 +110,14 @@ def _convert(client, project_id: str):
 # --- while the licence is good -------------------------------------------------------
 
 
+@needs_tableau
 def test_a_valid_licence_converts(api, monkeypatch, keys):
     _install(monkeypatch, keys, days=200)
     client = api.client
     assert _convert(client, _ready(client)).status_code == 202
 
 
+@needs_tableau
 def test_a_licence_near_expiry_still_converts_and_says_so(api, monkeypatch, keys):
     """The warning has to arrive while there is still time to act on it."""
     _install(monkeypatch, keys, days=9)
@@ -129,6 +132,7 @@ def test_a_licence_near_expiry_still_converts_and_says_so(api, monkeypatch, keys
 # --- once it has expired --------------------------------------------------------------
 
 
+@needs_tableau
 def test_an_expired_licence_refuses_to_convert(api, monkeypatch, keys):
     _install(monkeypatch, keys, days=-1, issued_days_ago=400)
     client = api.client
@@ -136,6 +140,7 @@ def test_an_expired_licence_refuses_to_convert(api, monkeypatch, keys):
     assert response.status_code == 402, response.text
 
 
+@needs_tableau
 def test_the_refusal_names_the_date_and_says_to_renew(api, monkeypatch, keys):
     _install(monkeypatch, keys, days=-1, issued_days_ago=400)
     client = api.client
@@ -144,6 +149,7 @@ def test_the_refusal_names_the_date_and_says_to_renew(api, monkeypatch, keys):
     assert str(date.today() - timedelta(days=1)) in body["message"]
 
 
+@needs_tableau
 def test_reading_still_works_after_expiry(api, monkeypatch, keys):
     """The deliberate limit on the lever.
 
@@ -166,6 +172,7 @@ def test_reading_still_works_after_expiry(api, monkeypatch, keys):
 # --- when there is no licence at all ---------------------------------------------------
 
 
+@needs_tableau
 def test_a_deployment_with_no_licence_refuses_and_says_where_to_put_one(
     api, monkeypatch
 ):

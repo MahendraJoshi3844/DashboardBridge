@@ -1,24 +1,49 @@
-# t2pbi — Tableau → Power BI Migration
+# DashboardBridge
 
-Convert Tableau workbooks (`.twb` / `.twbx`) into ready-to-open **Power BI projects
-(PBIP)** — fully offline. Automates the ~80% mechanical work of a Tableau→Power BI
-migration and flags the rest in a Migration Report.
+One web application for migrating BI content to **Power BI**, over separately
+sold conversion engines. A customer licenses any combination:
 
-- **Delivery:** a **web application the customer runs in their own environment**,
-  around a reusable conversion engine. Licensed offline; air-gapped installs are
-  a normal case.
-- **Stack:** Python 3.14 (lxml, FastAPI, SQLAlchemy) + Next.js 15 / React 19
-- **Output:** PBIP (TMDL + PBIR) now; `.pbix` packaging later
-- **v1 scope:** data model + fields + supported calcs→DAX + basic visuals
+| Product | Engine | Repository |
+|---|---|---|
+| **Tableau → Power BI** (and Power BI → Tableau) | `t2pbi` | Tableau-to-Power-BI |
+| **MicroStrategy → Power BI** | `mstr2pbi` | MicroStrategy-to-Power-BI |
+| **Qlik → Power BI** | `qlik2pbi` | Qlik-To-PowerBI |
+
+This repository is the shell (UI, API, contracts, licensing, validation). It
+contains no engine: each is an optional install, pinned by commit.
+
+- **Delivery:** a web application the customer runs in their own environment.
+  Licensed offline; air-gapped installs are a normal case.
+- **Stack:** Python 3.14 (FastAPI, SQLAlchemy) + Next.js 15 / React 19.
+- **Output:** PBIP (TMDL + PBIR) for Power BI; `.twb` for Power BI → Tableau.
+
+## Who can use what
+
+A migration path shows as usable only when its engine is **installed** on the
+deployment, **included in the licence**, and **granted to the person**.
+Administrators see every installed, licensed path and decide under
+**Administration → Users & access** who may use Tableau, MicroStrategy and/or
+Qlik. Everyone else sees the paths they were not given as locked, with the
+reason.
+
+```bash
+pip install -r apps/api/requirements.txt
+pip install -r apps/api/requirements-engine-tableau.txt        # each engine the customer bought
+pip install -r apps/api/requirements-engine-microstrategy.txt
+pip install -r apps/api/requirements-engine-qlik.txt
+```
+
+With Docker: `ENGINES="tableau qlik" docker compose up` (default: all three).
 
 ## Documentation
 | Doc | Purpose |
 |---|---|
-| [`docs/specs/SPEC-tableau-to-powerbi-migration.md`](docs/specs/SPEC-tableau-to-powerbi-migration.md) | Spec (Why/What) |
-| [`docs/design/TECHNICAL-DESIGN.md`](docs/design/TECHNICAL-DESIGN.md) | Technical Design (How) |
-| [`docs/TASKS.md`](docs/TASKS.md) | Implementation tasks |
+| [`SPEC.md`](SPEC.md) | Master specification |
+| [`docs/dashboardbridge/00-decisions.md`](docs/dashboardbridge/00-decisions.md) | Decisions (ADRs) |
+| [`docs/dashboardbridge/11-roadmap.md`](docs/dashboardbridge/11-roadmap.md) | Roadmap |
+| [`docs/operations/RUNBOOK.md`](docs/operations/RUNBOOK.md) | Running it as a customer would |
 | [`docs/business/PRODUCT-VISION.md`](docs/business/PRODUCT-VISION.md) | Pitch / business vision |
-| [`CLAUDE.md`](CLAUDE.md) | Guidance for Claude Code |
+| [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | How to work on it |
 
 ## Run it
 
@@ -76,11 +101,8 @@ The guided single-screen flow is still at `/classic`.
 `run-local.ps1` needs PowerShell 7 (`pwsh`); under Windows PowerShell 5.1 it
 stops at the database step because alembic logs to stderr.
 
-Headless, without the web app:
-
-```bash
-t2pbi convert testing_content/Superstore.twb --out ./output
-```
+Headless, without the web app, each engine has its own command line
+(`t2pbi convert`, `mstr2pbi convert`, `qlik2pbi convert`) in its own repository.
 
 ## Status
 

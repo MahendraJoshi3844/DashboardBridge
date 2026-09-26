@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 #: Declared because the desktop shell needs it, imported lazily so the headless
 #: suite never touches it. CI deliberately leaves it out.
-DESKTOP_ONLY = {"pywebview"}
+DESKTOP_ONLY: set[str] = set()
 
 
 def _declared() -> set[str]:
@@ -130,7 +130,7 @@ def test_every_optional_engine_has_a_requirements_file_and_is_tested_by_ci():
     config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     extras = config["project"]["optional-dependencies"]
     ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
-    for name in ("microstrategy", "qlik"):
+    for name in ("tableau", "microstrategy", "qlik"):
         assert name in extras, f"pyproject has no '{name}' extra"
         req = ROOT / "apps" / "api" / f"requirements-engine-{name}.txt"
         assert req.is_file(), f"{req.name} is missing"
@@ -144,7 +144,7 @@ def test_no_optional_engine_is_a_hard_dependency():
     config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     required = " ".join(config["project"]["dependencies"]).lower()
     api = (ROOT / "apps" / "api" / "requirements.txt").read_text(encoding="utf-8").lower()
-    for engine in ("mstr2pbi", "qlik2pbi"):
+    for engine in ("t2pbi", "mstr2pbi", "qlik2pbi"):
         assert engine not in required
         assert engine not in "\n".join(l for l in api.splitlines() if not l.strip().startswith("#"))
 

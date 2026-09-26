@@ -58,3 +58,4 @@ apps/web/screenshots/live-*.png
 
 # Scratch screenshots and the Chrome profile the shot script uses.
 apps/web/.shots/
+.venv-core/

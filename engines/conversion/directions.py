@@ -4,8 +4,8 @@ DashboardBridge is one front end over separate engines, sold separately:
 
 | direction | engine | where it lives | licence feature |
 |---|---|---|---|
-| Tableau -> Power BI | `t2pbi` | this repository | `tableau` |
-| Power BI -> Tableau | `t2pbi` | this repository | `tableau` |
+| Tableau -> Power BI | `t2pbi` | Tableau-to-Power-BI (optional extra) | `tableau` |
+| Power BI -> Tableau | `t2pbi` | Tableau-to-Power-BI (optional extra) | `tableau` |
 | MicroStrategy -> Power BI | `mstr2pbi` | MicroStrategy-to-Power-BI (optional extra) | `microstrategy` |
 | Qlik -> Power BI | `qlik2pbi` | Qlik-To-PowerBI (optional extra) | `qlik` |
 
@@ -57,8 +57,8 @@ class Direction:
 
 
 DIRECTIONS: tuple[Direction, ...] = (
-    Direction(Platform.TABLEAU, Platform.POWERBI, "t2pbi", "t2pbi", "tableau"),
-    Direction(Platform.POWERBI, Platform.TABLEAU, "t2pbi", "t2pbi", "tableau"),
+    Direction(Platform.TABLEAU, Platform.POWERBI, "t2pbi", "t2pbi", "tableau", "tableau"),
+    Direction(Platform.POWERBI, Platform.TABLEAU, "t2pbi", "t2pbi", "tableau", "tableau"),
     Direction(Platform.MICROSTRATEGY, Platform.POWERBI, "mstr2pbi", "mstr2pbi", "microstrategy", "microstrategy"),
     Direction(Platform.QLIK, Platform.POWERBI, "qlik2pbi", "qlik2pbi", "qlik", "qlik"),
 )

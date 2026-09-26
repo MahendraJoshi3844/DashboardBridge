@@ -32,6 +32,8 @@ from pathlib import Path
 import pytest
 from lxml import etree
 
+pytest.importorskip("t2pbi", reason="optional engine not installed on this deployment")
+
 from engines.adapters.powerbi import PowerBIAdapter
 from engines.adapters.tableau import TableauAdapter
 from engines.adapters.tableau_emit import write_twb

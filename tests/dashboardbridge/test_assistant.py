@@ -21,6 +21,7 @@ from dashboardbridge_contracts.enums import PrivacyMode, ProviderKind
 from engines.ai.providers import MockProvider
 from engines.ai.router import AdviceRequest, AISettings, Disposition, advise
 from tests.dashboardbridge.test_report_explorer import _converted
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 
@@ -120,6 +121,7 @@ def test_a_shared_name_is_reported_as_a_question_not_a_relationship():
 # --- over the API, with no model configured -----------------------------------------
 
 
+@needs_tableau
 def test_every_deterministic_step_runs_over_the_api(api):
     project_id = _converted(api.client)
     for step in ("inventory", "check_references", "check_mquery", "model_health", "format_mquery"):
@@ -128,6 +130,7 @@ def test_every_deterministic_step_runs_over_the_api(api):
         assert response.json()["messages"], step
 
 
+@needs_tableau
 def test_with_no_model_the_summary_says_nothing_was_asked(api):
     project_id = _converted(api.client)
     body = api.client.post(f"{PREFIX}/projects/{project_id}/workspace/assistant/summarize", json={}).json()
@@ -135,6 +138,7 @@ def test_with_no_model_the_summary_says_nothing_was_asked(api):
     assert "No model was asked" in body["messages"][0]["text"]
 
 
+@needs_tableau
 def test_with_no_model_held_calculations_get_no_draft(api):
     project_id = _converted(api.client)
     body = api.client.post(f"{PREFIX}/projects/{project_id}/workspace/assistant/draft_dax", json={}).json()
@@ -142,6 +146,7 @@ def test_with_no_model_held_calculations_get_no_draft(api):
     assert any("No model was asked" in m["text"] for m in body["messages"])
 
 
+@needs_tableau
 def test_an_unknown_step_is_refused(api):
     project_id = _converted(api.client)
     response = api.client.post(f"{PREFIX}/projects/{project_id}/workspace/assistant/delete_everything", json={})

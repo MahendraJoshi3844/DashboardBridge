@@ -73,9 +73,9 @@ services:
       PYTHONPATH: /workspace:/workspace/apps/api:/workspace/packages/contracts/src
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
-      # Optional engines to install, space separated: "microstrategy qlik".
-      # Empty = Tableau <-> Power BI only; the other cards show "not installed".
-      ENGINES: ${ENGINES:-}
+      # Engines to install, space separated: "tableau microstrategy qlik".
+      # Each is a separate product; a card whose engine is absent shows "not installed".
+      ENGINES: ${ENGINES:-tableau microstrategy qlik}
     command:
       - sh
       - -c

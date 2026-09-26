@@ -18,6 +18,8 @@ from dashboardbridge_contracts.enums import (
     Grain,
     Severity,
 )
+pytest.importorskip("t2pbi", reason="optional engine not installed on this deployment")
+
 from engines.adapters.tableau import TableauAdapter
 
 ENCODED_TWB = b"""<?xml version='1.0' encoding='utf-8' ?>

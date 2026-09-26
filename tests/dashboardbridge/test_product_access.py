@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from tests.dashboardbridge.conftest import FIXTURE_EMAIL, FIXTURE_PASSWORD
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -60,6 +61,7 @@ def test_an_unknown_product_is_refused_not_dropped(api):
     assert "cognos" in response.json()["message"]
 
 
+@needs_tableau
 def test_a_person_sees_and_uses_only_what_they_were_given(api):
     _add(api.client, "dee@example.test", products=["tableau"])
     _sign_in(api.client, "dee@example.test")
@@ -77,6 +79,7 @@ def test_a_person_sees_and_uses_only_what_they_were_given(api):
     assert ok.status_code == 201
 
 
+@needs_tableau
 def test_an_administrator_sees_every_installed_licensed_product_whatever_their_grants(api):
     admin = next(u for u in api.client.get(f"{PREFIX}/users").json()["users"] if u["email"] == FIXTURE_EMAIL)
     api.client.patch(f"{PREFIX}/users/{admin['user_id']}", json={"products": []})
@@ -86,6 +89,7 @@ def test_an_administrator_sees_every_installed_licensed_product_whatever_their_g
         assert states[source] == ("available" if _installed(module) else "not_installed")
 
 
+@needs_tableau
 def test_access_withdrawn_mid_project_stops_the_conversion(api):
     user = _add(api.client, "eve@example.test", products=["tableau"])
     _sign_in(api.client, "eve@example.test")

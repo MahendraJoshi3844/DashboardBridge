@@ -45,6 +45,7 @@ from app.services.artifact_store import (
 )
 
 from tests.dashboardbridge.conftest import sign_in  # noqa: E402
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
@@ -148,6 +149,7 @@ def assert_error_shape(body: dict) -> None:
 # ---------------------------------------------------------------------------
 
 
+@needs_tableau
 def test_a_twb_uploads_and_reports_its_own_bytes(api):
     payload = SAMPLE_TWB.read_bytes()
     response = upload(api, "sample.twb", payload)
@@ -161,6 +163,7 @@ def test_a_twb_uploads_and_reports_its_own_bytes(api):
     assert body["detected_platform"] == "tableau"
 
 
+@needs_tableau
 def test_the_stored_bytes_are_the_uploaded_bytes(api):
     payload = SAMPLE_TWB.read_bytes()
     upload(api, "sample.twb", payload)
@@ -169,6 +172,7 @@ def test_the_stored_bytes_are_the_uploaded_bytes(api):
     assert api.store.read(row.storage_key) == payload
 
 
+@needs_tableau
 def test_the_name_on_disk_is_never_the_name_that_was_uploaded(api):
     upload(api, "sample.twb", SAMPLE_TWB.read_bytes())
     names = [p.name for p in stored_files(api.root)]
@@ -177,6 +181,7 @@ def test_the_name_on_disk_is_never_the_name_that_was_uploaded(api):
     assert all(not n.startswith("sample") for n in names)
 
 
+@needs_tableau
 def test_a_traversing_filename_is_display_text_and_nothing_more(api, tmp_path):
     response = upload(api, "../../../../evil.twb", SAMPLE_TWB.read_bytes())
     assert response.status_code == 201, response.text
@@ -185,6 +190,7 @@ def test_a_traversing_filename_is_display_text_and_nothing_more(api, tmp_path):
     assert not (tmp_path / "evil.twb").exists()
 
 
+@needs_tableau
 def test_a_twbx_is_accepted_without_being_extracted(api):
     payload = make_twbx(
         {"Book.twb": SAMPLE_TWB.read_bytes(), "Data/thumb.png": b"\x89PNG\r\n\x1a\n"}
@@ -201,6 +207,7 @@ def test_a_twbx_is_accepted_without_being_extracted(api):
 # ---------------------------------------------------------------------------
 
 
+@needs_tableau
 def test_an_extension_outside_the_allow_list_is_refused(api):
     response = upload(api, "payload.exe", b"MZ\x90\x00")
     assert response.status_code == 400
@@ -210,6 +217,7 @@ def test_an_extension_outside_the_allow_list_is_refused(api):
     assert stored_files(api.root) == []
 
 
+@needs_tableau
 def test_power_bi_input_is_refused_clearly_rather_than_vaguely(api):
     """`.pbix` is a compressed SSAS model, not text, and is out of scope
     (ADR-005). PBIP *is* readable since `P6a`; this is the format that is not."""
@@ -281,6 +289,7 @@ def test_a_body_that_declares_no_length_is_still_bounded(api, monkeypatch):
         settings.cache_clear()
 
 
+@needs_tableau
 def test_a_zip_bomb_is_refused_before_anything_is_extracted(api):
     response = upload(api, "bomb.twbx", make_zip_bomb())
     assert response.status_code == 400, response.text
@@ -290,12 +299,14 @@ def test_a_zip_bomb_is_refused_before_anything_is_extracted(api):
     assert stored_files(api.root) == []
 
 
+@needs_tableau
 def test_a_twbx_that_is_not_a_zip_is_refused(api):
     response = upload(api, "Book.twbx", b"not a zip at all")
     assert response.status_code == 400
     assert_error_shape(response.json())
 
 
+@needs_tableau
 def test_content_that_is_not_a_workbook_is_refused_not_guessed(api):
     """Detection is inconclusive, so the answer is 'no', not a plausible guess."""
     response = upload(api, "sample.twb", b"just some text, no workbook here\n" * 10)
@@ -303,6 +314,7 @@ def test_content_that_is_not_a_workbook_is_refused_not_guessed(api):
     assert_error_shape(response.json())
 
 
+@needs_tableau
 def test_a_detected_platform_that_contradicts_the_project_is_refused(api):
     other = api.client.post(
         f"{PREFIX}/projects",
