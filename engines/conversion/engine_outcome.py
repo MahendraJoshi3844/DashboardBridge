@@ -49,8 +49,8 @@ from dashboardbridge_contracts.enums import (
     Stage,
 )
 
-from engines.conversion.run import ConversionOutcome, compatibility_by_object
-from engines.t2pbi.events import CROSSED, HELD, EventSink
+from engines.conversion.outcome import ConversionOutcome, compatibility_by_object
+from engines.conversion.events import CROSSED, HELD, EventSink
 
 _STATUS = {
     "exact": (ConversionStatus.CONVERTED, Severity.INFO, ConversionMethod.DETERMINISTIC),

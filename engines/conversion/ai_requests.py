@@ -21,8 +21,6 @@ from dashboardbridge_contracts import CanonicalModel
 
 from engines.ai import FieldSchema, LLMRequest
 from engines.ai.proposal import Policy
-from engines.t2pbi.core.dax.functions import ALLOWED_DAX_FUNCS, SUPPORTED_FUNCS
-from engines.t2pbi.core.dax.refs import REF_RE
 
 
 def _columns(model: CanonicalModel):
@@ -91,6 +89,8 @@ def _referenced_fields(
                 local.setdefault(alias, (table.name, datatype))
 
     seen: dict[str, FieldSchema] = {}
+    from engines.t2pbi.core.dax.refs import REF_RE  # noqa: PLC0415 - Tableau engine, optional
+
     for match in REF_RE.finditer(expression or ""):
         raw = match.group(1)
         found = local.get(raw.lower()) or everywhere.get(raw.lower())
@@ -110,6 +110,11 @@ def policy_for(model: CanonicalModel, **thresholds: float) -> Policy:
     knows to be equivalent - plus the tokens the translator legitimately emits
     on its own.
     """
+    from engines.t2pbi.core.dax.functions import (  # noqa: PLC0415 - Tableau engine, optional
+        ALLOWED_DAX_FUNCS,
+        SUPPORTED_FUNCS,
+    )
+
     references = {
         f"{table.name}[{column.caption or column.name}]"
         for table, column in _columns(model)

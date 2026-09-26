@@ -30,7 +30,7 @@ from qlik2pbi.pipeline import Options
 from qlik2pbi.pipeline import run as run_qlik2pbi
 
 from engines.conversion.engine_outcome import canonical_model, outcome_from_engine
-from engines.conversion.run import ConversionOutcome
+from engines.conversion.outcome import ConversionOutcome
 
 _ZIP_SIGNATURES = (b"PK\x03\x04", b"PK\x05\x06", b"PK\x07\x08")
 

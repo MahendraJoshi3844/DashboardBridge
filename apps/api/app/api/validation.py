@@ -46,7 +46,6 @@ from app.db.models import Job as JobRow
 from app.db.models import JobKind as DbJobKind
 from app.db.models import JobStatus as DbJobStatus
 from app.services.artifact_store import ArtifactStore, get_artifact_store
-from engines.conversion.run import convert_tableau_to_powerbi
 from engines.validation import TargetProject, validate
 
 logger = logging.getLogger(__name__)
@@ -204,6 +203,8 @@ def _reconvert(
             return TargetProject.from_dir(outcome.project_dir)
     if source is not Platform.TABLEAU:
         return None
+    from engines.conversion.run import convert_tableau_to_powerbi  # noqa: PLC0415 - Tableau engine, optional
+
     data = store.read(_source(session, project_id).storage_key)
     with tempfile.TemporaryDirectory(prefix="dbb-replica-") as tmp:
         outcome = convert_tableau_to_powerbi(data, Path(tmp) / "replica", name)

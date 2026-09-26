@@ -19,8 +19,14 @@ from dashboardbridge_contracts.enums import (
     Severity,
     Stage,
 )
-from engines.t2pbi.events import EventSink, Timeline
+from engines.t2pbi.events import EventSink
 from engines.t2pbi.ir import Severity as IRSeverity
+# Shared result types, re-exported so existing imports keep working.
+from engines.conversion.outcome import (  # noqa: F401
+    ConversionOutcome,
+    compatibility_by_object,
+    zip_project,
+)
 from engines.t2pbi.pipeline import run as run_pipeline
 
 # The engine reports how loudly to speak; the contracts also need what became of
@@ -64,18 +70,6 @@ _STAGE = {
     "translate": Stage.TRANSLATE,
     "emit": Stage.GENERATE,
 }
-
-
-@dataclass
-class ConversionOutcome:
-    """What the conversion produced, in contract terms."""
-
-    project_dir: Path
-    model: CanonicalModel
-    flags: list[ConversionFlag]
-    compatibility: Compatibility
-    timeline: Timeline
-    stats: dict[str, int]
 
 
 def convert_tableau_to_powerbi(
@@ -189,43 +183,6 @@ def _compatibility(stats: dict[str, int], flags: list[ConversionFlag]) -> Compat
         failed=tally[ConversionStatus.FAILED],
         total=max(considered, flagged),
     )
-
-
-def compatibility_by_object(
-    refs: list[str], worst: dict[str, ConversionStatus]
-) -> Compatibility:
-    """Counts over objects, each counted once as its worst flag says.
-
-    The parts sum to the whole by construction: every object lands in exactly
-    one bucket, and one with no flag converted. A flag naming no object in
-    `refs` is not silently lost either - it is counted as an object of its own,
-    because "every flagged object is in the total" is the promise the headline
-    makes.
-    """
-    everything = sorted(set(refs) | set(worst))
-    tally = {status: 0 for status in ConversionStatus}
-    for ref in everything:
-        tally[worst.get(ref, ConversionStatus.CONVERTED)] += 1
-    return Compatibility(
-        converted=tally[ConversionStatus.CONVERTED],
-        partial=tally[ConversionStatus.PARTIAL],
-        ai_required=tally[ConversionStatus.AI_REQUIRED],
-        unsupported=tally[ConversionStatus.UNSUPPORTED],
-        failed=tally[ConversionStatus.FAILED],
-        total=len(everything),
-    )
-
-
-def zip_project(project_dir: Path, destination: Path) -> Path:
-    """A PBIP is a folder, so it is delivered as an archive.
-
-    Written with a fixed member order and no compression timestamps of our own,
-    because two conversions of the same workbook must produce the same contents.
-    """
-    archive = shutil.make_archive(
-        str(destination.with_suffix("")), "zip", root_dir=project_dir
-    )
-    return Path(archive)
 
 
 def _ai_assisted_flags(

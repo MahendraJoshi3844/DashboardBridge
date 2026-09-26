@@ -41,7 +41,7 @@ from app.db.models import Job as JobRow
 from app.db.models import JobKind as DbJobKind
 from app.db.models import JobStatus as DbJobStatus
 from app.services.artifact_store import ArtifactStore, get_artifact_store
-from engines.conversion.run import convert_tableau_to_powerbi, zip_project
+from engines.conversion.outcome import zip_project
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["conversion"])
@@ -97,6 +97,8 @@ def _produce(
         outcome = convert_qlik_to_powerbi(data, out / "project", name)
         archive = zip_project(outcome.project_dir, out / "produced")
         return outcome, archive.read_bytes(), f"{name}.pbip.zip"
+
+    from engines.conversion.run import convert_tableau_to_powerbi  # noqa: PLC0415 - Tableau engine, optional
 
     outcome = convert_tableau_to_powerbi(
         data,

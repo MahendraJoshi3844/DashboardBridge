@@ -36,7 +36,7 @@ from dashboardbridge_contracts.enums import ConversionStatus
 
 from engines.adapters.powerbi import PowerBIAdapter
 from engines.adapters.tableau_emit import emit_twb
-from engines.conversion.run import ConversionOutcome, compatibility_by_object
+from engines.conversion.outcome import ConversionOutcome, compatibility_by_object
 from engines.t2pbi.events import CROSSED, HELD, EventSink
 
 

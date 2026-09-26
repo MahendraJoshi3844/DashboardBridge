@@ -29,7 +29,6 @@ from app.db.models import JobKind as DbJobKind
 from app.db.models import JobStatus as DbJobStatus
 from app.services import analysis as analysis_service
 from app.services.artifact_store import ArtifactStore, StorageKeyError, get_artifact_store
-from engines.adapters.tableau import UnreadableArtifact
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["analysis"])
@@ -131,6 +130,8 @@ def start_analysis(
         return _complete(session, job, project_id, model, inventory, compatibility, flags)
 
     adapter = _adapter_for(Platform(project.source_platform))
+    from engines.adapters.tableau import UnreadableArtifact  # noqa: PLC0415 - Tableau engine, optional
+
     try:
         model = adapter.normalize(adapter.parse(data))
     except UnreadableArtifact as exc:

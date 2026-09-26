@@ -23,7 +23,7 @@ from starlette.requests import Request
 
 from app.api.accounts import login
 from app.api.projects import create_project
-from app.db.models import Project, Session
+from app.db.models import Project, Session, User
 
 from tests.dashboardbridge.conftest import FIXTURE_EMAIL, FIXTURE_PASSWORD
 
@@ -54,8 +54,9 @@ def test_a_new_project_is_visible_to_the_next_request(api):
     before = _count(factory, Project)
     held = factory()
     try:
-        create_project(CreateProjectRequest(source_platform=Platform.QLIK, target_platform=Platform.POWERBI,
-                                            name="Race"), session=held)
+        admin = held.scalar(select(User).where(User.email == FIXTURE_EMAIL))
+        create_project(CreateProjectRequest(source_platform=Platform.TABLEAU, target_platform=Platform.POWERBI,
+                                            name="Race"), session=held, user=admin)
         assert _count(factory, Project) == before + 1
     finally:
         held.close()

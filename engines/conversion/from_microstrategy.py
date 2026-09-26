@@ -31,7 +31,7 @@ from mstr2pbi.pipeline import Options
 from mstr2pbi.pipeline import run as run_mstr2pbi
 
 from engines.conversion.engine_outcome import canonical_model, outcome_from_engine
-from engines.conversion.run import ConversionOutcome
+from engines.conversion.outcome import ConversionOutcome
 
 
 class UnreadableMicroStrategy(ValueError):
