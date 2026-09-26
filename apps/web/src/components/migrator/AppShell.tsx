@@ -44,6 +44,7 @@ const PLATFORMS: readonly { readonly name: string; readonly opens: string | null
   { name: "Tableau", opens: "tableau-powerbi" },
   { name: "Cognos", opens: null },
   { name: "MicroStrategy", opens: "microstrategy-powerbi" },
+  { name: "Qlik", opens: "qlik-powerbi" },
   { name: "Looker", opens: null },
 ];
 

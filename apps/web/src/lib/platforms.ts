@@ -12,6 +12,7 @@ export const PLATFORM_NAMES: Record<Platform, string> = {
   tableau: "Tableau",
   powerbi: "Power BI",
   microstrategy: "MicroStrategy",
+  qlik: "Qlik",
 };
 
 export function directionLabel(source: Platform, target: Platform): string {
@@ -23,4 +24,5 @@ export const TARGET_OF: Record<Platform, Platform> = {
   tableau: "powerbi",
   powerbi: "tableau",
   microstrategy: "powerbi",
+  qlik: "powerbi",
 };

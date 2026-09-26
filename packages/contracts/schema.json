@@ -1538,7 +1538,8 @@
       "enum": [
         "tableau",
         "powerbi",
-        "microstrategy"
+        "microstrategy",
+        "qlik"
       ],
       "title": "Platform",
       "type": "string"

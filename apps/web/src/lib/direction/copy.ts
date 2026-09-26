@@ -108,6 +108,29 @@ const MICROSTRATEGY_TO_POWER_BI: DirectionCopy = {
   calculationsMeaning: "Metrics needing DAX, or a person",
 };
 
+const QLIK_TO_POWER_BI: DirectionCopy = {
+  sourceName: "Qlik",
+  targetName: "Power BI",
+  sourceThing: "a Qlik app export",
+  targetThing: "Power BI project",
+  dropPrompt: "Drop a zipped qlik app unbuild folder or a .qvs load script to begin",
+  browseLabel: "Browse for an export",
+  inputLabel: "Choose a zipped Qlik app export or a .qvs load script",
+  accept: ".zip,.qvs",
+  targetLanguage: "DAX",
+  sourceLanguage: "Qlik expression",
+  convertExplainer:
+    "Converting produces a Power BI project you can download: the load script as Power Query, the associative model as a star schema, set analysis as DAX and each sheet as a page. It changes nothing about the file you opened.",
+  download: "Download the Power BI project",
+  deliverable:
+    "A Power BI project — TMDL semantic model and PBIR report — delivered as an archive, with the migration report and data-parity DAX queries beside it.",
+  desktopCaveat:
+    "No project generated from Qlik has yet been opened in Power BI Desktop, and the reader has only seen a synthetic app. Until a real app has been converted and opened, that is all this can claim.",
+  noEquivalent: "Power BI has no equivalent. Rebuilding it is a design decision.",
+  visualsMeaning: "Sheet objects to rebuild as Power BI visuals",
+  calculationsMeaning: "Master measures and chart expressions needing DAX, or a person",
+};
+
 /**
  * The words for a direction. `null` means none has been chosen yet, which only
  * happens on screens that existed before there was a second direction — they
@@ -116,5 +139,6 @@ const MICROSTRATEGY_TO_POWER_BI: DirectionCopy = {
 export function copyFor(direction: DirectionLike | null | undefined): DirectionCopy {
   if (direction?.source === "powerbi") return POWER_BI_TO_TABLEAU;
   if (direction?.source === "microstrategy") return MICROSTRATEGY_TO_POWER_BI;
+  if (direction?.source === "qlik") return QLIK_TO_POWER_BI;
   return TABLEAU_TO_POWER_BI;
 }

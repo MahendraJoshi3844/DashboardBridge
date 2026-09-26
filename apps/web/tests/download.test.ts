@@ -46,3 +46,9 @@ describe("producedName for a MicroStrategy source", () => {
     expect(producedName("Executive Sales.mstr")).toBe("Executive Sales.pbip.zip");
   });
 });
+
+describe("producedName for a Qlik source", () => {
+  it("drops the .qvs extension", () => {
+    expect(producedName("Sales.qvs")).toBe("Sales.pbip.zip");
+  });
+});

@@ -65,6 +65,17 @@ function plural(count: number, noun: string): string {
 
 function analysisLines(analysis: Analysis, live: boolean, project?: Project): LogLine[] {
   const inventory = analysis.inventory ?? {};
+  if (project?.source_platform === "qlik") {
+    return [
+      line(
+        "INFO",
+        `Qlik app read: load script run into ${plural(inventory.tables ?? 0, "table")} with ${plural(inventory.columns ?? 0, "column")}, ` +
+          `${plural(inventory.calculations ?? 0, "expression or calculated column")} translated, ` +
+          `${plural(inventory.visuals ?? 0, "visual")} on ${plural(inventory.dashboards ?? 0, "sheet")}`,
+        live,
+      ),
+    ];
+  }
   if (project?.source_platform === "microstrategy") {
     return [
       line(
@@ -144,7 +155,7 @@ function isMissing(cause: unknown): boolean {
 export async function readJob(project: Project): Promise<JobSnapshot> {
   const done = new Set<Step>(["Uploaded"]);
   const lines: LogLine[] = [
-    line("INFO", `Migration for ${project.source_platform === "microstrategy" ? "MicroStrategy project" : "workbook"}: ${project.name}`, false),
+    line("INFO", `Migration for ${project.source_platform === "microstrategy" ? "MicroStrategy project" : project.source_platform === "qlik" ? "Qlik app" : "workbook"}: ${project.name}`, false),
   ];
   let analysis: Analysis | null = null;
   let conversion: Conversion | null = null;
@@ -206,7 +217,9 @@ export async function runJob(
           "INFO",
           project.source_platform === "microstrategy"
             ? "Step 1: Reading the MicroStrategy export — attributes, facts, metrics, dossiers, reports"
-            : "Step 1: Reading the workbook — tables, fields, calculations, worksheets",
+            : project.source_platform === "qlik"
+              ? "Step 1: Reading the Qlik app — running the load script, resolving associations, translating set analysis"
+              : "Step 1: Reading the workbook — tables, fields, calculations, worksheets",
           true,
         ),
       );

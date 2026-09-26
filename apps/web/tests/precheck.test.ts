@@ -130,3 +130,26 @@ describe("precheck for MicroStrategy", () => {
     expect(result.error.message).toContain("MicroStrategy package");
   });
 });
+
+describe("precheck for Qlik", () => {
+  it("accepts a zipped unbuild folder and a load script", () => {
+    expect(precheck(fileOf("Sales.zip", 5000), "qlik").ok).toBe(true);
+    expect(precheck(fileOf("script.qvs", 500), "qlik").ok).toBe(true);
+  });
+
+  it("explains how to export a .qvf or .qvw instead of refusing blankly", () => {
+    for (const name of ["Sales.qvf", "Sales.qvw"]) {
+      const result = precheck(fileOf(name, 1000), "qlik");
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.message).toMatch(/unbuild|-prj/);
+    }
+  });
+
+  it("sends a .qvs opened elsewhere to Qlik → Power BI", () => {
+    const result = precheck(fileOf("script.qvs", 100), "tableau");
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain("Qlik → Power BI");
+  });
+});

@@ -14,23 +14,8 @@ forbids placeholders here. So it runs with `placeholders=False`: a metric it
 cannot translate - and every measure built on one - is not written, and is
 reported as unsupported with the reason and the Power BI construct to use.
 
-## How the engine's tiers become contract statuses
-
-| mstr2pbi | status | severity |
-|---|---|---|
-| exact | converted | info |
-| assumed (converted on a stated assumption) | partial | warning |
-| manual / unsupported | unsupported | manual |
-| info (advice) | converted | info |
-
-`ai_required` is never used: no model is consulted on this path, and "a model
-could draft this" is not a claim this module can make.
-
-## Counts
-
-Per object, as the other directions count: every measure, table, relationship,
-page and every object the engine reported on is one object, counted once as its
-worst finding.
+The tiers, counts and recording are described in `engine_outcome.py`, shared
+with the Qlik seam.
 """
 
 from __future__ import annotations
@@ -38,38 +23,15 @@ from __future__ import annotations
 import io
 import tempfile
 import zipfile
-from collections import Counter
 from pathlib import Path
 
-from dashboardbridge_contracts import (
-    CanonicalModel,
-    ConversionFlag,
-)
-from dashboardbridge_contracts.canonical import (
-    Column,
-    Dashboard,
-    DataSource,
-    Expression,
-    Relationship,
-    Table,
-    Translation,
-    Visual,
-)
-from dashboardbridge_contracts.enums import (
-    ConversionMethod,
-    ConversionStatus,
-    DataType,
-    Platform,
-    Severity,
-    Stage,
-)
+from dashboardbridge_contracts.enums import Platform
 from mstr2pbi.catalog.loader import BUNDLE_KEYS
-from mstr2pbi.findings import Fidelity, Finding
 from mstr2pbi.pipeline import Options
 from mstr2pbi.pipeline import run as run_mstr2pbi
 
-from engines.conversion.run import ConversionOutcome, compatibility_by_object
-from engines.t2pbi.events import CROSSED, HELD, EventSink
+from engines.conversion.engine_outcome import canonical_model, outcome_from_engine
+from engines.conversion.run import ConversionOutcome
 
 
 class UnreadableMicroStrategy(ValueError):
@@ -82,44 +44,6 @@ class UnreadableMicroStrategy(ValueError):
 
 #: Member names that make a zip an export bundle rather than a `.mstr` package.
 BUNDLE_MEMBERS = frozenset(f"{key}.json" for key in BUNDLE_KEYS)
-
-_STATUS = {
-    Fidelity.EXACT: (ConversionStatus.CONVERTED, Severity.INFO, ConversionMethod.DETERMINISTIC),
-    Fidelity.INFO: (ConversionStatus.CONVERTED, Severity.INFO, ConversionMethod.DETERMINISTIC),
-    Fidelity.ASSUMED: (ConversionStatus.PARTIAL, Severity.WARNING, ConversionMethod.DETERMINISTIC),
-    Fidelity.MANUAL: (ConversionStatus.UNSUPPORTED, Severity.MANUAL, ConversionMethod.MANUAL),
-    Fidelity.UNSUPPORTED: (ConversionStatus.UNSUPPORTED, Severity.MANUAL, ConversionMethod.MANUAL),
-}
-
-_STAGE = {
-    "acquire": Stage.EXTRACT,
-    "assess": Stage.PARSE,
-    "model": Stage.MAP,
-    "translate": Stage.TRANSLATE,
-    "layout": Stage.MAP,
-    "emit": Stage.GENERATE,
-    "validate": Stage.VALIDATE,
-    "report": Stage.REPORT,
-}
-
-_TYPES = {
-    "string": DataType.STRING,
-    "integer": DataType.INTEGER,
-    "decimal": DataType.DECIMAL,
-    "double": DataType.DECIMAL,
-    "date": DataType.DATE,
-    "datetime": DataType.DATETIME,
-    "boolean": DataType.BOOLEAN,
-}
-
-#: The order statuses are ranked in; worst last.
-_RANK = (
-    ConversionStatus.CONVERTED,
-    ConversionStatus.PARTIAL,
-    ConversionStatus.AI_REQUIRED,
-    ConversionStatus.UNSUPPORTED,
-    ConversionStatus.FAILED,
-)
 
 
 def _suffix_for(data: bytes) -> str:
@@ -138,104 +62,6 @@ def _suffix_for(data: bytes) -> str:
             "export bundle as a .zip."
         ) from exc
     return ".zip" if names & BUNDLE_MEMBERS else ".mstr"
-
-
-def _ref(finding: Finding) -> str:
-    return f"{finding.object_type}:{finding.object_name}"
-
-
-def _flag(finding: Finding) -> ConversionFlag:
-    status, severity, method = _STATUS[finding.fidelity]
-    reason = finding.message
-    if finding.action:
-        reason = f"{reason} What to do: {finding.action}"
-    return ConversionFlag(
-        item=f"{finding.object_type}: {finding.object_name}",
-        stage=_STAGE.get(finding.stage, Stage.MAP),
-        method=method,
-        status=status,
-        severity=severity,
-        reason=reason,
-        ref=_ref(finding),
-    )
-
-
-def _canonical(run, name: str) -> CanonicalModel:
-    """The produced model, in contract terms, for the screens that read one."""
-    sem = run.model
-    tables: list[Table] = []
-    for table in sorted(sem.tables, key=lambda t: t.name.lower()):
-        columns = [
-            Column(
-                id=f"{table.name}.{column.name}",
-                name=column.name,
-                datatype=_TYPES.get(column.data_type, DataType.UNKNOWN),
-                role="dimension",
-                expression=(
-                    Expression(source_language="dax", source_text=column.expression)
-                    if column.expression
-                    else None
-                ),
-            )
-            for column in table.columns
-        ]
-        columns += [
-            Column(
-                id=f"{table.name}.{measure.name}",
-                name=measure.name,
-                datatype=DataType.DECIMAL,
-                role="measure",
-                expression=Expression(
-                    source_language="microstrategy_metric", source_text=measure.source
-                ),
-                translation=Translation(
-                    target_language="dax",
-                    target_text=measure.dax,
-                    method=ConversionMethod.DETERMINISTIC,
-                ),
-            )
-            for measure in sorted(table.measures, key=lambda m: m.name.lower())
-        ]
-        tables.append(Table(id=f"table:{table.name}", name=table.name, columns=columns))
-
-    visuals: list[Visual] = []
-    dashboards: list[Dashboard] = []
-    for page in run.plan.pages:
-        ids = []
-        for index, visual in enumerate(page.visuals):
-            visual_id = f"visual:{page.name}:{index}"
-            ids.append(visual_id)
-            visuals.append(
-                Visual(id=visual_id, name=f"{page.name} / {visual.name}", visual_type=visual.visual_type)
-            )
-        dashboards.append(Dashboard(id=f"page:{page.name}", name=page.name, visual_ids=ids))
-
-    connection = ", ".join(sorted({ds.db_type for ds in run.catalog.datasources})) or "unknown"
-    return CanonicalModel(
-        source_platform=Platform.MICROSTRATEGY,
-        name=name,
-        datasources=[
-            DataSource(
-                id=f"project:{run.catalog.project}",
-                name=run.catalog.project,
-                connection=connection,
-                tables=tables,
-            )
-        ],
-        relationships=[
-            Relationship(
-                from_table=r.from_table,
-                from_column=r.from_column,
-                to_table=r.to_table,
-                to_column=r.to_column,
-                # Inactive paths are reported as flags; the kind stays the contract's.
-                kind="many_to_one",
-            )
-            for r in sem.relationships
-        ],
-        visuals=visuals,
-        dashboards=dashboards,
-    )
 
 
 def convert_microstrategy_to_powerbi(artifact: bytes, out_dir: Path, name: str) -> ConversionOutcome:
@@ -262,57 +88,22 @@ def convert_microstrategy_to_powerbi(artifact: bytes, out_dir: Path, name: str) 
             )
         run = run_mstr2pbi(source, out_dir, Options(project_name=name, placeholders=False))
 
-    findings = run.log.sorted()
-    flags = sorted((_flag(f) for f in findings), key=lambda f: (f.ref, f.stage.value, f.reason))
-
-    worst: dict[str, ConversionStatus] = {}
-    for flag in flags:
-        current = worst.get(flag.ref, ConversionStatus.CONVERTED)
-        worst[flag.ref] = max(current, flag.status, key=_RANK.index)
-
-    objects: list[str] = []
-    for table in run.model.tables:
-        objects.append(f"table:{table.name}")
-        objects.extend(f"metric:{m.name}" for m in table.measures)
-    objects.extend(f"relationship:{r.from_table} -> {r.to_table}" for r in run.model.relationships)
-    objects.extend(f"page:{p.name}" for p in run.plan.pages)
-
-    sink = EventSink()
-    measures = {m.name: m for m in run.model.all_measures()}
-    recorded: set[str] = set()
-    for finding in findings:
-        # One event per metric, from the finding that decided it (a metric can
-        # also carry a format or threshold finding).
-        if finding.object_type != "metric" or finding.stage != "translate" or not finding.source:
-            continue
-        if finding.object_name in recorded:
-            continue
-        recorded.add(finding.object_name)
-        measure = measures.get(finding.object_name)
-        held = measure is None
-        sink.emit(
-            stage="Translate",
-            kind="metric",
-            name=finding.object_name,
-            outcome=HELD if held else CROSSED,
-            detail=finding.message if held else finding.fidelity.value,
-            ref=_ref(finding),
-            source=finding.source,
-            result="" if held else measure.dax,
-        )
-    for table in sorted(run.model.tables, key=lambda t: t.name.lower()):
-        sink.emit(stage="Generate", kind="table", name=table.name, outcome=CROSSED,
-                  detail=f"{len(table.columns)} columns", ref=f"table:{table.name}")
-    for page in run.plan.pages:
-        sink.emit(stage="Generate", kind="page", name=page.name, outcome=CROSSED,
-                  detail=f"{len(page.visuals)} visuals", ref=f"page:{page.name}")
-
-    kinds = Counter(ref.split(":", 1)[0] for ref in set(objects) | set(worst))
-    return ConversionOutcome(
+    canonical = canonical_model(
+        platform=Platform.MICROSTRATEGY,
+        name=name,
+        model=run.model,
+        pages=run.plan.pages,
+        source_language="microstrategy_metric",
+        datasource_id=f"project:{run.catalog.project}",
+        datasource_name=run.catalog.project,
+        connection=", ".join(sorted({ds.db_type for ds in run.catalog.datasources})) or "unknown",
+    )
+    return outcome_from_engine(
         project_dir=out_dir,
-        model=_canonical(run, name),
-        flags=flags,
-        compatibility=compatibility_by_object(objects, worst),
-        timeline=sink.timeline(),
-        stats=dict(sorted(kinds.items())),
+        findings=run.log.sorted(),
+        model=run.model,
+        pages=run.plan.pages,
+        canonical=canonical,
+        measure_ref=lambda m: f"metric:{m.name}",
+        measure_kinds={"metric"},
     )

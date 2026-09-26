@@ -827,11 +827,11 @@ def visual_checks(model: CanonicalModel, target: TargetProject) -> list[Check]:
 def pages_are_dashboards(model: CanonicalModel) -> bool:
     """Whether the source's dashboards become pages holding several visuals.
 
-    True for MicroStrategy, whose dossier pages map one-to-one onto Power BI
-    pages. Tableau is the other shape: a page per worksheet, matched by title.
-    Decided by the source platform, never by whether names happen to coincide.
+    True for MicroStrategy (dossier pages) and Qlik (sheets), which map one-to-one
+    onto Power BI pages. Tableau is the other shape: a page per worksheet, matched
+    by title. Decided by the source platform, never by whether names coincide.
     """
-    return model.source_platform is Platform.MICROSTRATEGY
+    return model.source_platform in (Platform.MICROSTRATEGY, Platform.QLIK)
 
 
 def place_visuals(model: CanonicalModel, report) -> dict[str, tuple[object, object]]:

@@ -123,13 +123,13 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
       <div className="mg-grid-3">
         <div className="mg-card mg-stat">
           <div className="mg-stat__label">Migration Type</div>
-          <div className="mg-stat__value">{project?.source_platform === "microstrategy" ? "Migrate MicroStrategy Project" : "Migrate Single Workbook"}</div>
+          <div className="mg-stat__value">{project?.source_platform === "microstrategy" ? "Migrate MicroStrategy Project" : project?.source_platform === "qlik" ? "Migrate Qlik App" : "Migrate Single Workbook"}</div>
           <div className="mg-note">{direction} · {project?.name ?? "…"}</div>
         </div>
         <div className="mg-card mg-stat">
           <div className="mg-stat__label">Load Mode</div>
           <div className="mg-stat__value">Import</div>
-          <div className="mg-note">Schema only — no data is read from the {project?.source_platform === "microstrategy" ? "export" : "workbook"}</div>
+          <div className="mg-note">Schema only — no data is read from the {project?.source_platform === "microstrategy" || project?.source_platform === "qlik" ? "export" : "workbook"}</div>
         </div>
         <div className="mg-card mg-stat" aria-live="polite">
           <div className="mg-stat__label">Status</div>

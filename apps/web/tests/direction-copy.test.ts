@@ -69,4 +69,13 @@ describe("copyFor", () => {
       expect(text).not.toMatch(/tableau|workbook/i);
     }
   });
+
+  it("names Qlik and Power BI, and nothing about Tableau, for Qlik → Power BI", () => {
+    const fromQlik = copyFor({ source: "qlik", target: "powerbi" });
+    expect(fromQlik.sourceName).toBe("Qlik");
+    expect(fromQlik.accept).toBe(".zip,.qvs");
+    for (const text of everyString(fromQlik)) {
+      expect(text).not.toMatch(/tableau|workbook|microstrategy/i);
+    }
+  });
 });

@@ -26,6 +26,7 @@ import {
   IconDoc,
   IconLayers,
   IconServer,
+  IconSigma,
   IconUpload,
 } from "./MgIcons";
 
@@ -35,7 +36,7 @@ function stem(filename: string, source: Platform): string {
   const lower = filename.toLowerCase();
   const extension = ACCEPTED_BY_SOURCE[source].find((candidate) => lower.endsWith(candidate));
   const trimmed = extension ? filename.slice(0, -extension.length) : filename;
-  return trimmed || (source === "microstrategy" ? "MicroStrategy project" : "Workbook");
+  return trimmed || ({ microstrategy: "MicroStrategy project", qlik: "Qlik app" } as Partial<Record<Platform, string>>)[source] || "Workbook";
 }
 
 /** Where a server-hosted source would come from, and what to do instead today. */
@@ -52,6 +53,16 @@ const SERVER_NOTE: Record<Platform, readonly [string, string]> = {
     "Reading from a MicroStrategy Library server is not connected here yet.",
     "Download the dossier as a .mstr file, or run `mstr2pbi extract` inside your network and upload the zipped bundle.",
   ],
+  qlik: [
+    "Reading from Qlik Sense or Qlik Cloud is not connected here yet.",
+    "Run `qlik app unbuild --app <app id> --dir out/` with qlik-cli, zip the folder and upload it.",
+  ],
+};
+
+/** The source's chip on the dialog header. */
+const SOURCE_CHIP: Partial<Record<Platform, { readonly color: string; readonly icon: "server" | "sigma" }>> = {
+  microstrategy: { color: "#0891b2", icon: "server" },
+  qlik: { color: "#009845", icon: "sigma" },
 };
 
 export function MigrateModal({
@@ -149,8 +160,8 @@ export function MigrateModal({
       >
         <div className="mg-modal__head">
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span className="mg-chip" style={{ color: source === "microstrategy" ? "#0891b2" : "var(--mg-tableau)" }}>
-              {source === "microstrategy" ? <IconServer /> : <IconLayers />}
+            <span className="mg-chip" style={{ color: SOURCE_CHIP[source]?.color ?? "var(--mg-tableau)" }}>
+              {SOURCE_CHIP[source]?.icon === "server" ? <IconServer /> : SOURCE_CHIP[source]?.icon === "sigma" ? <IconSigma /> : <IconLayers />}
             </span>
             <span style={{ color: "var(--mg-ink-3)" }}>→</span>
             <span className="mg-chip" style={{ color: "var(--mg-powerbi)" }}>

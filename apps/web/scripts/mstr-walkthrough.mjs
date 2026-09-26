@@ -1,7 +1,9 @@
 /**
- * Drive MicroStrategy → Power BI through the real app and screenshot each step.
+ * Drive an engine-backed migration (MicroStrategy or Qlik → Power BI) through the
+ * real app and screenshot each step.
  *
  *   node scripts/mstr-walkthrough.mjs <package.mstr> [outdir]
+ *   CARD="Qlik → Power BI" node scripts/mstr-walkthrough.mjs <app.zip|script.qvs> [outdir]
  *
  * Needs the API (API_URL, default :8010) and `next dev` on :3000, and an
  * account to sign in with (DBB_EMAIL / DBB_PASSWORD). puppeteer-core and the
@@ -67,8 +69,9 @@ if (await page.$('input[type="email"]')) {
 }
 await shot("paths");
 
-if (!(await clickText("button.mg-path", "MicroStrategy → Power BI"))) throw new Error("no MicroStrategy card");
-await waitForText("Drop .mstr or .zip file here", 15_000);
+const card = process.env.CARD ?? "MicroStrategy → Power BI";
+if (!(await clickText("button.mg-path", card))) throw new Error(`no '${card}' card`);
+await waitForText("file here", 15_000);
 await shot("modal");
 
 const input = await page.$('input[type="file"]');

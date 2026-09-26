@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * Choose a migration path. Tableau → Power BI and MicroStrategy → Power BI have
- * an engine behind them; the rest are shown locked with the reason, so the
+ * Choose a migration path. Tableau, MicroStrategy and Qlik → Power BI have an
+ * engine behind them; the rest are shown locked with the reason, so the
  * roadmap is visible without any card opening a screen that would claim otherwise.
  */
 
@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 
 import { AppShell } from "./AppShell";
 import { MigrateModal } from "./MigrateModal";
-import { IconChart, IconDatabase, IconDoc, IconGlobe, IconLayers, IconLock, IconServer } from "./MgIcons";
+import { IconChart, IconDatabase, IconDoc, IconGlobe, IconLayers, IconLock, IconServer, IconSigma } from "./MgIcons";
 
 interface Path {
   readonly id: string;
@@ -57,6 +57,14 @@ const PATHS: readonly Path[] = [
     to: powerBi,
     title: "MicroStrategy → Power BI",
     description: "Dossiers, reports, metrics, security filters — upload a .mstr package",
+    locked: null,
+  },
+  {
+    id: "qlik-powerbi",
+    from: <IconSigma style={{ color: "#009845" }} />,
+    to: powerBi,
+    title: "Qlik → Power BI",
+    description: "Load scripts, set analysis, sheets — upload a .zip export or .qvs",
     locked: null,
   },
   {
@@ -121,6 +129,7 @@ export function MigratePaths() {
       {open === "microstrategy-powerbi" && (
         <MigrateModal key="microstrategy" source="microstrategy" onClose={() => router.push("/migrate")} />
       )}
+      {open === "qlik-powerbi" && <MigrateModal key="qlik" source="qlik" onClose={() => router.push("/migrate")} />}
     </AppShell>
   );
 }

@@ -57,6 +57,26 @@ ALLOWED_EXTENSIONS: dict[str, Platform] = {
     # same archive limits; its layout is not published, so detection only
     # confirms it is an archive and the reader says what it recognised.
     ".mstr": Platform.MICROSTRATEGY,
+    # A Qlik load script on its own (text). A zipped `qlik app unbuild` folder
+    # arrives as `.zip` and is told apart from the others by its members.
+    ".qvs": Platform.QLIK,
+}
+
+#: A zipped `qlik app unbuild` folder: any of these member names makes it one.
+QLIK_UNBUILD_MEMBERS = frozenset({"script.qvs", "app-properties.json", "variables.json"})
+
+#: Binary Qlik documents: refused with the export that makes them readable.
+EXPORT_FIRST: dict[str, str] = {
+    ".qvf": (
+        "A .qvf is Qlik Sense's binary app file and is not read directly. Export it with "
+        "qlik-cli: `qlik app unbuild --app <app id> --dir out/`, zip the folder and upload "
+        "that - or upload the app's load script as a .qvs file."
+    ),
+    ".qvw": (
+        "A .qvw is QlikView's binary document and is not read directly. In QlikView "
+        "Desktop turn on the -prj folder (Document Properties) and save, then upload "
+        "LoadScript.txt from it renamed to .qvs."
+    ),
 }
 
 #: A zipped MicroStrategy metadata export (`mstr2pbi`'s bundle): one JSON file
@@ -157,6 +177,13 @@ def validated_extension(filename: str) -> str:
         return suffix
 
     allowed = " or ".join(sorted(ALLOWED_EXTENSIONS))
+    if suffix in EXPORT_FIRST:
+        raise ApiException(
+            ErrorCategory.UNSUPPORTED_ARTIFACT,
+            EXPORT_FIRST[suffix],
+            detail=f"{suffix!r} is a binary container; an export of it is read instead",
+            status_code=400,
+        )
     if suffix in MANIFEST_ONLY:
         # Not "unsupported": the format is supported and this particular file
         # is the wrong part of it. The remedy is one sentence, so say it.
@@ -179,7 +206,7 @@ def validated_extension(filename: str) -> str:
 
     raise _refuse(
         f"That file type cannot be migrated. Upload a Tableau workbook, a "
-        f"zipped Power BI project or a MicroStrategy package — a {allowed} file.",
+        f"zipped Power BI project, a MicroStrategy package or a Qlik export — a {allowed} file.",
         detail=f"extension {suffix!r} is not in the allow-list {sorted(ALLOWED_EXTENSIONS)}",
     )
 
@@ -400,7 +427,13 @@ _DISPLAY = {
     Platform.TABLEAU: "Tableau",
     Platform.POWERBI: "Power BI",
     Platform.MICROSTRATEGY: "MicroStrategy",
+    Platform.QLIK: "Qlik",
 }
+#: A line that only a load script starts with.
+_QLIK_SCRIPT = re.compile(
+    rb"(?im)^[ \t]*(load\b|sql[ \t]+select\b|select\b|set[ \t]+\w|let[ \t]+\w|lib[ \t]+connect\b"
+    rb"|///\$tab|section[ \t]+access\b|\w+:[ \t]*$)"
+)
 _TABLEAU_MARKER = b"<workbook"
 
 
@@ -441,7 +474,19 @@ def detect_platform(
             for name in zip_report.names
         ):
             return Platform.MICROSTRATEGY
+        if any(
+            name.replace("\\", "/").rsplit("/", 1)[-1].lower() in QLIK_UNBUILD_MEMBERS
+            for name in zip_report.names
+        ):
+            return Platform.QLIK
         return None
+
+    if extension == ".qvs":
+        # A load script is text with Qlik statements in it; a binary, or a
+        # document that merely has the extension, is not.
+        if b"\x00" in head or not _QLIK_SCRIPT.search(head):
+            return None
+        return Platform.QLIK
 
     if extension == ".mstr":
         # Nothing more is claimed than "a non-empty archive": the package layout
@@ -466,6 +511,12 @@ def detect_platform(
 
 
 def refuse_undetectable(filename: str, expected: Platform | None = None) -> ApiException:
+    if expected is Platform.QLIK:
+        return _refuse(
+            "We could not confirm that this file is a Qlik export. Upload the folder written by "
+            "qlik app unbuild as a .zip (it contains script.qvs), or the load script as a .qvs file.",
+            detail=f"detection inconclusive for {filename!r}; refusing rather than guessing",
+        )
     if expected is Platform.MICROSTRATEGY:
         return _refuse(
             "We could not confirm that this file is a MicroStrategy export. Upload a "

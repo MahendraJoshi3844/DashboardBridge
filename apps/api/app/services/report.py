@@ -212,6 +212,7 @@ _PLATFORM = {
     Platform.TABLEAU: "Tableau",
     Platform.POWERBI: "Power BI",
     Platform.MICROSTRATEGY: "MicroStrategy",
+    Platform.QLIK: "Qlik",
 }
 
 

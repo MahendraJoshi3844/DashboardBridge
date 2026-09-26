@@ -34,6 +34,8 @@ export const ACCEPTED_BY_SOURCE: Record<Platform, readonly string[]> = {
   // A dossier package, or the metadata export zipped. `.zip` is shared with
   // Power BI: the gateway tells them apart by the members inside.
   microstrategy: [".mstr", ".zip"],
+  // A zipped `qlik app unbuild` folder, or the load script alone.
+  qlik: [".zip", ".qvs"],
 };
 
 /** What a person opens, per source - for the sentence that refuses the wrong one. */
@@ -41,6 +43,7 @@ const THINGS: Record<Platform, string> = {
   tableau: "a Tableau workbook",
   powerbi: "a zipped Power BI project",
   microstrategy: "a MicroStrategy package (.mstr) or zipped metadata export",
+  qlik: "a zipped Qlik app export (qlik app unbuild) or a .qvs load script",
 };
 
 /** The same, as a noun for someone else's file. */
@@ -48,6 +51,7 @@ const SHORT_THINGS: Record<Platform, string> = {
   tableau: "a Tableau workbook",
   powerbi: "a Power BI project",
   microstrategy: "a MicroStrategy package",
+  qlik: "a Qlik export",
 };
 
 /** Kept for callers that predate the second direction. */
@@ -66,6 +70,10 @@ const REMEDIES: Record<string, string> = {
   ".pbip":
     "A .pbip file is only the project manifest — it points at the folders beside it and carries none of their contents. Zip the whole project folder and open that instead.",
   ".twbr": "Tableau .twbr files cannot be read here. Save the workbook as .twb or .twbx and open that.",
+  ".qvf":
+    "A .qvf is Qlik Sense's binary app file and cannot be read here. Export it with qlik-cli (qlik app unbuild --app <app id> --dir out/), zip the folder and open that - or open the app's load script as a .qvs.",
+  ".qvw":
+    "A .qvw is a binary QlikView document and cannot be read here. Turn on the -prj folder in QlikView, save, and open its LoadScript.txt renamed to .qvs.",
 };
 
 const NAMES: Record<Platform, string> = PLATFORM_NAMES;

@@ -190,14 +190,17 @@ def _reconvert(
     """
     project = load_project(session, project_id)
     source = Platform(project.source_platform)
-    if source is Platform.MICROSTRATEGY:
-        from engines.conversion.from_microstrategy import (  # noqa: PLC0415
-            convert_microstrategy_to_powerbi,
-        )
+    if source in (Platform.MICROSTRATEGY, Platform.QLIK):
+        if source is Platform.QLIK:
+            from engines.conversion.from_qlik import convert_qlik_to_powerbi as convert  # noqa: PLC0415
+        else:
+            from engines.conversion.from_microstrategy import (  # noqa: PLC0415
+                convert_microstrategy_to_powerbi as convert,
+            )
 
         data = store.read(_source(session, project_id).storage_key)
         with tempfile.TemporaryDirectory(prefix="dbb-replica-") as tmp:
-            outcome = convert_microstrategy_to_powerbi(data, Path(tmp) / "replica", name)
+            outcome = convert(data, Path(tmp) / "replica", name)
             return TargetProject.from_dir(outcome.project_dir)
     if source is not Platform.TABLEAU:
         return None

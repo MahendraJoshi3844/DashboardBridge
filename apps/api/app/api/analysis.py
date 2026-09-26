@@ -114,13 +114,13 @@ def start_analysis(
             project_id=project_id,
         ) from exc
 
-    if Platform(project.source_platform) is Platform.MICROSTRATEGY:
-        # No separate reading adapter: MicroStrategy content only means
-        # something once the object graph is resolved into a model, so the
-        # analysis is a dry run of the real conversion - as for Power BI, and
-        # for the same reason: the two screens then cannot disagree.
-        model, compatibility, flags = _dry_run_microstrategy(
-            session, job, data, project.name or "project", project_id
+    if Platform(project.source_platform) in (Platform.MICROSTRATEGY, Platform.QLIK):
+        # No separate reading adapter: MicroStrategy and Qlik content only mean
+        # something once resolved into a model (the object graph; the load
+        # script), so the analysis is a dry run of the real conversion - as for
+        # Power BI, and for the same reason: the two screens cannot disagree.
+        model, compatibility, flags = _dry_run_engine(
+            session, job, data, project.name or "project", project_id, Platform(project.source_platform)
         )
         inventory = analysis_service.inventory_of(model)
         return _complete(session, job, project_id, model, inventory, compatibility, flags)
@@ -192,22 +192,34 @@ def _complete(session, job, project_id, model, inventory, compatibility, flags) 
     return Job(job_id=job.job_id, kind=JobKind.ANALYSIS, status=JobStatus.COMPLETED)
 
 
-def _dry_run_microstrategy(session: Session, job: JobRow, data: bytes, name: str, project_id: UUID):
-    """The MicroStrategy analysis: convert into a scratch directory, keep the report."""
-    from engines.conversion.from_microstrategy import (  # noqa: PLC0415
-        UnreadableMicroStrategy,
-        convert_microstrategy_to_powerbi,
-    )
+def _dry_run_engine(
+    session: Session, job: JobRow, data: bytes, name: str, project_id: UUID, platform: Platform
+):
+    """A MicroStrategy or Qlik analysis: convert into a scratch directory, keep the report."""
+    if platform is Platform.QLIK:
+        from engines.conversion.from_qlik import UnreadableQlik as Unreadable  # noqa: PLC0415
+        from engines.conversion.from_qlik import convert_qlik_to_powerbi as convert  # noqa: PLC0415
+
+        product = "Qlik app"
+    else:
+        from engines.conversion.from_microstrategy import (  # noqa: PLC0415
+            UnreadableMicroStrategy as Unreadable,
+        )
+        from engines.conversion.from_microstrategy import (  # noqa: PLC0415
+            convert_microstrategy_to_powerbi as convert,
+        )
+
+        product = "MicroStrategy export"
 
     try:
         with tempfile.TemporaryDirectory(prefix="dbb-dry-run-") as scratch:
-            outcome = convert_microstrategy_to_powerbi(data, Path(scratch) / "out", name)
-    except UnreadableMicroStrategy as exc:
+            outcome = convert(data, Path(scratch) / "out", name)
+    except Unreadable as exc:
         _fail(session, job, ErrorCategory.UNSUPPORTED_ARTIFACT)
         raise ApiException(
             ErrorCategory.UNSUPPORTED_ARTIFACT,
             str(exc),
-            detail=f"UnreadableMicroStrategy: {exc}",
+            detail=f"{type(exc).__name__}: {exc}",
             project_id=project_id,
         ) from exc
     except Exception as exc:
@@ -215,7 +227,7 @@ def _dry_run_microstrategy(session: Session, job: JobRow, data: bytes, name: str
         logger.exception("analysis failed", extra={"project_id": str(project_id)})
         raise ApiException(
             ErrorCategory.PARSER_ERROR,
-            "We could not read that MicroStrategy export. It may use a shape this "
+            f"We could not read that {product}. It may use a shape this "
             "version does not understand yet; nothing was produced.",
             detail=f"{type(exc).__name__}: {exc}",
             project_id=project_id,

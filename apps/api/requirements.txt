@@ -28,3 +28,5 @@ pyyaml>=6.0                    # the DAX rule pack
 cryptography>=42.0             # Ed25519 licence signatures
 # MicroStrategy -> Power BI engine (standard library only), pinned by commit.
 mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595
+# Qlik -> Power BI engine (standard library only), pinned by commit.
+qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d

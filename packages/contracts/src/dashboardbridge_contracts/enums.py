@@ -13,8 +13,9 @@ from enum import Enum
 class Platform(str, Enum):
     TABLEAU = "tableau"
     POWERBI = "powerbi"
-    # Source only: there is a reader (the `mstr2pbi` engine) and no writer.
+    # Sources only: each has a reader (the `mstr2pbi` / `qlik2pbi` engine) and no writer.
     MICROSTRATEGY = "microstrategy"
+    QLIK = "qlik"
 
 
 class Stage(str, Enum):

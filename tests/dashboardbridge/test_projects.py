@@ -139,7 +139,7 @@ def test_matching_platforms_are_refused_as_unsupported(api):
 
 
 def test_an_unknown_platform_is_a_typed_error_not_a_raw_422_dump(api):
-    response = create(api, source_platform="qlik")
+    response = create(api, source_platform="looker")  # a platform with no reader
     body = response.json()
     assert set(body) >= {"category", "message", "detail", "request_id"}
     assert "detail" in body and isinstance(body["detail"], str)

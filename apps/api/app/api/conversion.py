@@ -55,6 +55,7 @@ _DIRECTIONS = {
     (Platform.TABLEAU, Platform.POWERBI),
     (Platform.POWERBI, Platform.TABLEAU),
     (Platform.MICROSTRATEGY, Platform.POWERBI),
+    (Platform.QLIK, Platform.POWERBI),
 }
 
 #: What the stored target is served as, by its file name.
@@ -91,6 +92,14 @@ def _produce(
         # data-parity DAX queries beside the project: they are how a person
         # checks what the conversion claims.
         outcome = convert_microstrategy_to_powerbi(data, out / "project", name)
+        archive = zip_project(outcome.project_dir, out / "produced")
+        return outcome, archive.read_bytes(), f"{name}.pbip.zip"
+
+    if direction == (Platform.QLIK, Platform.POWERBI):
+        from engines.conversion.from_qlik import convert_qlik_to_powerbi  # noqa: PLC0415
+
+        # Carries the migration report and parity queries beside the project too.
+        outcome = convert_qlik_to_powerbi(data, out / "project", name)
         archive = zip_project(outcome.project_dir, out / "produced")
         return outcome, archive.read_bytes(), f"{name}.pbip.zip"
 
