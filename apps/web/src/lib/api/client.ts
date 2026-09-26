@@ -22,6 +22,7 @@ import type {
   HealthResponse,
   Job,
   LicenseStatusResponse,
+  DirectionList,
   LoginRequest,
   Project,
   ProposalReview,
@@ -237,6 +238,11 @@ export function license(
   options: RequestOptions = {},
 ): Promise<LicenseStatusResponse> {
   return request<LicenseStatusResponse>("/license", options);
+}
+
+/** Which migration directions this deployment has an installed, licensed engine for. */
+export function directions(options: RequestOptions = {}): Promise<DirectionList> {
+  return request<DirectionList>("/directions", options);
 }
 
 /**

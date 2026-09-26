@@ -14,6 +14,29 @@ env:
   PYTHONPATH: apps/api:packages/contracts/src
 
 jobs:
+  core-only:
+    # A deployment without the optional engines (e.g. a Tableau-only customer):
+    # the whole suite must pass, the MicroStrategy and Qlik tests skipping and
+    # those directions reported "not installed".
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install core dependencies only
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r apps/api/requirements.txt
+          pip install pytest httpx
+      - name: The optional engines really are absent
+        run: python -c "import importlib.util as u; assert u.find_spec('mstr2pbi') is None and u.find_spec('qlik2pbi') is None"
+      - name: Tests
+        env:
+          PYTHONPATH: .:apps/api:packages/contracts/src
+        run: pytest -q
+
   python:
     name: Python — lint, typecheck, tests
     runs-on: ubuntu-latest
@@ -29,6 +52,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r apps/api/requirements.txt
+          # Every optional engine, so every direction is tested here. The
+          # core-only job below proves the product also runs without them.
+          pip install -r apps/api/requirements-engine-microstrategy.txt
+          pip install -r apps/api/requirements-engine-qlik.txt
           # Test-only tools. Runtime dependencies are not listed here: they
           # live in requirements.txt above, so CI installs the same set the API
           # container does rather than a hand-copy that can drift from it.

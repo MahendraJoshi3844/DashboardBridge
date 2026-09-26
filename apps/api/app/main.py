@@ -40,6 +40,7 @@ from app.core.config import settings
 from app.core.errors import install_error_handlers
 
 from app.api.accounts import current_user  # noqa: E402
+from app.api import directions as directions_api  # noqa: E402
 
 logger = logging.getLogger(__name__)
 API_PREFIX = "/api/v1"
@@ -213,6 +214,7 @@ app.include_router(health.router, prefix=API_PREFIX)
 app.include_router(accounts.router, prefix=API_PREFIX)
 app.include_router(license_api.router, prefix=API_PREFIX)
 app.include_router(projects.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
+app.include_router(directions_api.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(artifacts.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(analysis.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)
 app.include_router(conversion.router, prefix=API_PREFIX, dependencies=_SIGNED_IN)

@@ -21,6 +21,8 @@ import zipfile
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("mstr2pbi", reason="optional engine not installed on this deployment")
 from dashboardbridge_contracts.enums import ConversionStatus
 
 from engines.conversion.from_microstrategy import (

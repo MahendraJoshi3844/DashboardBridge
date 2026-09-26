@@ -24,15 +24,22 @@ dependencies = [
     # undeclared, which is the kind of dependency that works until a clean
     # install on a customer's machine.
     "cryptography>=42.0",
-    # The MicroStrategy -> Power BI engine lives in its own repository and is
-    # pinned by commit so a checkout converts the same way every time. For
-    # development against a local clone: pip install -e ../MicroStrategy-to-Power-BI
-    "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595",
-    "qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pyinstaller>=6.0"]
+# Engines sold separately, each in its own repository and pinned by commit so a
+# deployment converts the same way every time. Install the ones a customer has:
+#   pip install ".[microstrategy]"   pip install ".[qlik]"   pip install ".[engines]"
+# Without them the matching migration cards show as "not installed" and the API
+# refuses those directions (engines/conversion/directions.py).
+# For development against a local clone: pip install -e ../MicroStrategy-to-Power-BI
+microstrategy = ["mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595"]
+qlik = ["qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d"]
+engines = [
+    "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595",
+    "qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d",
+]
 
 [project.scripts]
 t2pbi = "engines.t2pbi.cli:main"

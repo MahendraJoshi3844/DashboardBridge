@@ -33,16 +33,29 @@ A **6-stage linear pipeline** around a single **Intermediate Representation (IR)
 
 See `docs/design/TECHNICAL-DESIGN.md` §2–§3 for the stage table and folder layout.
 
-## MicroStrategy → Power BI
+## Engines are separate products
 
-The third direction runs a separate engine, `mstr2pbi` (repository
-MicroStrategy-to-Power-BI), pinned by commit in `pyproject.toml` and
-`apps/api/requirements.txt`. `engines/conversion/from_microstrategy.py` is the
-only seam: it calls the engine with `placeholders=False` (rule 1) and reports
-in contract terms. Uploads are `.mstr` packages or zipped metadata exports,
-told apart from Power BI zips by their members. For local development:
-`pip install -e ../../Mstr2PBI/MicroStrategy-to-Power-BI`. To bump the engine,
-change the commit in both files.
+DashboardBridge is one UI/API over separately sold engines. Customers buy any
+combination, so no engine may be required by another or by the shell:
+
+| Direction | Engine | Repository | Install | Licence feature |
+|---|---|---|---|---|
+| Tableau ↔ Power BI | `t2pbi` | this repo (`engines/t2pbi`) | always | `tableau` |
+| MicroStrategy → Power BI | `mstr2pbi` | MicroStrategy-to-Power-BI | `pip install ".[microstrategy]"` / `requirements-engine-microstrategy.txt` | `microstrategy` |
+| Qlik → Power BI | `qlik2pbi` | Qlik-To-PowerBI | `pip install ".[qlik]"` / `requirements-engine-qlik.txt` | `qlik` |
+
+- `engines/conversion/directions.py` is the single registry: a direction is
+  *available* only when its engine is importable **and** licensed. A licence naming
+  no engine feature covers every installed engine (older licences keep working).
+- The API refuses unavailable directions at project creation, analysis and conversion
+  (`app/core/directions.py`); `GET /directions` feeds the web app's cards and sidebar.
+- Optional engines are imported lazily (inside functions), their seams are
+  `engines/conversion/from_*.py`, and their tests `importorskip` the engine.
+- CI runs the full suite twice: with every engine, and core-only (no optional engines).
+- Engines are pinned by commit in both `pyproject.toml` (extras) and
+  `apps/api/requirements-engine-*.txt`; bump both together. Docker: `ENGINES="microstrategy qlik"`.
+- Engine seams run with `placeholders=False` (rule 1). Local dev:
+  `pip install -e ../../Mstr2PBI/MicroStrategy-to-Power-BI -e ../../Qlik2PBI/Qlik-to-Power-BI`.
 
 ## Commands
 

@@ -203,3 +203,16 @@ class ErrorCategory(str, Enum):
     AUTH_ERROR = "AUTH_ERROR"
     NOT_FOUND = "NOT_FOUND"
     SYSTEM_ERROR = "SYSTEM_ERROR"
+
+
+class DirectionState(str, Enum):
+    """Whether this deployment can run a migration direction, and if not, why.
+
+    Engines are separate products: a deployment installs the ones a customer
+    bought, and the licence says which may run. The two answers are different
+    remedies (install a package / buy the engine), so they are different states.
+    """
+
+    AVAILABLE = "available"
+    NOT_INSTALLED = "not_installed"
+    NOT_LICENSED = "not_licensed"

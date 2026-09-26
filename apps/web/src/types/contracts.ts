@@ -4,7 +4,7 @@
  * Source: packages/contracts/schema.json (Pydantic → JSON Schema).
  * Regenerate: npm run gen:types
  *
- * 82 contract definitions.
+ * 85 contract definitions.
  */
 
 /* eslint-disable */
@@ -365,6 +365,22 @@ export type Password = string;
  * via the `definition` "DataType".
  */
 export type DataType2 = "string" | "integer" | "decimal" | "boolean" | "date" | "datetime" | "unknown";
+/**
+ * Whether this deployment can run a migration direction, and if not, why.
+ *
+ * Engines are separate products: a deployment installs the ones a customer
+ * bought, and the licence says which may run. The two answers are different
+ * remedies (install a package / buy the engine), so they are different states.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "DirectionState".
+ */
+export type DirectionState = "available" | "not_installed" | "not_licensed";
+export type Engine = string;
+export type EngineVersion = string;
+export type LicenceFeature = string;
+export type Reason3 = string;
+export type Directions = DirectionStatus[];
 export type Status1 = string;
 export type Version = string;
 /**
@@ -432,7 +448,7 @@ export type Item3 = string;
  * Router disposition or gauntlet rejection.
  */
 export type Outcome2 = string;
-export type Reason3 = string;
+export type Reason4 = string;
 export type Skipped = SkippedItem[];
 export type Summary = string;
 /**
@@ -507,7 +523,7 @@ export type Item4 = string;
 export type Table4 = string;
 export type Name15 = string;
 export type Source1 = string;
-export type Reason4 = string;
+export type Reason5 = string;
 export type Name16 = string;
 export type Expression3 = string;
 export type ProjectId3 = string;
@@ -1007,6 +1023,28 @@ export interface CreateUserRequest {
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "DirectionList".
+ */
+export interface DirectionList {
+  directions?: Directions;
+}
+/**
+ * One migration direction and whether this deployment can run it.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "DirectionStatus".
+ */
+export interface DirectionStatus {
+  source_platform: Platform;
+  target_platform: Platform;
+  state: DirectionState;
+  engine: Engine;
+  engine_version?: EngineVersion;
+  licence_feature: LicenceFeature;
+  reason?: Reason3;
+}
+/**
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "HealthResponse".
  */
 export interface HealthResponse {
@@ -1125,7 +1163,7 @@ export interface ProposalSet {
 export interface SkippedItem {
   item: Item3;
   outcome: Outcome2;
-  reason: Reason3;
+  reason: Reason4;
 }
 /**
  * Keys are write-only over the API.
@@ -1301,7 +1339,7 @@ export interface WorkspaceHeld {
   table: Table4;
   name: Name15;
   source?: Source1;
-  reason: Reason4;
+  reason: Reason5;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema

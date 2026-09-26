@@ -1,0 +1,3 @@
+# Qlik -> Power BI engine (standard library only), pinned by commit.
+# Installed only for deployments licensed for Qlik.
+qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d

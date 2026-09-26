@@ -206,7 +206,15 @@ def _parser() -> argparse.ArgumentParser:
     mint.add_argument("--days", type=int, help="length from the issue date")
     mint.add_argument("--expires", help="ISO date, instead of --days")
     mint.add_argument("--issued", help="ISO date; defaults to today")
-    mint.add_argument("--features", default="convert", help="comma separated")
+    mint.add_argument(
+        "--features",
+        default="convert",
+        help=(
+            "comma separated. 'convert' (and 'ai') as before; add engine features to sell "
+            "engines separately: tableau, microstrategy, qlik. A licence naming no engine "
+            "feature covers every installed engine."
+        ),
+    )
     mint.add_argument("--seats", type=int, default=1)
     mint.add_argument("--out", required=True)
     mint.set_defaults(handler=_issue)

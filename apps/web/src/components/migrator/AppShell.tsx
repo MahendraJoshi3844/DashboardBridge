@@ -12,7 +12,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import { useDirections } from "@/lib/hooks/useDirections";
 import { useCurrentUser, useSession } from "@/lib/hooks/useSession";
+import { directionLock } from "@/lib/migrator/paths";
+import type { Platform } from "@/types/contracts";
 import { useLicense } from "@/lib/hooks/useLicense";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 
@@ -39,12 +42,19 @@ interface AppShellProps {
   readonly children: ReactNode;
 }
 
-/** The platforms the sidebar lists, and the migration card each one opens. */
-const PLATFORMS: readonly { readonly name: string; readonly opens: string | null }[] = [
-  { name: "Tableau", opens: "tableau-powerbi" },
+/**
+ * The platforms the sidebar lists, the migration card each opens, and the
+ * direction whose engine decides - installed and licensed per deployment.
+ */
+const PLATFORMS: readonly {
+  readonly name: string;
+  readonly opens: string | null;
+  readonly direction?: readonly [Platform, Platform];
+}[] = [
+  { name: "Tableau", opens: "tableau-powerbi", direction: ["tableau", "powerbi"] },
   { name: "Cognos", opens: null },
-  { name: "MicroStrategy", opens: "microstrategy-powerbi" },
-  { name: "Qlik", opens: "qlik-powerbi" },
+  { name: "MicroStrategy", opens: "microstrategy-powerbi", direction: ["microstrategy", "powerbi"] },
+  { name: "Qlik", opens: "qlik-powerbi", direction: ["qlik", "powerbi"] },
   { name: "Looker", opens: null },
 ];
 
@@ -101,6 +111,7 @@ export function AppShell({ crumbs, children }: AppShellProps) {
   const router = useRouter();
   const user = useCurrentUser();
   const { signOut } = useSession();
+  const directions = useDirections();
   const [query, setQuery] = useState("");
 
   const initial = (user?.display_name || user?.email || "?").trim().charAt(0).toUpperCase();
@@ -133,22 +144,22 @@ export function AppShell({ crumbs, children }: AppShellProps) {
         </Link>
 
         <div className="mg-side__label">Platforms</div>
-        {PLATFORMS.map((platform) =>
-          platform.opens !== null ? (
+        {PLATFORMS.map((platform) => {
+          const lock = platform.opens === null
+            ? `No ${platform.name} reader exists yet`
+            : platform.direction
+              ? directionLock(directions, platform.direction[0], platform.direction[1])
+              : null;
+          return lock === null && platform.opens !== null ? (
             <Link key={platform.name} href={`/migrate?open=${platform.opens}`} className="mg-side__link">
               <IconSwap /> {platform.name}
             </Link>
           ) : (
-            <span
-              key={platform.name}
-              className="mg-side__link"
-              aria-disabled="true"
-              title={`No ${platform.name} reader exists yet`}
-            >
+            <span key={platform.name} className="mg-side__link" aria-disabled="true" title={lock ?? undefined}>
               <IconSwap /> {platform.name}
             </span>
-          ),
-        )}
+          );
+        })}
       </aside>
 
       <header className="mg-top">

@@ -17,6 +17,8 @@ import zipfile
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("qlik2pbi", reason="optional engine not installed on this deployment")
 from dashboardbridge_contracts.enums import ConversionStatus
 
 from engines.conversion.from_qlik import UnreadableQlik, convert_qlik_to_powerbi

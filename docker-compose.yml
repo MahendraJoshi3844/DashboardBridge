@@ -73,11 +73,15 @@ services:
       PYTHONPATH: /workspace:/workspace/apps/api:/workspace/packages/contracts/src
       PYTHONDONTWRITEBYTECODE: "1"
       PYTHONUNBUFFERED: "1"
+      # Optional engines to install, space separated: "microstrategy qlik".
+      # Empty = Tableau <-> Power BI only; the other cards show "not installed".
+      ENGINES: ${ENGINES:-}
     command:
       - sh
       - -c
       - |
         pip install --no-cache-dir -r apps/api/requirements.txt &&
+        for engine in $$ENGINES; do pip install --no-cache-dir -r apps/api/requirements-engine-$$engine.txt || exit 1; done &&
         alembic -c apps/api/alembic.ini upgrade head &&
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:

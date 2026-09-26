@@ -29,6 +29,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.db import get_session
+from app.core.directions import require_direction
 from app.core.errors import ApiException
 from app.db.models import Project as ProjectRow
 
@@ -110,6 +111,9 @@ def create_project(
     `app.core.errors.request_validation_handler`, which turns that rule into the
     documented `400 UNSUPPORTED_ARTIFACT` instead of a pydantic dump.
     """
+    # Refused here, before anything is stored: a project in a direction this
+    # deployment cannot run would only fail later, after an upload.
+    require_direction(body.source_platform, body.target_platform)
     row = ProjectRow(
         name=body.name,
         source_platform=body.source_platform,

@@ -30,6 +30,7 @@ from app.api.projects import load_project
 from app.core.licensing import status as license_status
 from app.api.proposals import accepted_proposals
 from app.core.db import get_session
+from app.core.directions import require_direction
 from app.core.errors import ApiException
 from app.core.headers import header_safe_filename
 from app.db.models import Artifact as ArtifactRow
@@ -49,14 +50,6 @@ router = APIRouter(tags=["conversion"])
 #: which worked only while nothing this module imports imported it too.
 _latest = latest_job
 
-
-#: The directions there is an engine for. Anything else is refused by name.
-_DIRECTIONS = {
-    (Platform.TABLEAU, Platform.POWERBI),
-    (Platform.POWERBI, Platform.TABLEAU),
-    (Platform.MICROSTRATEGY, Platform.POWERBI),
-    (Platform.QLIK, Platform.POWERBI),
-}
 
 #: What the stored target is served as, by its file name.
 _MEDIA_TYPES = {".zip": "application/zip", ".twb": "application/xml"}
@@ -173,13 +166,8 @@ def start_conversion(
 
     project = load_project(session, project_id)
     direction = (Platform(project.source_platform), Platform(project.target_platform))
-    if direction not in _DIRECTIONS:
-        raise ApiException(
-            ErrorCategory.UNSUPPORTED_ARTIFACT,
-            f"Converting from {project.source_platform} to "
-            f"{project.target_platform} is not supported yet.",
-            detail=f"no conversion path for {direction[0].value} -> {direction[1].value}",
-        )
+    # Installed and licensed now - not only when the project began.
+    require_direction(*direction)
     if _latest(session, project_id, DbJobKind.ANALYSIS) is None:
         raise ApiException(
             ErrorCategory.CONVERSION_ERROR,

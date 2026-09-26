@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.api.projects import load_project
 from app.core.db import get_session
+from app.core.directions import require_direction
 from app.core.errors import ApiException
 from app.db.models import Artifact as ArtifactRow
 from app.db.models import Job as JobRow
@@ -92,6 +93,7 @@ def start_analysis(
     artifact makes a worker worthwhile.
     """
     project = load_project(session, project_id)
+    require_direction(Platform(project.source_platform), Platform(project.target_platform))
     artifact = _source_artifact(session, project_id)
 
     job = JobRow(job_id=uuid4(), project_id=project_id, kind=DbJobKind.ANALYSIS)

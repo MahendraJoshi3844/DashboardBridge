@@ -25,6 +25,7 @@ from .enums import (
     ProviderKind,
     Stage,
     Verdict,
+    DirectionState,
 )
 
 
@@ -477,6 +478,26 @@ class LicenseStatusResponse(ApiModel):
     expiring_soon: bool = False
     #: Present whenever something needs doing, including "valid, expiring soon".
     message: str | None = None
+
+
+class DirectionStatus(ApiModel):
+    """One migration direction and whether this deployment can run it."""
+
+    source_platform: Platform
+    target_platform: Platform
+    state: DirectionState
+    #: The engine that runs it, e.g. `t2pbi`, `mstr2pbi`, `qlik2pbi`.
+    engine: str
+    #: The installed engine's version; empty when it is not installed.
+    engine_version: str = ""
+    #: The licence feature that enables it, e.g. `qlik`.
+    licence_feature: str
+    #: Why it cannot run, for a person; empty when available.
+    reason: str = ""
+
+
+class DirectionList(ApiModel):
+    directions: list[DirectionStatus] = Field(default_factory=list)
 
 
 # --------------------------------------------------------------------------

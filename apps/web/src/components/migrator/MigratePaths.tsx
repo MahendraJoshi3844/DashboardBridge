@@ -1,13 +1,20 @@
 "use client";
 
 /**
- * Choose a migration path. Tableau, MicroStrategy and Qlik → Power BI have an
- * engine behind them; the rest are shown locked with the reason, so the
- * roadmap is visible without any card opening a screen that would claim otherwise.
+ * Choose a migration path.
+ *
+ * Engines are sold separately, so which cards open depends on the deployment:
+ * `GET /directions` says which engines are installed and licensed, and a card
+ * whose engine is missing or unlicensed is shown locked with the server's
+ * reason. Paths with no engine at all (the roadmap) are always locked.
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
+
+import { useDirections } from "@/lib/hooks/useDirections";
+import { directionLock } from "@/lib/migrator/paths";
+import type { Platform } from "@/types/contracts";
 
 import { AppShell } from "./AppShell";
 import { MigrateModal } from "./MigrateModal";
@@ -19,8 +26,10 @@ interface Path {
   readonly to: ReactNode;
   readonly title: string;
   readonly description: string;
-  /** Null when the path works; otherwise why it does not yet. */
+  /** A reason that locks the card whatever the deployment has (roadmap, unfinished screens). */
   readonly locked: string | null;
+  /** The direction an engine runs - its availability comes from the server. */
+  readonly direction?: readonly [Platform, Platform];
 }
 
 const tableau = <IconLayers style={{ color: "var(--mg-tableau)" }} />;
@@ -29,6 +38,7 @@ const powerBi = <IconChart style={{ color: "var(--mg-powerbi)" }} />;
 const PATHS: readonly Path[] = [
   {
     id: "tableau-powerbi",
+    direction: ["tableau", "powerbi"],
     from: tableau,
     to: powerBi,
     title: "Tableau → Power BI",
@@ -37,6 +47,7 @@ const PATHS: readonly Path[] = [
   },
   {
     id: "powerbi-tableau",
+    direction: ["powerbi", "tableau"],
     from: powerBi,
     to: tableau,
     title: "Power BI → Tableau",
@@ -53,6 +64,7 @@ const PATHS: readonly Path[] = [
   },
   {
     id: "microstrategy-powerbi",
+    direction: ["microstrategy", "powerbi"],
     from: <IconServer style={{ color: "#0891b2" }} />,
     to: powerBi,
     title: "MicroStrategy → Power BI",
@@ -61,6 +73,7 @@ const PATHS: readonly Path[] = [
   },
   {
     id: "qlik-powerbi",
+    direction: ["qlik", "powerbi"],
     from: <IconSigma style={{ color: "#009845" }} />,
     to: powerBi,
     title: "Qlik → Power BI",
@@ -89,6 +102,13 @@ export function MigratePaths() {
   const router = useRouter();
   const params = useSearchParams();
   const open = params.get("open");
+  const probe = useDirections();
+  const lockOf = (path: Path): string | null =>
+    path.locked ?? (path.direction ? directionLock(probe, path.direction[0], path.direction[1]) : null);
+  const opens = (id: string) => {
+    const path = PATHS.find((p) => p.id === id);
+    return open === id && path !== undefined && lockOf(path) === null;
+  };
 
   return (
     <AppShell crumbs={[{ label: "Migrate" }]}>
@@ -96,15 +116,17 @@ export function MigratePaths() {
       <p className="mg-sub">Choose a migration path to convert your BI reports</p>
 
       <div className="mg-grid-2">
-        {PATHS.map((path) => (
+        {PATHS.map((path) => {
+          const locked = lockOf(path);
+          return (
           <button
             key={path.id}
             type="button"
             className="mg-path"
-            aria-disabled={path.locked !== null}
-            title={path.locked ?? undefined}
+            aria-disabled={locked !== null}
+            title={locked ?? undefined}
             onClick={() => {
-              if (path.locked === null) router.push(`/migrate?open=${path.id}`);
+              if (locked === null) router.push(`/migrate?open=${path.id}`);
             }}
           >
             <span className="mg-path__icons">
@@ -115,21 +137,22 @@ export function MigratePaths() {
             <span style={{ minWidth: 0 }}>
               <span className="mg-path__title">
                 {path.title}
-                {path.locked !== null && <IconLock size={13} aria-label="Not available yet" />}
+                {locked !== null && <IconLock size={13} aria-label="Not available" />}
               </span>
               <span className="mg-path__desc" style={{ display: "block" }}>
-                {path.locked ?? path.description}
+                {locked ?? path.description}
               </span>
             </span>
           </button>
-        ))}
+          );
+        })}
       </div>
 
-      {open === "tableau-powerbi" && <MigrateModal source="tableau" onClose={() => router.push("/migrate")} />}
-      {open === "microstrategy-powerbi" && (
+      {opens("tableau-powerbi") && <MigrateModal source="tableau" onClose={() => router.push("/migrate")} />}
+      {opens("microstrategy-powerbi") && (
         <MigrateModal key="microstrategy" source="microstrategy" onClose={() => router.push("/migrate")} />
       )}
-      {open === "qlik-powerbi" && <MigrateModal key="qlik" source="qlik" onClose={() => router.push("/migrate")} />}
+      {opens("qlik-powerbi") && <MigrateModal key="qlik" source="qlik" onClose={() => router.push("/migrate")} />}
     </AppShell>
   );
 }

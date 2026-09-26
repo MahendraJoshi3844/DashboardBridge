@@ -1070,6 +1070,72 @@
       "title": "DatePart",
       "type": "string"
     },
+    "DirectionList": {
+      "additionalProperties": false,
+      "properties": {
+        "directions": {
+          "items": {
+            "$ref": "#/definitions/DirectionStatus"
+          },
+          "title": "Directions",
+          "type": "array"
+        }
+      },
+      "title": "DirectionList",
+      "type": "object"
+    },
+    "DirectionState": {
+      "description": "Whether this deployment can run a migration direction, and if not, why.\n\nEngines are separate products: a deployment installs the ones a customer\nbought, and the licence says which may run. The two answers are different\nremedies (install a package / buy the engine), so they are different states.",
+      "enum": [
+        "available",
+        "not_installed",
+        "not_licensed"
+      ],
+      "title": "DirectionState",
+      "type": "string"
+    },
+    "DirectionStatus": {
+      "additionalProperties": false,
+      "description": "One migration direction and whether this deployment can run it.",
+      "properties": {
+        "source_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "target_platform": {
+          "$ref": "#/definitions/Platform"
+        },
+        "state": {
+          "$ref": "#/definitions/DirectionState"
+        },
+        "engine": {
+          "title": "Engine",
+          "type": "string"
+        },
+        "engine_version": {
+          "default": "",
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "licence_feature": {
+          "title": "Licence Feature",
+          "type": "string"
+        },
+        "reason": {
+          "default": "",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_platform",
+        "target_platform",
+        "state",
+        "engine",
+        "licence_feature"
+      ],
+      "title": "DirectionStatus",
+      "type": "object"
+    },
     "ErrorCategory": {
       "enum": [
         "UPLOAD_ERROR",

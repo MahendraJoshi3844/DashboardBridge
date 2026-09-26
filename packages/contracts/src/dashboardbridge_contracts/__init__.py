@@ -4,7 +4,7 @@ from dashboardbridge_contracts import api, canonical, enums
 from dashboardbridge_contracts.api import (
     AIProposal, Analysis, ApiError, Artifact, AuditEntry, CategoryScore, Compatibility, Complexity, Conversion,
     ConversionReport, ConversionRequest, CreateProjectRequest, HealthResponse,
-    Inventory, Job, LicenseStatusResponse, LoginRequest,
+    DirectionList, DirectionStatus, Inventory, Job, LicenseStatusResponse, LoginRequest,
     CreateUserRequest, UpdateUserRequest, UserAccount, UserList,
     NumericalValidation, Project, ProposalReview, ProposalSet, ProviderSettings,
     SkippedItem, Validation, ValidationRuleResult,
@@ -19,7 +19,7 @@ from dashboardbridge_contracts.canonical import (
 )
 from dashboardbridge_contracts.enums import (
     Aggregation, ArtifactKind, BindingRole, ConversionMethod, ConversionStatus, DataType,
-    DatePart, ErrorCategory, Grain, JobKind, JobStatus, Outcome, Platform,
+    DatePart, DirectionState, ErrorCategory, Grain, JobKind, JobStatus, Outcome, Platform,
     PrivacyMode,
     ProposalDecision, ProviderKind, Severity, Stage, Verdict,
 )

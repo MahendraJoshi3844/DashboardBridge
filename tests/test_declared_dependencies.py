@@ -123,3 +123,28 @@ def test_the_api_container_installs_the_engine_dependencies_too():
         f"{', '.join(missing)} is declared in pyproject.toml but not in "
         "apps/api/requirements.txt, which is all the API container installs."
     )
+
+
+def test_every_optional_engine_has_a_requirements_file_and_is_tested_by_ci():
+    """An engine extra that CI never installs is an engine nobody tests."""
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    extras = config["project"]["optional-dependencies"]
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    for name in ("microstrategy", "qlik"):
+        assert name in extras, f"pyproject has no '{name}' extra"
+        req = ROOT / "apps" / "api" / f"requirements-engine-{name}.txt"
+        assert req.is_file(), f"{req.name} is missing"
+        pinned = [line for line in req.read_text(encoding="utf-8").splitlines() if line and not line.startswith("#")]
+        assert pinned == extras[name], f"{req.name} and the '{name}' extra pin different engines"
+        assert f"requirements-engine-{name}.txt" in ci, f"CI never installs the {name} engine"
+
+
+def test_no_optional_engine_is_a_hard_dependency():
+    """A Tableau-only customer must not have to install the other engines."""
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    required = " ".join(config["project"]["dependencies"]).lower()
+    api = (ROOT / "apps" / "api" / "requirements.txt").read_text(encoding="utf-8").lower()
+    for engine in ("mstr2pbi", "qlik2pbi"):
+        assert engine not in required
+        assert engine not in "\n".join(l for l in api.splitlines() if not l.strip().startswith("#"))
+
