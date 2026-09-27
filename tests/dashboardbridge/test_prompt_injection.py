@@ -111,7 +111,10 @@ def test_a_hostile_workbook_converts_normally_with_no_model_anywhere(api):
 
     assert body["reviews"] == []
     assert all(item["outcome"] == "not_enabled" for item in body["skipped"])
-    assert len(body["skipped"]) == 4
+    # The three table calculations. The fourth hostile field, a FIXED LOD used
+    # row by row, now converts exactly (CALCULATE/ALLEXCEPT) and carries none
+    # of the planted text, so it never goes near a model.
+    assert len(body["skipped"]) == 3
 
 
 def test_the_planted_text_never_becomes_part_of_the_output(api):
