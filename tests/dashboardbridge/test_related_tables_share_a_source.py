@@ -74,6 +74,7 @@ from dashboardbridge_contracts.enums import (
 )
 from engines.adapters.powerbi import PowerBIAdapter
 from engines.adapters.tableau_emit import write_twb
+from tests.support.engines import needs_tableau
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -382,6 +383,7 @@ def test_the_retail_project_produces_one_source_for_its_related_tables():
     assert len(sources) == 1, sources
 
 
+@needs_tableau
 def test_every_shelf_reference_still_decodes(related):
     """The writer and the reader must keep agreeing; a merged source changes
     the token, and a token the reader cannot decode is a visual bound to

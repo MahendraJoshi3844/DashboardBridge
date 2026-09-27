@@ -12,6 +12,9 @@ import zipfile
 from pathlib import Path
 
 from lxml import etree
+from tests.support.engines import needs_tableau
+
+pytestmark = needs_tableau
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "pbip"
 PREFIX = "/api/v1"

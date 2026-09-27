@@ -43,6 +43,8 @@ from dashboardbridge_contracts.enums import (
 )
 from lxml import etree
 
+pytest.importorskip("t2pbi", reason="optional engine not installed on this deployment")
+
 from engines.adapters.powerbi import PowerBIAdapter
 from engines.adapters.tableau import TableauAdapter
 from engines.adapters.tableau_emit import emit_twb, write_twb

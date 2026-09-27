@@ -7,6 +7,7 @@ programme, so the tests pin what they mean rather than that they exist.
 from pathlib import Path
 
 import pytest
+from tests.support.engines import needs_tableau
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 
@@ -48,6 +49,7 @@ def analysed(api) -> dict:
 # --- the job contract ------------------------------------------------------
 
 
+@needs_tableau
 def test_starting_analysis_returns_a_job_naming_its_kind(api):
     client = api.client
     project_id = _project(client)
@@ -57,6 +59,7 @@ def test_starting_analysis_returns_a_job_naming_its_kind(api):
     assert body["status"] in {"queued", "running", "completed"}
 
 
+@needs_tableau
 def test_analysing_without_an_artifact_is_refused_in_the_users_terms(api):
     client = api.client
     project_id = _project(client)
@@ -78,6 +81,7 @@ def test_analysis_of_an_unknown_project_is_not_our_fault(api):
     assert response.json()["category"] == "NOT_FOUND"
 
 
+@needs_tableau
 def test_fetching_analysis_before_it_runs_is_not_found(api):
     client = api.client
     assert client.get(f"/api/v1/projects/{_project(client)}/analysis").status_code == 404
@@ -86,6 +90,7 @@ def test_fetching_analysis_before_it_runs_is_not_found(api):
 # --- inventory -------------------------------------------------------------
 
 
+@needs_tableau
 def test_inventory_counts_the_real_workbook(analysed):
     inventory = analysed["inventory"]
     # sample.twb: 4 physical columns plus 2 calculated ones.
@@ -96,6 +101,7 @@ def test_inventory_counts_the_real_workbook(analysed):
     assert inventory["dashboards"] == 1
 
 
+@needs_tableau
 def test_the_canonical_model_is_returned_for_the_comparison_view(analysed):
     assert analysed["model"]["source_platform"] == "tableau"
 
@@ -103,6 +109,7 @@ def test_the_canonical_model_is_returned_for_the_comparison_view(analysed):
 # --- complexity ------------------------------------------------------------
 
 
+@needs_tableau
 def test_complexity_publishes_the_formula_that_produced_it(analysed):
     """A score whose derivation a reader cannot follow is decoration."""
     complexity = analysed["complexity"]
@@ -132,6 +139,7 @@ def test_an_empty_workbook_does_not_divide_by_zero(api):
 # --- compatibility ---------------------------------------------------------
 
 
+@needs_tableau
 def test_compatibility_totals_match_the_flags(analysed):
     compatibility = analysed["compatibility"]
     counted = (
@@ -144,6 +152,7 @@ def test_compatibility_totals_match_the_flags(analysed):
     assert counted == compatibility["total"]
 
 
+@needs_tableau
 def test_nothing_unconvertible_is_missing_from_the_flags(analysed):
     """Every object that could not be represented must be reported. A refusal
     nobody can see is a silent drop."""
@@ -161,6 +170,7 @@ def test_nothing_unconvertible_is_missing_from_the_flags(analysed):
 # --- determinism -----------------------------------------------------------
 
 
+@needs_tableau
 def test_analysing_the_same_artifact_twice_gives_the_same_model(api):
     client = api.client
     first, second = (_project(client), _project(client))

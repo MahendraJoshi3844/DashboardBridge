@@ -12,7 +12,7 @@ where that is silent, `SPEC.md` wins.
 2. `SPEC.md` — the master specification and index.
 3. `docs/dashboardbridge/04-canonical-model.md` — the seam everything crosses.
 4. `docs/dashboardbridge/11-roadmap.md` — what to build next, in order.
-5. `CLAUDE.md` — repo conventions and the existing engine.
+5. `CLAUDE.md` — repo conventions, the engines and who may use them.
 
 ---
 
@@ -87,7 +87,6 @@ test your understanding of a format; only real files test the format.
 ```
 apps/web/         Next.js + TypeScript UI
 apps/api/         FastAPI gateway
-apps/desktop/     pywebview shell — Local/air-gapped mode (ADR-006)
 engines/
   parser/         platform → canonical
   rules/          data-driven mapping rules, versioned
@@ -101,11 +100,13 @@ fixtures/         golden test artifacts, per platform
 docs/dashboardbridge/
 ```
 
-**Where the code actually lives today** (ADR-008): the conversion engine is
-`t2pbi` and stays there. `engines/adapters/` holds the platform adapters that
-map between an engine's parse-time IR and the canonical contracts. The wholesale
-move into `engines/` is deferred until something needs it — a documented layout
-that is not true is worse than an honest one.
+**Where the code actually lives today** (ADR-008, ADR-010): the engines are
+separate products in their own repositories - `t2pbi` (Tableau-to-Power-BI, which
+also keeps the desktop app of ADR-006), `mstr2pbi` (MicroStrategy-to-Power-BI) and
+`qlik2pbi` (Qlik-To-PowerBI) - installed here as optional, commit-pinned extras.
+`engines/adapters/` maps an engine's parse-time IR to the canonical contracts and
+`engines/conversion/` holds the seams that run one. Only those seams import an
+engine at module level (`tests/dashboardbridge/test_layering.py`).
 
 ---
 
@@ -115,13 +116,13 @@ Delegate to these rather than working outside your lane:
 
 | Agent | Owns |
 |---|---|
-| `tableau-parser` | reading `.twb`/`.twbx` into canonical |
-| `pbip-emitter` | writing TMDL/PBIR/PBIP |
-| `dax-translator` | Tableau calc → DAX, the rule tables, grain |
 | `canonical-model-steward` | the seam; reviews any change to it |
 | `ai-router` | provider abstraction, prompts, structured output, injection defence |
 | `validation-engine` | scoring, comparison, the no-hallucination rule |
 | `migration-validator` | acceptance criteria, determinism, performance |
+
+Work inside an engine (parsing, DAX translation, PBIP emission) belongs in that
+engine's repository and its own agents, not here.
 
 Any change to the canonical model goes through `canonical-model-steward`. It is
 the one interface every platform depends on, so an unreviewed change there breaks

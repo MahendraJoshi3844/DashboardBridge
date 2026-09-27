@@ -22,6 +22,7 @@ import re
 from pathlib import Path
 
 import pytest
+from tests.support.engines import needs_tableau
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 PREFIX = "/api/v1"
@@ -77,6 +78,7 @@ def validated(api):
 # --- when there is nothing to report --------------------------------------
 
 
+@needs_tableau
 def test_a_report_before_conversion_is_refused_in_the_users_terms(api):
     project_id = _project(api.client)
     response = api.client.get(f"{PREFIX}/projects/{project_id}/report")
@@ -86,6 +88,7 @@ def test_a_report_before_conversion_is_refused_in_the_users_terms(api):
     assert "Traceback" not in body["message"]
 
 
+@needs_tableau
 def test_an_unknown_format_is_refused_rather_than_guessed_at(api, validated):
     response = api.client.get(f"{PREFIX}/projects/{validated}/report?format=pdf")
     assert response.status_code in {400, 422}
@@ -94,12 +97,14 @@ def test_an_unknown_format_is_refused_rather_than_guessed_at(api, validated):
 # --- the JSON report -------------------------------------------------------
 
 
+@needs_tableau
 def test_json_is_the_default_format(api, validated):
     response = api.client.get(f"{PREFIX}/projects/{validated}/report")
     assert response.status_code == 200, response.text
     assert response.headers["content-type"].startswith("application/json")
 
 
+@needs_tableau
 def test_the_report_carries_every_flag_with_all_three_axes(api, validated):
     body = api.client.get(f"{PREFIX}/projects/{validated}/report?format=json").json()
     assert body["flags"], "a report with no flags hides the work that remains"
@@ -108,6 +113,7 @@ def test_the_report_carries_every_flag_with_all_three_axes(api, validated):
         assert flag["reason"]
 
 
+@needs_tableau
 def test_the_report_carries_the_counts_and_they_sum_to_the_whole(api, validated):
     body = api.client.get(f"{PREFIX}/projects/{validated}/report?format=json").json()
     c = body["compatibility"]
@@ -117,6 +123,7 @@ def test_the_report_carries_the_counts_and_they_sum_to_the_whole(api, validated)
     )
 
 
+@needs_tableau
 def test_the_report_carries_the_validation_verdict_when_one_exists(api, validated):
     body = api.client.get(f"{PREFIX}/projects/{validated}/report?format=json").json()
     assert body["validation"] is not None
@@ -129,6 +136,7 @@ def test_the_report_carries_the_validation_verdict_when_one_exists(api, validate
     assert body["validation"]["rules"]
 
 
+@needs_tableau
 def test_an_unvalidated_conversion_reports_unverified_rather_than_silence(api):
     """The absence has to be stated. An omitted verdict reads as a passed one."""
     project_id = _converted(api.client)
@@ -137,12 +145,14 @@ def test_an_unvalidated_conversion_reports_unverified_rather_than_silence(api):
     assert body["verdict"] == "unverified"
 
 
+@needs_tableau
 def test_the_report_names_the_workbook_it_describes(api):
     project_id = _converted(api.client, name="Quarterly numbers.twb")
     body = api.client.get(f"{PREFIX}/projects/{project_id}/report?format=json").json()
     assert body["project"]["name"] == "Quarterly numbers.twb"
 
 
+@needs_tableau
 def test_two_reports_of_the_same_run_are_identical(api, validated):
     """A report that changes between reads cannot be attached to a ticket."""
     first = api.client.get(f"{PREFIX}/projects/{validated}/report?format=json").text
@@ -153,12 +163,14 @@ def test_two_reports_of_the_same_run_are_identical(api, validated):
 # --- the HTML report -------------------------------------------------------
 
 
+@needs_tableau
 def test_html_is_served_as_html(api, validated):
     response = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html")
     assert response.status_code == 200, response.text
     assert response.headers["content-type"].startswith("text/html")
 
 
+@needs_tableau
 def test_the_html_report_fetches_nothing_from_the_internet(api, validated):
     """Offline is the product's promise, and a report is where it leaks.
 
@@ -171,6 +183,7 @@ def test_the_html_report_fetches_nothing_from_the_internet(api, validated):
         assert marker not in html, f"the report reaches out via {marker!r}"
 
 
+@needs_tableau
 def test_the_html_report_states_what_did_not_convert(api, validated):
     html = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
     # The sample workbook refuses RUNNING_SUM; that refusal is the report's
@@ -178,6 +191,7 @@ def test_the_html_report_states_what_did_not_convert(api, validated):
     assert "Running Total" in html
 
 
+@needs_tableau
 def test_the_html_report_shows_the_verdict_word(api, validated):
     html = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
     assert any(
@@ -186,6 +200,7 @@ def test_the_html_report_shows_the_verdict_word(api, validated):
     )
 
 
+@needs_tableau
 def test_the_html_report_never_prints_a_bare_percentage(api, validated):
     """A percentage is the number people quote and cannot defend.
 
@@ -199,6 +214,7 @@ def test_the_html_report_never_prints_a_bare_percentage(api, validated):
     assert "%" not in visible
 
 
+@needs_tableau
 def test_a_name_from_the_workbook_cannot_become_markup(api):
     """Every name in this document came out of a file we did not write.
 
@@ -213,6 +229,7 @@ def test_a_name_from_the_workbook_cannot_become_markup(api):
     assert "&lt;script&gt;" in html
 
 
+@needs_tableau
 def test_two_html_reports_of_the_same_run_are_identical(api, validated):
     first = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
     second = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
@@ -222,6 +239,7 @@ def test_two_html_reports_of_the_same_run_are_identical(api, validated):
 # --- the executive summary (P5.6) -----------------------------------------
 
 
+@needs_tableau
 def test_the_means_of_conversion_sum_to_the_denominator(api, validated):
     """"How was this converted" must survive the same arithmetic as "how much".
 
@@ -240,6 +258,7 @@ def test_the_means_of_conversion_sum_to_the_denominator(api, validated):
     )
 
 
+@needs_tableau
 def test_the_means_are_taken_from_the_flags_not_assumed_from_the_status(api, validated):
     """Method and status are different axes (ADR-004) and are read as such."""
     from app.services.report import means_of_conversion
@@ -254,6 +273,7 @@ def test_the_means_are_taken_from_the_flags_not_assumed_from_the_status(api, val
     assert means.by_hand == by_hand
 
 
+@needs_tableau
 def test_the_html_report_says_by_what_means_the_objects_came_across(api, validated):
     html = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
     assert "How it was converted" in html
@@ -261,6 +281,7 @@ def test_the_html_report_says_by_what_means_the_objects_came_across(api, validat
     assert "By hand" in html
 
 
+@needs_tableau
 def test_no_ai_reports_its_absence_rather_than_a_bare_zero(api, validated):
     """A bare "AI-assisted 0" reads as "the model tried and produced nothing".
 
@@ -366,6 +387,7 @@ def test_a_conversion_with_nothing_held_reports_no_risks():
     assert omitted == 0
 
 
+@needs_tableau
 def test_the_html_report_leads_with_the_key_risks(api, validated):
     html = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
     assert "Key risks" in html
@@ -385,6 +407,7 @@ def test_a_hostile_reason_cannot_become_markup_in_the_risks_section():
 # --- the audit trail (P5.7) ------------------------------------------------
 
 
+@needs_tableau
 def test_the_report_carries_an_entry_for_every_object_the_run_handled(api, validated):
     body = api.client.get(f"{PREFIX}/projects/{validated}/report?format=json").json()
     assert body["audit"], "a report with no audit trail cannot defend anything"
@@ -393,6 +416,7 @@ def test_the_report_carries_an_entry_for_every_object_the_run_handled(api, valid
         assert entry["outcome"] in {"crossed", "held"}
 
 
+@needs_tableau
 def test_the_audit_trail_records_what_crossed_not_only_what_did_not(api, validated):
     """The flags say what failed. Only this says what succeeded, and how.
 
@@ -405,6 +429,7 @@ def test_the_audit_trail_records_what_crossed_not_only_what_did_not(api, validat
     assert crossed, "nothing recorded as having come across"
 
 
+@needs_tableau
 def test_a_translated_calculation_carries_both_expressions(api, validated):
     """Source beside result, on the record, is what makes it auditable."""
     body = api.client.get(f"{PREFIX}/projects/{validated}/report?format=json").json()
@@ -417,6 +442,7 @@ def test_a_translated_calculation_carries_both_expressions(api, validated):
     assert all(entry["source"] for entry in calcs)
 
 
+@needs_tableau
 def test_the_audit_trail_carries_no_timing(api, validated):
     """Determinism outranks forensic detail here.
 
@@ -439,12 +465,14 @@ def test_a_conversion_with_no_recording_reports_its_absence(api):
     assert "no recording" in html.lower()
 
 
+@needs_tableau
 def test_the_html_report_shows_the_audit_trail(api, validated):
     html = api.client.get(f"{PREFIX}/projects/{validated}/report?format=html").text
     assert "Audit trail" in html
     assert "Came across" in html
 
 
+@needs_tableau
 def test_the_audit_trail_names_the_stage_that_did_the_work(api, validated):
     """A stage every entry shares is a stage nobody recorded.
 

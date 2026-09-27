@@ -1,18 +1,15 @@
-"""The layering invariant, checked rather than remembered.
+"""The layering invariants, checked rather than remembered.
 
-`CLAUDE.md` and the technical design both state it: **`engines/` imports
-`t2pbi`, never the reverse**, and `packages/contracts` depends on nothing. It is
-the reason `P3.1` kept the DAX rule pack inside the engine package, and the
-reason the canonical model is the only thing that crosses between adapters.
+DashboardBridge is the shell over separately sold engines - `t2pbi` (Tableau),
+`mstr2pbi` (MicroStrategy), `qlik2pbi` (Qlik) - each in its own repository and
+each optional. Two things keep that true:
 
-Nothing was checking it. An invariant that lives only in a document is one that
-holds until the first person who has not read the document adds an import, and
-the code keeps working, the tests keep passing, and the property is gone.
-
-This was written because a change broke it: `P7.8` made `t2pbi/
-assist.py` call `require_loopback` from `engines/ai/provider.py` - the right
-check in the wrong direction. It is exempted below with a reason and a companion
-test, on the same terms as `LEGACY_MODEL_CALLERS`, rather than quietly allowed.
+* **Engines are reached only through their seams.** A module-level engine import
+  anywhere else makes the whole shell fail to start on a deployment that did
+  not buy that engine. The seams are imported lazily, after `directions` has
+  said the engine is installed. (That an engine never imports the shell is
+  checked in the engine's own repository, where the engine lives.)
+* `packages/contracts` depends on nothing of ours.
 
 A grep over imports is a blunt instrument. It is also the only thing that
 notices an import nobody meant to add.
@@ -24,25 +21,44 @@ import ast
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ENGINE = ROOT / "t2pbi"
 CONTRACTS = ROOT / "packages" / "contracts" / "src"
+SHELL = (ROOT / "engines", ROOT / "apps" / "api" / "app")
 
-#: The Tableau engine is a separate product (like mstr2pbi and qlik2pbi): it may
-#: import nothing from the DashboardBridge shell. The shell's `engines.*`
-#: packages and `app` reach into it only through the seams in
-#: engines/conversion and engines/adapters.
-SIBLINGS = ("engines", "app", "dashboardbridge_contracts")
+#: The engines, each a separate product and an optional install.
+ENGINES = ("t2pbi", "mstr2pbi", "qlik2pbi")
 
-#: No exemptions any more: the assist's loopback guard is the engine's own copy
-#: (t2pbi/_loopback.py), because a separate product cannot import the shell.
-ALLOWED_UPWARD: set[tuple[Path, str]] = set()
+#: The only modules that may import an engine at module level. Everything else
+#: imports them inside a function, after the engine is known to be installed.
+SEAMS = {
+    Path("engines/adapters/tableau.py"),
+    Path("engines/conversion/run.py"),
+    Path("engines/conversion/from_microstrategy.py"),
+    Path("engines/conversion/from_qlik.py"),
+}
 
 
 def _imports(path: Path) -> set[str]:
     """Every module a file imports, including inside a function body."""
+    return _collect(ast.walk(ast.parse(path.read_text(encoding="utf-8"), filename=str(path))))
+
+
+def _top_level_imports(path: Path) -> set[str]:
+    """What a file imports when it is itself imported (not inside a function)."""
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    nodes = []
+    pending = list(tree.body)
+    while pending:
+        node = pending.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            continue
+        nodes.append(node)
+        pending.extend(ast.iter_child_nodes(node))
+    return _collect(nodes)
+
+
+def _collect(nodes) -> set[str]:
     found: set[str] = set()
-    for node in ast.walk(tree):
+    for node in nodes:
         if isinstance(node, ast.ImportFrom) and node.level == 0:
             found.add(node.module or "")
         elif isinstance(node, ast.Import):
@@ -50,56 +66,52 @@ def _imports(path: Path) -> set[str]:
     return found
 
 
-def _python_files(root: Path) -> list[Path]:
+def _python_files(*roots: Path) -> list[Path]:
     return [
         path
+        for root in roots
         for path in root.rglob("*.py")
         if "__pycache__" not in path.parts
     ]
 
 
-def test_the_tableau_engine_never_imports_the_shell():
-    """The direction that makes the IR a seam rather than a suggestion.
+def _is_engine(module: str) -> bool:
+    return module.split(".")[0] in ENGINES
 
-    If the converter may reach into `engines/adapters`, "read Tableau" can touch
-    "write Power BI" without either of them going through the IR - and the whole
-    reason the IR exists is that the two stay apart.
+
+def test_engines_are_imported_at_module_level_only_by_their_seams():
+    """A shell that imports an engine eagerly cannot start without it.
+
+    A Qlik-only customer's deployment has no `t2pbi`; if `app.api.analysis`
+    imported it at the top, the API would not even boot there.
     """
-    offenders: list[str] = []
-    for path in _python_files(ENGINE):
-        relative = path.relative_to(ROOT)
-        for module in _imports(path):
-            if not module.startswith(SIBLINGS):
-                continue
-            if any(
-                relative == allowed and module.startswith(prefix)
-                for allowed, prefix in ALLOWED_UPWARD
-            ):
-                continue
-            offenders.append(f"{relative} imports {module}")
-
+    offenders = [
+        f"{path.relative_to(ROOT)} imports {module}"
+        for path in _python_files(*SHELL)
+        if path.relative_to(ROOT) not in SEAMS
+        for module in _top_level_imports(path)
+        if _is_engine(module)
+    ]
     assert offenders == [], (
-        f"{offenders} import the DashboardBridge shell. t2pbi is a separate "
-        "product: the shell imports it through its seams, never the reverse."
+        f"{offenders}: import the engine inside the function that needs it, or "
+        "go through its seam in engines/conversion"
     )
 
 
-def test_every_upward_exemption_is_still_real():
-    """An exemption list that outlives what it exempted stops meaning anything.
-
-    Both halves are checked: the file still exists, and it still has the import
-    the exemption was written for. A stale entry is worse than none, because it
-    reads as a considered decision.
-    """
-    for relative, module in ALLOWED_UPWARD:
+def test_every_seam_still_imports_its_engine():
+    """A seam list that outlives what it listed stops meaning anything."""
+    for relative in SEAMS:
         path = ROOT / relative
-        assert path.exists(), (
-            f"{relative} is gone; remove it from ALLOWED_UPWARD so the list "
-            "keeps meaning something"
+        assert path.exists(), f"{relative} is gone; remove it from SEAMS"
+        assert any(_is_engine(m) for m in _top_level_imports(path)), (
+            f"{relative} no longer imports an engine; remove it from SEAMS"
         )
-        assert any(name.startswith(module) for name in _imports(path)), (
-            f"{relative} no longer imports {module}; remove the exemption"
-        )
+
+
+def test_the_shell_does_not_vendor_an_engine():
+    """The engines live in their own repositories; a copy here would drift."""
+    for engine in ENGINES:
+        assert not (ROOT / engine).exists(), f"{engine}/ belongs in its own repository"
 
 
 def test_the_contracts_package_depends_on_nothing_of_ours():

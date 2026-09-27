@@ -14,7 +14,7 @@
 
       1. Makes a **development** licence if there is not one yet, under
          ~/.dashboardbridge-dev. This is not your vendor identity - that one
-         you create yourself with `t2pbi-license keygen`, outside any
+         you create yourself with `dashboardbridge-license keygen`, outside any
          repository, and it signs what your customers run. This one is a
          throwaway so the application will start.
       2. Migrates the database (SQLite, in the same folder).

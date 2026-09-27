@@ -1,3 +1,3 @@
 # MicroStrategy -> Power BI engine (standard library only), pinned by commit.
 # Installed only for deployments licensed for MicroStrategy.
-mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595
+mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@3852d73b75a07efed2f3904612b2cb859a4784af

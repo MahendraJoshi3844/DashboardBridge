@@ -20,7 +20,7 @@ licence can change under a running conversion cannot say what it did.
 ## Vendor: creating your keypair (once, ever)
 
 ```
-t2pbi-license keygen --out ~/dashboardbridge-keys
+dashboardbridge-license keygen --out ~/dashboardbridge-keys
 ```
 
 The private half signs every licence you will ever issue. **If it leaks, anyone
@@ -45,7 +45,7 @@ licence from a forged one, so it trusts neither.
 ## Vendor: issuing a licence
 
 ```
-t2pbi-license issue \
+dashboardbridge-license issue \
   --key ~/dashboardbridge-keys/vendor-private.pem \
   --customer "Northwind BI" \
   --days 365 \
@@ -62,7 +62,7 @@ password.
 Check one you have been sent back, or one you are about to send:
 
 ```
-t2pbi-license inspect --file northwind.lic \
+dashboardbridge-license inspect --file northwind.lic \
   --public-key ~/dashboardbridge-keys/vendor-public.pem
 ```
 

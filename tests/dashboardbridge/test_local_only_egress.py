@@ -41,6 +41,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
+from tests.support.engines import needs_tableau
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 PREFIX = "/api/v1"
@@ -121,6 +122,7 @@ def test_the_guard_reports_where_the_attempt_was_going(monkeypatch):
     assert seen[0][1] == ("api.example.com", 443)
 
 
+@needs_tableau
 def test_the_guard_catches_an_attempt_made_from_inside_the_product(monkeypatch):
     """The control that matters more than the one above.
 
@@ -147,6 +149,7 @@ def test_the_guard_catches_an_attempt_made_from_inside_the_product(monkeypatch):
 # --- the conversion path --------------------------------------------------------
 
 
+@needs_tableau
 def test_a_full_conversion_opens_no_connection(monkeypatch):
     """Extract, parse, map, translate, generate, report - end to end, offline.
 
@@ -173,6 +176,7 @@ def test_writing_a_tableau_workbook_opens_no_connection(monkeypatch):
     assert seen == []
 
 
+@needs_tableau
 def test_translating_dax_opens_no_connection(monkeypatch):
     """Both rule packs are files beside the code, and neither is fetched."""
     from t2pbi.core.dax.translator import translate_formula
@@ -188,6 +192,7 @@ def test_translating_dax_opens_no_connection(monkeypatch):
 # --- the API path ----------------------------------------------------------------
 
 
+@needs_tableau
 def test_uploading_analysing_and_converting_over_the_api_opens_no_connection(
     api, monkeypatch
 ):
@@ -233,6 +238,7 @@ def test_uploading_analysing_and_converting_over_the_api_opens_no_connection(
     assert seen == []
 
 
+@needs_tableau
 def test_power_bi_to_tableau_over_the_api_opens_no_connection(api, monkeypatch):
     """`SPEC-powerbi-to-tableau-web.md` AC9: the second direction, end to end.
 
@@ -309,6 +315,7 @@ def test_asking_a_model_under_local_only_is_refused_before_a_socket_is_opened(
 # --- the one hard-coded host -----------------------------------------------------
 
 
+@needs_tableau
 def test_the_assist_module_refuses_a_host_that_is_not_this_machine(monkeypatch):
     """`assist._HOST` was guarded by a comment, and comments do not run.
 
@@ -334,6 +341,7 @@ def test_the_assist_module_refuses_a_host_that_is_not_this_machine(monkeypatch):
     assert seen == [], "it resolved or connected before deciding it was allowed to"
 
 
+@needs_tableau
 def test_the_assist_module_still_talks_to_loopback(monkeypatch):
     """The check must not cost the feature. `127.0.0.1` is still allowed, and
     the absence of a runtime is still reported as absence rather than error."""
@@ -345,6 +353,7 @@ def test_the_assist_module_still_talks_to_loopback(monkeypatch):
     assert [target for _, target in seen] == [("127.0.0.1", 11434)]
 
 
+@needs_tableau
 def test_sending_a_prompt_is_refused_for_a_host_that_is_not_this_machine(monkeypatch):
     """The probe and the request are two different calls, and only one of them
     carries the workbook's content. Guarding the cheap one would be theatre."""

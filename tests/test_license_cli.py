@@ -292,7 +292,7 @@ def test_the_command_is_declared_as_a_console_script():
     """A tool nobody can run is a module. The vendor runs this on their own
     machine, so it has to exist as a command after `pip install -e .`"""
     text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert "t2pbi-license = " in text
+    assert "dashboardbridge-license = " in text
 
 
 def test_it_runs_as_a_module(tmp_path):

@@ -1,0 +1,3 @@
+# Tableau <-> Power BI engine (t2pbi), pinned by commit.
+# Installed only for deployments licensed for Tableau.
+t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@973c11f49c3b9f25c65e0ba1f5e5647ba4b9c623

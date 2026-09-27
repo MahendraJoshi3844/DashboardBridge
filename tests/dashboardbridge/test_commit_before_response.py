@@ -26,6 +26,7 @@ from app.api.projects import create_project
 from app.db.models import Project, Session, User
 
 from tests.dashboardbridge.conftest import FIXTURE_EMAIL, FIXTURE_PASSWORD
+from tests.support.engines import needs_tableau
 
 
 def _request() -> Request:
@@ -49,6 +50,7 @@ def test_a_new_sign_in_is_visible_to_the_next_request(api):
         held.close()
 
 
+@needs_tableau
 def test_a_new_project_is_visible_to_the_next_request(api):
     factory = api.session_factory
     before = _count(factory, Project)

@@ -21,7 +21,8 @@
 *.yaml   text
 *.json   text
 *.toml   text
-*.twb    text
+# .twb goldens are compared byte for byte, so they are LF on every machine.
+*.twb    text eol=lf
 *.tmdl   text
 
 # Never touched.

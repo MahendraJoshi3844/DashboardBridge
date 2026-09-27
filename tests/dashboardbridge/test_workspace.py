@@ -8,6 +8,7 @@ import zipfile
 from app.services import workspace as ws
 from dashboardbridge_contracts import WorkspaceEdit
 from tests.dashboardbridge.test_conversion import _ready
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 
@@ -19,6 +20,7 @@ def _converted(client) -> str:
     return project_id
 
 
+@needs_tableau
 def test_the_workspace_reads_tables_measures_and_power_query(api):
     project_id = _converted(api.client)
     model = api.client.get(f"{PREFIX}/projects/{project_id}/workspace").json()
@@ -31,6 +33,7 @@ def test_the_workspace_reads_tables_measures_and_power_query(api):
     assert any(path.endswith(".tmdl") for path in (f["path"] for f in model["files"]))
 
 
+@needs_tableau
 def test_a_saved_edit_is_a_new_version_and_is_what_downloads(api):
     client = api.client
     project_id = _converted(client)
@@ -63,6 +66,7 @@ def test_a_saved_edit_is_a_new_version_and_is_what_downloads(api):
     assert "ROUND(SUM('Sales'[Sales])" in tmdl
 
 
+@needs_tableau
 def test_a_save_on_a_stale_version_is_refused(api):
     client = api.client
     project_id = _converted(client)
@@ -75,6 +79,7 @@ def test_a_save_on_a_stale_version_is_refused(api):
     assert stale.status_code == 409
 
 
+@needs_tableau
 def test_an_edit_to_a_table_that_does_not_exist_changes_nothing(api):
     client = api.client
     project_id = _converted(client)
@@ -127,6 +132,7 @@ def test_a_new_measure_is_added_before_the_partition():
     ]
 
 
+@needs_tableau
 def test_a_held_calculation_written_by_hand_is_no_longer_held(api):
     from tests.dashboardbridge.test_conversion import FIXTURES  # noqa: PLC0415
 

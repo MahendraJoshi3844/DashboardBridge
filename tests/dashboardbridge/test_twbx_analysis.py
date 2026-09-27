@@ -12,6 +12,9 @@ import io
 import zipfile
 
 from tests.dashboardbridge.test_conversion import FIXTURES
+from tests.support.engines import needs_tableau
+
+pytestmark = needs_tableau
 
 PREFIX = "/api/v1"
 

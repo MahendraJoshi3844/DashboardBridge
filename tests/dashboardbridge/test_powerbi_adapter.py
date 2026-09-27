@@ -29,6 +29,7 @@ import pytest
 
 from dashboardbridge_contracts.enums import BindingRole, DataType, Grain, Platform
 from engines.adapters.powerbi import PowerBIAdapter
+from tests.support.engines import needs_tableau
 
 FIXTURE = Path(__file__).resolve().parents[1] / "fixtures" / "pbip"
 
@@ -197,6 +198,7 @@ def _all_columns(model):
 # --- against a project we produced ourselves ---------------------------------
 
 
+@needs_tableau
 def test_it_also_reads_a_project_this_converter_produced(tmp_path):
     """Tableau in, PBIP out, canonical back. As close to a round trip as `P6a`
     reaches before `P6b` exists.
@@ -226,6 +228,7 @@ def test_it_also_reads_a_project_this_converter_produced(tmp_path):
     ), "no translated expression survived the round trip"
 
 
+@needs_tableau
 def test_reading_back_what_we_wrote_never_claims_a_translation(tmp_path):
     """Our own DAX is still just DAX to a reader.
 

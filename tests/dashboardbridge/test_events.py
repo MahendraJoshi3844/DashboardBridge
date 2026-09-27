@@ -9,6 +9,9 @@ import json
 from pathlib import Path
 
 import pytest
+from tests.support.engines import needs_tableau
+
+pytestmark = needs_tableau
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 

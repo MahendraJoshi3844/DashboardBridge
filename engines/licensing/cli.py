@@ -1,10 +1,10 @@
 """The vendor's licensing tool (`P7.1`).
 
-    t2pbi-license keygen  --out ~/dashboardbridge-keys
-    t2pbi-license issue   --key ~/dashboardbridge-keys/vendor-private.pem \\
+    dashboardbridge-license keygen  --out ~/dashboardbridge-keys
+    dashboardbridge-license issue   --key ~/dashboardbridge-keys/vendor-private.pem \\
                           --customer "Northwind BI" --days 365 \\
                           --features convert --seats 5 --out northwind.lic
-    t2pbi-license inspect --file northwind.lic \\
+    dashboardbridge-license inspect --file northwind.lic \\
                           --public-key ~/dashboardbridge-keys/vendor-public.pem
 
 The engine could already mint and check a licence and nothing could run it, so
@@ -191,7 +191,7 @@ def _inspect(args: argparse.Namespace) -> int:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="t2pbi-license",
+        prog="dashboardbridge-license",
         description="Mint and check DashboardBridge licences (vendor side).",
     )
     commands = parser.add_subparsers(dest="command", required=True)

@@ -328,7 +328,9 @@ def _parse_visual(raw: str | None) -> TargetVisual | None:
             # A measure projection names its measure the way a column
             # projection names its column; reading only `Column` left every
             # measure binding looking like an empty reference.
-            column = field_.get("Column") or field_.get("Measure") or {}
+            # A Sum of a column is written as an Aggregation around the Column.
+            aggregated = (field_.get("Aggregation") or {}).get("Expression") or {}
+            column = field_.get("Column") or field_.get("Measure") or aggregated.get("Column") or {}
             entity = (
                 column.get("Expression", {}).get("SourceRef", {}).get("Entity", "")
             )

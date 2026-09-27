@@ -15,6 +15,7 @@ from dashboardbridge_contracts.enums import DirectionState, Platform
 
 from app.core import licensing
 from engines.conversion import directions as registry
+from tests.support.engines import needs_tableau
 
 PREFIX = "/api/v1"
 
@@ -80,10 +81,14 @@ def test_the_directions_endpoint_lists_every_direction(api):
     response = api.client.get(f"{PREFIX}/directions")
     assert response.status_code == 200
     states = {(d["source_platform"], d["target_platform"]): d["state"] for d in response.json()["directions"]}
-    assert states[("tableau", "powerbi")] == "available"
-    for source, module in (("microstrategy", "mstr2pbi"), ("qlik", "qlik2pbi")):
+    for (source, target), module in (
+        (("tableau", "powerbi"), "t2pbi"),
+        (("powerbi", "tableau"), "t2pbi"),
+        (("microstrategy", "powerbi"), "mstr2pbi"),
+        (("qlik", "powerbi"), "qlik2pbi"),
+    ):
         installed = importlib.util.find_spec(module) is not None
-        assert states[(source, "powerbi")] == ("available" if installed else "not_installed")
+        assert states[(source, target)] == ("available" if installed else "not_installed")
 
 
 def test_the_directions_endpoint_needs_a_session(empty_api):
@@ -113,6 +118,7 @@ def test_an_uninstalled_engine_cannot_start_a_project(api, monkeypatch):
     assert listed["qlik"] == "not_installed"
 
 
+@needs_tableau
 def test_a_direction_withdrawn_after_the_project_began_stops_the_conversion(api, monkeypatch):
     project = api.client.post(f"{PREFIX}/projects",
                               json={"source_platform": "tableau", "target_platform": "powerbi", "name": "T"}).json()

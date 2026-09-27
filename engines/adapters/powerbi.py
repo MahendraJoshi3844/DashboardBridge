@@ -366,6 +366,10 @@ def _binding(field_spec: dict | None, role: BindingRole) -> VisualBinding | None
     """
     if not isinstance(field_spec, dict):
         return None
+    # A Sum of a column is written as an Aggregation around the Column.
+    aggregated = field_spec.get("Aggregation")
+    if isinstance(aggregated, dict) and isinstance(aggregated.get("Expression"), dict):
+        field_spec = aggregated["Expression"]
     for key in ("Column", "Measure"):
         spec = field_spec.get(key)
         if not isinstance(spec, dict):

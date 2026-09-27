@@ -107,13 +107,13 @@ def test_every_licence_command_it_gives_is_one_the_cli_accepts(runbook):
         for action in parser._subparsers._group_actions  # noqa: SLF001
         for name in action.choices
     }
-    for command in re.findall(r"t2pbi-license (\w+)", runbook):
+    for command in re.findall(r"dashboardbridge-license (\w+)", runbook):
         assert command in subcommands, command
 
     # And every long option, since a wrong flag is the same afternoon lost.
     for command in subcommands:
         block = re.search(
-            rf"t2pbi-license {command}\b(.*?)```", runbook, re.S
+            rf"dashboardbridge-license {command}\b(.*?)```", runbook, re.S
         )
         if block is None:
             continue
