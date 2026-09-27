@@ -34,11 +34,11 @@ dev = ["pytest>=8.0", "httpx"]
 # refuses those directions (engines/conversion/directions.py).
 # For development against local clones: pip install -e ../Tableau-to-Power-BI (and the others)
 tableau = ["t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@2daaf376b7163e2a5c75ea66e3ef6b0108f95cbf"]
-microstrategy = ["mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595"]
+microstrategy = ["mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@3852d73b75a07efed2f3904612b2cb859a4784af"]
 qlik = ["qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d"]
 engines = [
     "t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@2daaf376b7163e2a5c75ea66e3ef6b0108f95cbf",
-    "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@76da86b242df2456ebfb23fcca3bb0d360094595",
+    "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@3852d73b75a07efed2f3904612b2cb859a4784af",
     "qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d",
 ]
 
