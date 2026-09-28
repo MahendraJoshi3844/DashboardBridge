@@ -10,7 +10,7 @@ from dashboardbridge_contracts.api import (
     SkippedItem, Validation, ValidationRuleResult,
     WorkspaceColumn, WorkspaceCommit, WorkspaceEdit, WorkspaceFile, WorkspaceHeld,
     WorkspaceMeasure, WorkspaceModel, WorkspacePartition, WorkspaceTable, WorkspaceVersion,
-    PublishRequest, ReportExplorer, ReportPage, ReportVisual,
+    ProjectFile, ProjectFiles, PublishRequest, ReportExplorer, ReportPage, ReportVisual,
     AssistantFinding, AssistantMessage, AssistantProposal, AssistantStepRequest, AssistantStepResult,
 )
 from dashboardbridge_contracts.canonical import (

@@ -77,6 +77,7 @@ def convert_tableau_to_powerbi(
     out_dir: Path,
     name: str,
     accepted: dict[str, tuple[str, str]] | None = None,
+    source_name: str | None = None,
 ) -> ConversionOutcome:
     """Convert, with no AI anywhere in the path.
 
@@ -93,6 +94,8 @@ def convert_tableau_to_powerbi(
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     sink = EventSink()
+    # Beside the project, never inside it: the .pbip archive stays the project.
+    extraction_dir = out_dir.parent / f"{out_dir.name}-extracted"
 
     with tempfile.TemporaryDirectory(prefix="dbb-convert-") as staging:
         source = Path(staging) / "source.twb"
@@ -106,7 +109,13 @@ def convert_tableau_to_powerbi(
             # expression so the produced model can say a person accepted a
             # model's draft rather than a rule producing it (§62).
             accepted=accepted or {},
+            extraction_dir=extraction_dir,
+            # The uploaded file's name, not the staging copy's; it is only
+            # reported, never used to build a path.
+            source_name=source_name,
         )
+    # The archive carries the project it describes, so the two travel together.
+    shutil.copytree(out_dir, extraction_dir / "powerbi", dirs_exist_ok=True)
 
     flags = [
         ConversionFlag(
@@ -134,6 +143,8 @@ def convert_tableau_to_powerbi(
         compatibility=_compatibility(result.stats, flags),
         timeline=result.timeline,
         stats=result.stats,
+        extraction_dir=extraction_dir,
+        validation=result.validation,
     )
 
 

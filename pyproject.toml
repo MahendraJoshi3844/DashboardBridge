@@ -33,11 +33,11 @@ dev = ["pytest>=8.0", "httpx"]
 # Without them the matching migration cards show as "not installed" and the API
 # refuses those directions (engines/conversion/directions.py).
 # For development against local clones: pip install -e ../Tableau-to-Power-BI (and the others)
-tableau = ["t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@973c11f49c3b9f25c65e0ba1f5e5647ba4b9c623"]
+tableau = ["t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@28c9b6fc6d1756a750915bf8a8d14263e87a99ad"]
 microstrategy = ["mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@3852d73b75a07efed2f3904612b2cb859a4784af"]
 qlik = ["qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d"]
 engines = [
-    "t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@973c11f49c3b9f25c65e0ba1f5e5647ba4b9c623",
+    "t2pbi @ git+https://github.com/MahendraJoshi3844/Tableau-to-Power-BI@28c9b6fc6d1756a750915bf8a8d14263e87a99ad",
     "mstr2pbi @ git+https://github.com/MahendraJoshi3844/MicroStrategy-to-Power-BI@3852d73b75a07efed2f3904612b2cb859a4784af",
     "qlik2pbi @ git+https://github.com/MahendraJoshi3844/Qlik-To-PowerBI@7e1e69d25ef66be188143270408e3f358e74804d",
 ]

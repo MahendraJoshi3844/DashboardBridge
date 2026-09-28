@@ -178,6 +178,29 @@ class Conversion(ApiModel):
     flags: list[ConversionFlag] = Field(default_factory=list)
 
 
+class ProjectFile(ApiModel):
+    """One file a finished job offers for download."""
+
+    kind: Literal["extraction", "target", "validation_report"]
+    label: str
+    filename: str
+    size_bytes: int = Field(ge=0)
+    #: API path, relative to the API prefix, that serves it.
+    href: str
+
+
+class ProjectFiles(ApiModel):
+    """What a job's Files tab offers. Only files that exist are listed."""
+
+    files: list[ProjectFile] = Field(default_factory=list)
+    extraction_available: bool = False
+    #: Why there are no extracted files, when there are none - said plainly
+    #: rather than left as an empty list a person has to interpret.
+    note: str | None = None
+    #: "PASSED" / "FAILED" from the extracted validation report, when there is one.
+    validation: str | None = None
+
+
 # --------------------------------------------------------------------------
 # validation
 # --------------------------------------------------------------------------

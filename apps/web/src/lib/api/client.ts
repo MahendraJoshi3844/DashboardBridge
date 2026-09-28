@@ -28,6 +28,8 @@ import type {
   UserList,
   LoginRequest,
   Project,
+  ProjectFile,
+  ProjectFiles,
   ProposalReview,
   ProposalSet,
   ProviderSettings,
@@ -507,12 +509,36 @@ export function decideProposal(
   );
 }
 
-export async function downloadArtifact(
+export function downloadArtifact(
   projectId: string,
   fallbackFilename: string,
   options: RequestOptions = {},
 ): Promise<DownloadedArtifact> {
-  const url = `${API_BASE_URL}${API_PREFIX}/projects/${projectId}/artifact`;
+  return downloadFrom(
+    `/projects/${projectId}/artifact`,
+    fallbackFilename,
+    "The produced project could not be downloaded.",
+    options,
+  );
+}
+
+/** What a job's Files tab offers: only files that exist, and why not when not. */
+export function getProjectFiles(projectId: string, options: RequestOptions = {}): Promise<ProjectFiles> {
+  return request<ProjectFiles>(`/projects/${projectId}/files`, options);
+}
+
+/** One of the files `getProjectFiles` listed, by the path it gave. */
+export function downloadProjectFile(file: ProjectFile, options: RequestOptions = {}): Promise<DownloadedArtifact> {
+  return downloadFrom(file.href, file.filename, `${file.label} could not be downloaded.`, options);
+}
+
+async function downloadFrom(
+  path: string,
+  fallbackFilename: string,
+  failure: string,
+  options: RequestOptions = {},
+): Promise<DownloadedArtifact> {
+  const url = `${API_BASE_URL}${API_PREFIX}${path}`;
   let response: Response;
 
   try {
@@ -542,7 +568,7 @@ export async function downloadArtifact(
     throw new ApiRequestError(
       asApiError(body) ??
         fallbackError(
-          "The produced project could not be downloaded.",
+          failure,
           `GET ${url} responded ${response.status} ${response.statusText}`,
         ),
     );
