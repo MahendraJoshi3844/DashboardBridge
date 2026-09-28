@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from dashboardbridge_contracts import Conversion, ConversionRequest, Job
+from dashboardbridge_contracts import Conversion, ConversionRequest, Job, ProjectFile, ProjectFiles
 from dashboardbridge_contracts.enums import (
     ArtifactKind,
     ErrorCategory,
@@ -64,6 +64,7 @@ def _produce(
     name: str,
     session: Session,
     project_id: UUID,
+    source_name: str | None = None,
 ):
     """Run the engine for this direction. Returns the outcome, bytes and file name.
 
@@ -109,6 +110,7 @@ def _produce(
         # here would be the auto-apply path ADR-007 rejects, arrived at from the
         # conversion endpoint.
         accepted=accepted_proposals(session, project_id),
+        source_name=source_name,
     )
     archive = zip_project(outcome.project_dir, out / "produced")
     return outcome, archive.read_bytes(), f"{name}.pbip.zip"
@@ -208,6 +210,7 @@ def start_conversion(
                 project.name or "project",
                 session,
                 project_id,
+                source_name=artifact.filename,
             )
             # Same staged write the upload path uses, so nothing enters the
             # store until it is complete.
@@ -215,6 +218,14 @@ def start_conversion(
             with store.stage() as staged:
                 staged.write(payload)
                 staged.commit(storage_key)
+            extraction = None
+            if outcome.extraction_dir is not None and outcome.extraction_dir.is_dir():
+                extracted = zip_project(outcome.extraction_dir, Path(out) / "extracted").read_bytes()
+                extraction_key = store.new_key(suffix=".zip")
+                with store.stage() as staged:
+                    staged.write(extracted)
+                    staged.commit(extraction_key)
+                extraction = (extracted, extraction_key)
     except Exception as exc:
         job.transition_to(DbJobStatus.FAILED)
         job.error_category = ErrorCategory.CONVERSION_ERROR.value
@@ -239,6 +250,20 @@ def start_conversion(
         detected_platform=direction[1].value,
     )
     session.add(produced)
+    if extraction is not None:
+        extracted, extraction_key = extraction
+        session.add(
+            ArtifactRow(
+                artifact_id=uuid4(),
+                project_id=project_id,
+                kind=ArtifactKind.EXTRACTION.value,
+                filename=f"{project.name or 'project'}.extracted.zip",
+                size_bytes=len(extracted),
+                sha256=hashlib.sha256(extracted).hexdigest(),
+                storage_key=extraction_key,
+                detected_platform=direction[0].value,
+            )
+        )
 
     job.result = Conversion(
         conversion_id=job.job_id,
@@ -318,3 +343,114 @@ def download_artifact(
             "content-disposition": f'attachment; filename="{header_safe_filename(produced.filename)}"'
         },
     )
+
+
+def _latest_artifact(session: Session, project_id: UUID, kind: ArtifactKind) -> ArtifactRow | None:
+    return session.scalars(
+        select(ArtifactRow)
+        .where(ArtifactRow.project_id == project_id, ArtifactRow.kind == kind.value)
+        .order_by(ArtifactRow.created_at.desc())
+    ).first()
+
+
+def _no_extraction(project) -> ApiException:
+    if project.source_platform != Platform.TABLEAU.value or project.target_platform != Platform.POWERBI.value:
+        message = (
+            "Extracted files are produced for Tableau to Power BI migrations. This project's "
+            "engine does not produce them; its converted project is still available to download."
+        )
+    else:
+        message = "There are no extracted files yet. Convert the workbook first."
+    return ApiException(
+        ErrorCategory.NOT_FOUND,
+        message,
+        detail=f"no extraction artifact for project {project.project_id}",
+        status_code=404,
+    )
+
+
+def _validation_of(archive: bytes) -> tuple[str | None, bytes | None]:
+    """The validation status and report inside an extraction archive."""
+    import io  # noqa: PLC0415
+    import json  # noqa: PLC0415
+    import zipfile  # noqa: PLC0415
+
+    with zipfile.ZipFile(io.BytesIO(archive)) as zipped:
+        names = set(zipped.namelist())
+        status = None
+        if "validation.json" in names:
+            status = json.loads(zipped.read("validation.json")).get("status")
+        report = zipped.read("VALIDATION_REPORT.md") if "VALIDATION_REPORT.md" in names else None
+    return status, report
+
+
+@router.get("/projects/{project_id}/extraction")
+def download_extraction(
+    project_id: UUID,
+    session: Session = Depends(get_session),
+    store: ArtifactStore = Depends(get_artifact_store),
+) -> Response:
+    """The extracted files of the latest conversion: metadata, what each item
+    became, the validation report and the project, as one archive."""
+    project = load_project(session, project_id)
+    row = _latest_artifact(session, project_id, ArtifactKind.EXTRACTION)
+    if row is None:
+        raise _no_extraction(project)
+    return Response(
+        content=store.read(row.storage_key),
+        media_type="application/zip",
+        headers={"content-disposition": f'attachment; filename="{header_safe_filename(row.filename)}"'},
+    )
+
+
+@router.get("/projects/{project_id}/validation-report")
+def download_validation_report(
+    project_id: UUID,
+    session: Session = Depends(get_session),
+    store: ArtifactStore = Depends(get_artifact_store),
+) -> Response:
+    """The validation report on its own, readable without unzipping anything."""
+    project = load_project(session, project_id)
+    row = _latest_artifact(session, project_id, ArtifactKind.EXTRACTION)
+    report = _validation_of(store.read(row.storage_key))[1] if row is not None else None
+    if report is None:
+        raise _no_extraction(project)
+    name = Path(row.filename).name.removesuffix(".extracted.zip")
+    return Response(
+        content=report,
+        media_type="text/markdown; charset=utf-8",
+        headers={"content-disposition": f'attachment; filename="{header_safe_filename(name + "-validation-report.md")}"'},
+    )
+
+
+@router.get("/projects/{project_id}/files", response_model=ProjectFiles)
+def list_files(
+    project_id: UUID,
+    session: Session = Depends(get_session),
+    store: ArtifactStore = Depends(get_artifact_store),
+) -> ProjectFiles:
+    """What the job's Files tab offers: only files that exist, and why not when not."""
+    project = load_project(session, project_id)
+    files: list[ProjectFile] = []
+    validation = None
+    extraction = _latest_artifact(session, project_id, ArtifactKind.EXTRACTION)
+    if extraction is not None:
+        files.append(ProjectFile(kind="extraction", label="Extracted Files (.zip)", filename=extraction.filename,
+                                 size_bytes=extraction.size_bytes, href=f"/projects/{project_id}/extraction"))
+        validation, report = _validation_of(store.read(extraction.storage_key))
+        if report is not None:
+            stem = Path(extraction.filename).name.removesuffix(".extracted.zip")
+            files.append(ProjectFile(kind="validation_report", label="Validation report (.md)",
+                                     filename=f"{stem}-validation-report.md", size_bytes=len(report),
+                                     href=f"/projects/{project_id}/validation-report"))
+    target = _latest_artifact(session, project_id, ArtifactKind.TARGET)
+    if target is not None:
+        label = "Tableau workbook (.twb)" if target.filename.endswith(".twb") else "Power BI project (.pbip.zip)"
+        files.append(ProjectFile(kind="target", label=label, filename=target.filename,
+                                 size_bytes=target.size_bytes, href=f"/projects/{project_id}/artifact"))
+    note = None
+    if extraction is None:
+        note = _no_extraction(project).message if target is not None else \
+            "Files appear here once the project has been converted."
+    return ProjectFiles(files=files, extraction_available=extraction is not None, note=note,
+                        validation=validation)

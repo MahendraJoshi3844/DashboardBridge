@@ -28,6 +28,11 @@ class ConversionOutcome:
     compatibility: Compatibility
     timeline: Timeline
     stats: dict[str, int]
+    #: The extracted files (metadata, what each item became, the validation
+    #: report, the project) when the engine produces them; None when not.
+    extraction_dir: Path | None = None
+    #: "PASSED" / "FAILED" from that validation report.
+    validation: str | None = None
 
 
 def compatibility_by_object(

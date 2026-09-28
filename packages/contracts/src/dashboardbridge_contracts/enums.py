@@ -146,6 +146,9 @@ class ArtifactKind(str, Enum):
 
     SOURCE = "source"
     TARGET = "target"
+    #: The extracted files of a conversion: metadata, what each item became,
+    #: the validation report. Produced beside the target, never instead of it.
+    EXTRACTION = "extraction"
 
 
 class JobKind(str, Enum):

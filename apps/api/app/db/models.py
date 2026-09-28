@@ -71,6 +71,7 @@ class ArtifactKind(str, enum.Enum):
 
     SOURCE = "source"
     TARGET = "target"
+    EXTRACTION = "extraction"
 
 
 class JobKind(str, enum.Enum):

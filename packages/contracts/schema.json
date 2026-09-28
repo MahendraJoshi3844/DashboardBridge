@@ -233,7 +233,8 @@
       "description": "An artifact is either what was uploaded or what was produced.\n\nGET /projects/{id}/artifact must return the target, so the distinction has\nto exist in the contract and not only in the database.",
       "enum": [
         "source",
-        "target"
+        "target",
+        "extraction"
       ],
       "title": "ArtifactKind",
       "type": "string"
@@ -1691,6 +1692,91 @@
         "created_at"
       ],
       "title": "Project",
+      "type": "object"
+    },
+    "ProjectFile": {
+      "additionalProperties": false,
+      "description": "One file a finished job offers for download.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "extraction",
+            "target",
+            "validation_report"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "filename": {
+          "title": "Filename",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "href": {
+          "title": "Href",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "label",
+        "filename",
+        "size_bytes",
+        "href"
+      ],
+      "title": "ProjectFile",
+      "type": "object"
+    },
+    "ProjectFiles": {
+      "additionalProperties": false,
+      "description": "What a job's Files tab offers. Only files that exist are listed.",
+      "properties": {
+        "files": {
+          "items": {
+            "$ref": "#/definitions/ProjectFile"
+          },
+          "title": "Files",
+          "type": "array"
+        },
+        "extraction_available": {
+          "default": false,
+          "title": "Extraction Available",
+          "type": "boolean"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "validation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Validation"
+        }
+      },
+      "title": "ProjectFiles",
       "type": "object"
     },
     "ProposalDecision": {

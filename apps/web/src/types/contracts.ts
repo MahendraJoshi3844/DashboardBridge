@@ -4,7 +4,7 @@
  * Source: packages/contracts/schema.json (Pydantic → JSON Schema).
  * Regenerate: npm run gen:types
  *
- * 85 contract definitions.
+ * 87 contract definitions.
  */
 
 /* eslint-disable */
@@ -227,7 +227,7 @@ export type ArtifactId = string;
  * GET /projects/{id}/artifact must return the target, so the distinction has
  * to exist in the contract and not only in the database.
  */
-export type ArtifactKind = "source" | "target";
+export type ArtifactKind = "source" | "target" | "extraction";
 /**
  * Sanitised. Never used as a path.
  */
@@ -243,7 +243,7 @@ export type Sha256 = string;
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
  * via the `definition` "ArtifactKind".
  */
-export type ArtifactKind1 = "source" | "target";
+export type ArtifactKind1 = "source" | "target" | "extraction";
 export type Severity1 = "info" | "warning" | "error";
 export type Item1 = string;
 export type Message1 = string;
@@ -416,6 +416,15 @@ export type Email1 = string;
 export type Password1 = string;
 export type Completed = number;
 export type Total1 = number;
+export type Kind5 = "extraction" | "target" | "validation_report";
+export type Label = string;
+export type Filename1 = string;
+export type SizeBytes1 = number;
+export type Href = string;
+export type Files = ProjectFile[];
+export type ExtractionAvailable = boolean;
+export type Note1 = string | null;
+export type Validation1 = string | null;
 /**
  * What a person did about a proposal (§62).
  *
@@ -511,17 +520,17 @@ export type Verdict2 = "verified" | "partially_verified" | "unverified" | "faile
 export type Name13 = string;
 export type DataType3 = string;
 export type BaseVersion = number;
-export type Note1 = string;
+export type Note2 = string;
 /**
  * @minItems 1
  */
 export type Edits = [WorkspaceEdit, ...WorkspaceEdit[]];
-export type Kind5 = "measure" | "partition";
+export type Kind6 = "measure" | "partition";
 export type Table3 = string;
 export type Name14 = string;
 export type Expression2 = string;
 export type Path = string;
-export type SizeBytes1 = number;
+export type SizeBytes2 = number;
 export type Item4 = string;
 export type Table4 = string;
 export type Name15 = string;
@@ -535,7 +544,7 @@ export type Version2 = number;
 export type Version3 = number;
 export type ArtifactId2 = string;
 export type CreatedAt2 = string;
-export type Note2 = string;
+export type Note3 = string;
 export type Versions = WorkspaceVersion[];
 export type Name18 = string;
 export type Columns2 = WorkspaceColumn[];
@@ -546,7 +555,7 @@ export type SourceKind = string;
 export type Expression4 = string;
 export type Partitions = WorkspacePartition[];
 export type Tables2 = WorkspaceTable[];
-export type Files = WorkspaceFile[];
+export type Files1 = WorkspaceFile[];
 export type Held = WorkspaceHeld[];
 
 export interface DashboardBridgeContracts {
@@ -1123,6 +1132,31 @@ export interface ProgressEvent {
   total: Total1;
 }
 /**
+ * One file a finished job offers for download.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "ProjectFile".
+ */
+export interface ProjectFile {
+  kind: Kind5;
+  label: Label;
+  filename: Filename1;
+  size_bytes: SizeBytes1;
+  href: Href;
+}
+/**
+ * What a job's Files tab offers. Only files that exist are listed.
+ *
+ * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema
+ * via the `definition` "ProjectFiles".
+ */
+export interface ProjectFiles {
+  files?: Files;
+  extraction_available?: ExtractionAvailable;
+  note?: Note1;
+  validation?: Validation1;
+}
+/**
  * One proposal, with everything a reviewer needs to judge it (ADR-007).
  *
  * 07-ai-engine.md: the reviewer sees the source expression, the reason the
@@ -1304,7 +1338,7 @@ export interface WorkspaceColumn {
  */
 export interface WorkspaceCommit {
   base_version: BaseVersion;
-  note?: Note1;
+  note?: Note2;
   edits: Edits;
 }
 /**
@@ -1317,7 +1351,7 @@ export interface WorkspaceCommit {
  * via the `definition` "WorkspaceEdit".
  */
 export interface WorkspaceEdit {
-  kind: Kind5;
+  kind: Kind6;
   table: Table3;
   name: Name14;
   expression: Expression2;
@@ -1328,7 +1362,7 @@ export interface WorkspaceEdit {
  */
 export interface WorkspaceFile {
   path: Path;
-  size_bytes: SizeBytes1;
+  size_bytes: SizeBytes2;
 }
 /**
  * A calculation the converter refused, offered for a person to write.
@@ -1365,7 +1399,7 @@ export interface WorkspaceModel {
   version: Version2;
   versions?: Versions;
   tables?: Tables2;
-  files?: Files;
+  files?: Files1;
   held?: Held;
 }
 /**
@@ -1378,7 +1412,7 @@ export interface WorkspaceVersion {
   version: Version3;
   artifact_id: ArtifactId2;
   created_at: CreatedAt2;
-  note?: Note2;
+  note?: Note3;
 }
 /**
  * This interface was referenced by `DashboardBridgeContracts`'s JSON-Schema

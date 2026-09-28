@@ -14,19 +14,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   downloadArtifact,
+  downloadProjectFile,
   getProject,
+  getProjectFiles,
   getWorkspace,
   getWorkspaceFile,
   reportUrl,
+  startConversion,
   toApiError,
 } from "@/lib/api/client";
 import { saveBlob } from "@/lib/download";
+import { formatBytes } from "@/lib/migrator/files";
 import { directionLabel } from "@/lib/platforms";
 import { STEPS, emptySnapshot, formatLine, readJob, runJob, type JobSnapshot } from "@/lib/migrator/job";
-import type { ApiError, Project, WorkspaceModel } from "@/types/contracts";
+import type { ApiError, Project, ProjectFile, ProjectFiles, WorkspaceModel } from "@/types/contracts";
 
 import { AppShell } from "./AppShell";
-import { IconDoc, IconDownload, IconEye, IconSigma, IconTable } from "./MgIcons";
+import { IconDoc, IconDownload, IconEye, IconRefresh, IconSigma, IconTable } from "./MgIcons";
 
 type Tab = "logs" | "files" | "model";
 
@@ -41,6 +45,8 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
   const [autoScroll, setAutoScroll] = useState(true);
   const [workspace, setWorkspace] = useState<WorkspaceModel | null>(null);
   const [openFile, setOpenFile] = useState<{ path: string; text: string } | null>(null);
+  const [files, setFiles] = useState<ProjectFiles | null>(null);
+  const [recompiling, setRecompiling] = useState(false);
   const consoleRef = useRef<HTMLDivElement>(null);
   const ran = useRef(false);
 
@@ -71,6 +77,40 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
         // The job screen works without it; the Files and Model tabs say so.
       });
   }, [projectId, snapshot.done, workspace]);
+
+  useEffect(() => {
+    if (!snapshot.done.has("Converted") || files !== null) return;
+    getProjectFiles(projectId)
+      .then(setFiles)
+      .catch(() => {
+        // The Files tab says the list could not be read; downloads stay above.
+      });
+  }, [projectId, snapshot.done, files]);
+
+  async function downloadFile(file: ProjectFile) {
+    try {
+      const { blob, filename } = await downloadProjectFile(file);
+      saveBlob(blob, filename);
+    } catch (cause) {
+      setFailure(toApiError(cause));
+    }
+  }
+
+  /** Convert the stored workbook again - no new upload - and refresh what is offered. */
+  async function recompile() {
+    setRecompiling(true);
+    setFailure(null);
+    try {
+      await startConversion(projectId, { ai_enabled: false });
+      setFiles(await getProjectFiles(projectId));
+      setWorkspace(await getWorkspace(projectId));
+      setOpenFile(null);
+    } catch (cause) {
+      setFailure(toApiError(cause));
+    } finally {
+      setRecompiling(false);
+    }
+  }
 
   useEffect(() => {
     if (autoScroll && consoleRef.current) {
@@ -230,6 +270,51 @@ export function JobDetail({ projectId }: { readonly projectId: string }) {
               })
             )}
           </div>
+        </section>
+      )}
+
+      {tab === "files" && snapshot.done.has("Converted") && (
+        <section className="mg-card" style={{ marginTop: 12 }} aria-labelledby="downloads-title">
+          <div className="mg-panelhead">
+            <strong id="downloads-title">
+              Downloads
+              {files?.validation && (
+                <span className={`mg-pill ${files.validation === "PASSED" ? "mg-pill--good" : "mg-pill--bad"}`} style={{ marginLeft: 10 }}>
+                  Validation {files.validation.toLowerCase()}
+                </span>
+              )}
+            </strong>
+            <button type="button" className="mg-btn mg-btn--sm" disabled={recompiling} onClick={() => void recompile()}>
+              <IconRefresh size={13} /> {recompiling ? "Recompiling…" : "Recompile"}
+            </button>
+          </div>
+          {files === null ? (
+            <p className="mg-empty">Reading what this job produced…</p>
+          ) : (
+            <>
+              {(files.files?.length ?? 0) > 0 && (
+                <table className="mg-table mg-table--fixed">
+                  <tbody>
+                    {files.files?.map((file) => (
+                      <tr key={file.kind}>
+                        <td>
+                          <IconDoc size={14} /> <strong>{file.label}</strong>
+                          <div className="mg-note mg-mono" style={{ fontSize: 12 }}>{file.filename}</div>
+                        </td>
+                        <td style={{ textAlign: "right", width: 100 }}>{formatBytes(file.size_bytes)}</td>
+                        <td style={{ textAlign: "right", width: 140 }}>
+                          <button type="button" className="mg-btn mg-btn--sm" onClick={() => void downloadFile(file)} aria-label={`Download ${file.label}`}>
+                            <IconDownload size={13} /> Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {files.note && <p className="mg-note" style={{ padding: "10px 16px" }}>{files.note}</p>}
+            </>
+          )}
         </section>
       )}
 
